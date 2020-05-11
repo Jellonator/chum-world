@@ -1,6 +1,6 @@
-use std::io::{self, Write, Read};
 use byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
 use std::cmp;
+use std::io::{self, Read, Write};
 use std::mem;
 
 /// .DGC header information
@@ -24,7 +24,7 @@ impl DgcHeader {
                 headerdata[i] = data[i];
             }
             Some(DgcHeader {
-                legal_notice: headerdata
+                legal_notice: headerdata,
             })
         } else {
             None
@@ -60,7 +60,7 @@ impl DgcFile {
             data,
             type_id,
             name_id,
-            subtype_id
+            subtype_id,
         }
     }
 
@@ -73,7 +73,7 @@ impl DgcFile {
     pub fn get_name_id(&self) -> i32 {
         self.name_id
     }
-    
+
     /// Get the type id of this file
     pub fn get_subtype_id(&self) -> i32 {
         self.subtype_id
@@ -122,9 +122,7 @@ pub struct DgcChunk {
 impl DgcChunk {
     /// Create a new DgcChunk
     fn new() -> DgcChunk {
-        DgcChunk {
-            data: Vec::new()
-        }
+        DgcChunk { data: Vec::new() }
     }
 
     /// Add a file to this chunk
@@ -204,13 +202,16 @@ impl DgcArchive {
     }
 
     /// Iterate over all files in this archive.
-    pub fn iter_files(&self) -> impl Iterator<Item=&DgcFile> {
+    pub fn iter_files(&self) -> impl Iterator<Item = &DgcFile> {
         self.data.iter().flat_map(|chunk| chunk.data.iter())
     }
 
     /// Take all files from this archive
     pub fn take_files(self) -> Vec<DgcFile> {
-        self.data.into_iter().flat_map(|chunk| chunk.data.into_iter()).collect()
+        self.data
+            .into_iter()
+            .flat_map(|chunk| chunk.data.into_iter())
+            .collect()
     }
 
     /// Set the files so that the given files all fit
@@ -255,7 +256,10 @@ impl DgcArchive {
         if file.get_total_size() + 4 > self.chunk_size {
             let mut old_chunks = Vec::new();
             mem::swap(&mut self.data, &mut old_chunks);
-            let mut files: Vec<DgcFile> = old_chunks.into_iter().flat_map(|chunk| chunk.data.into_iter()).collect();
+            let mut files: Vec<DgcFile> = old_chunks
+                .into_iter()
+                .flat_map(|chunk| chunk.data.into_iter())
+                .collect();
             files.push(file);
             self.set_files(files);
             return;
@@ -294,7 +298,11 @@ impl DgcArchive {
         let mut chunks = Vec::new();
         file.read_to_end(&mut fdata)?;
         if fdata.len() % (size as usize) > 0 {
-            eprintln!("Warning: stream size {} is not divisible by chunk size {}!", fdata.len(), size);
+            eprintln!(
+                "Warning: stream size {} is not divisible by chunk size {}!",
+                fdata.len(),
+                size
+            );
         }
         for chunk in fdata.chunks(size as usize) {
             chunks.push(load_chunk(chunk)?);
@@ -338,7 +346,5 @@ fn load_chunk(mut data: &[u8]) -> io::Result<DgcChunk> {
             subtype_id: id2,
         });
     }
-    Ok(DgcChunk {
-        data: files,
-    })
+    Ok(DgcChunk { data: files })
 }

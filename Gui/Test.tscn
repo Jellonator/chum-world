@@ -9,3 +9,50 @@ script = ExtResource( 1 )
 __meta__ = {
 "_edit_use_anchors_": false
 }
+
+[node name="GridContainer" type="GridContainer" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+columns = 2
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="Label" type="Label" parent="GridContainer"]
+margin_top = 5.0
+margin_right = 28.0
+margin_bottom = 19.0
+text = "NGC"
+
+[node name="NGC" type="LineEdit" parent="GridContainer"]
+margin_left = 32.0
+margin_right = 1024.0
+margin_bottom = 24.0
+size_flags_horizontal = 3
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="Label2" type="Label" parent="GridContainer"]
+margin_top = 33.0
+margin_right = 28.0
+margin_bottom = 47.0
+text = "DGC"
+
+[node name="DGC" type="LineEdit" parent="GridContainer"]
+margin_left = 32.0
+margin_top = 28.0
+margin_right = 1024.0
+margin_bottom = 52.0
+size_flags_horizontal = 3
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="Button" type="Button" parent="."]
+margin_left = 215.063
+margin_top = 70.7872
+margin_right = 272.063
+margin_bottom = 90.7872
+text = "Submit"
+[connection signal="pressed" from="Button" to="." method="_on_Button_pressed"]

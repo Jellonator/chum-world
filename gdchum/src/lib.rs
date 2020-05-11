@@ -2,6 +2,8 @@ use gdnative::*;
 use libchum;
 use std::fs::File;
 
+pub mod chumfile;
+
 #[derive(NativeClass)]
 #[inherit(Resource)]
 pub struct ChumArchive {
@@ -17,21 +19,21 @@ impl ChumArchive {
     }
 
     #[export]
-    fn load(&mut self, _owner: Resource, ngcpath: gdnative::GodotString, dgcpath: gdnative::GodotString) -> Result<(), i64> {
+    fn load(&mut self, _owner: Resource, ngcpath: gdnative::GodotString, dgcpath: gdnative::GodotString) -> i64 {
         let mut ngcfile = match File::open(ngcpath.to_string()) {
             Ok(x) => x,
-            Err(_) => return Err(gdnative::GodotError::FileBadPath as i64)
+            Err(_) => return gdnative::GodotError::FileBadPath as i64
         };
         let mut dgcfile = match File::open(dgcpath.to_string()) {
             Ok(x) => x,
-            Err(_) => return Err(gdnative::GodotError::FileBadPath as i64)
+            Err(_) => return gdnative::GodotError::FileBadPath as i64
         };
         match libchum::ChumArchive::read_chum_archive(&mut ngcfile, &mut dgcfile) {
             Ok(x) => {
                 self.archive = Some(x);
-                Ok(())
+                0
             }
-            Err(_) => Err(gdnative::GodotError::FileCantOpen as i64)
+            Err(_) => gdnative::GodotError::FileCantOpen as i64
         }
     }
 
@@ -40,8 +42,11 @@ impl ChumArchive {
         let mut arr = gdnative::VariantArray::new();
         if let Some(archive) = &self.archive {
             for file in archive.get_files() {
-                let gdvariant = gdnative::Variant::from(file.get_name_id());
-                arr.push(&gdvariant);
+                let f = Instance::<chumfile::ChumFile>::new();
+                f.map_mut(|script, _res| {
+                    script.read_from_chumfile(file);
+                }).unwrap();
+                arr.push(&Variant::from(f.base().new_ref()));
             }
         }
         return arr
@@ -55,6 +60,7 @@ impl ChumArchive {
 
 fn init(handle: gdnative::init::InitHandle) {
     handle.add_class::<ChumArchive>();
+    handle.add_class::<chumfile::ChumFile>();
 }
 
 godot_gdnative_init!();

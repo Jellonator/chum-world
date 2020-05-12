@@ -1,0 +1,56 @@
+[gd_scene load_steps=2 format=2]
+
+[ext_resource path="res://Gui/HexEditor.gd" type="Script" id=1]
+
+[node name="HexEditor" type="HSplitContainer"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+focus_mode = 2
+dragger_visibility = 1
+script = ExtResource( 1 )
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="Left" type="PanelContainer" parent="."]
+margin_right = 762.0
+margin_bottom = 600.0
+mouse_filter = 1
+size_flags_horizontal = 3
+size_flags_stretch_ratio = 3.0
+
+[node name="HBox" type="HBoxContainer" parent="Left"]
+margin_left = 7.0
+margin_top = 7.0
+margin_right = 755.0
+margin_bottom = 593.0
+
+[node name="Hex" type="Panel" parent="Left/HBox"]
+margin_right = 732.0
+margin_bottom = 586.0
+mouse_filter = 1
+size_flags_horizontal = 3
+
+[node name="Scroll" type="VScrollBar" parent="Left/HBox"]
+margin_left = 736.0
+margin_right = 748.0
+margin_bottom = 586.0
+mouse_filter = 1
+rounded = true
+
+[node name="Right" type="PanelContainer" parent="."]
+margin_left = 774.0
+margin_right = 1024.0
+margin_bottom = 600.0
+mouse_filter = 1
+size_flags_horizontal = 3
+
+[node name="Chars" type="Panel" parent="Right"]
+margin_left = 7.0
+margin_top = 7.0
+margin_right = 243.0
+margin_bottom = 593.0
+[connection signal="item_rect_changed" from="." to="." method="_on_HexEditor_item_rect_changed"]
+[connection signal="draw" from="Left/HBox/Hex" to="." method="_on_Hex_draw"]
+[connection signal="scrolling" from="Left/HBox/Scroll" to="." method="_on_Scroll_scrolling"]
+[connection signal="draw" from="Right/Chars" to="." method="_on_Chars_draw"]

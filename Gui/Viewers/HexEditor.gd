@@ -8,6 +8,7 @@ var select_to := 0
 var is_selecting := false
 var data = ByteData.new()
 var bytes_per_line := 16
+var x = 0
 
 onready var node_chars := $Right/Chars
 onready var node_hex := $Left/HBox/Hex
@@ -19,6 +20,7 @@ func refresh_view():
 
 func _ready():
 	node_scroll.max_value = 1
+	connect("item_rect_changed", self, "_on_HexEditor_item_rect_changed")
 
 func get_font_height() -> int:
 	return int(MONOFONT.get_string_size("w").y)
@@ -50,10 +52,13 @@ func set_data(p_data):
 	self.data = p_data
 	refresh_view()
 	node_scroll.value = 0
-	node_scroll.max_value = int(ceil(float(data.size() / bytes_per_line)))
+	node_scroll.max_value = max(1, int(ceil(float(data.size() / bytes_per_line))))
 
 func set_file(file):
-	set_data(file.data)
+	if file == null:
+		set_data(ByteData.new())
+	else:
+		set_data(file.data)
 
 func _on_Hex_draw():
 	var iy := -1

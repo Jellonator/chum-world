@@ -19,6 +19,10 @@ config/name="Chum World"
 run/main_scene="res://Gui/Viewer.tscn"
 config/icon="res://icon.png"
 
+[autoload]
+
+ChumReader="*res://gdchum/ChumReader.gdns"
+
 [input]
 
 ui_scroll_up={

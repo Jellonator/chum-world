@@ -1,7 +1,7 @@
 [gd_scene load_steps=5 format=2]
 
 [ext_resource path="res://Gui/Viewer.gd" type="Script" id=1]
-[ext_resource path="res://Gui/Viewers/HexEditor.tscn" type="PackedScene" id=2]
+[ext_resource path="res://Gui/EditorList.tscn" type="PackedScene" id=2]
 [ext_resource path="res://Gui/ArchiveFileSelector.tscn" type="PackedScene" id=6]
 [ext_resource path="res://Gui/FileTree.gd" type="Script" id=7]
 
@@ -58,7 +58,7 @@ rect_min_size = Vector2( 128, 0 )
 hide_root = true
 script = ExtResource( 7 )
 
-[node name="HexEditor" parent="VBox/Tabs/Files" instance=ExtResource( 2 )]
+[node name="EditorList" parent="VBox/Tabs/Files" instance=ExtResource( 2 )]
 anchor_right = 0.0
 anchor_bottom = 0.0
 margin_left = 140.0

@@ -64,6 +64,7 @@ fn init(handle: gdnative::init::InitHandle) {
     handle.add_class::<ChumArchive>();
     handle.add_class::<chumfile::ChumFile>();
     handle.add_class::<bytedata::ByteData>();
+    handle.add_class::<reader::ChumReader>();
 }
 
 godot_gdnative_init!();

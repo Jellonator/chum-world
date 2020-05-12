@@ -50,7 +50,6 @@ margin_left = 7.0
 margin_top = 7.0
 margin_right = 243.0
 margin_bottom = 593.0
-[connection signal="item_rect_changed" from="." to="." method="_on_HexEditor_item_rect_changed"]
 [connection signal="draw" from="Left/HBox/Hex" to="." method="_on_Hex_draw"]
 [connection signal="scrolling" from="Left/HBox/Scroll" to="." method="_on_Scroll_scrolling"]
 [connection signal="draw" from="Right/Chars" to="." method="_on_Chars_draw"]

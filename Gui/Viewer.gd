@@ -7,9 +7,10 @@ const MENU_FILE_EXIT := 1
 var archive: ChumArchive
 
 onready var node_tree := $VBox/Tabs/Files/Tree
-onready var node_hex := $VBox/Tabs/Files/HexEditor
+onready var node_editor := $VBox/Tabs/Files/EditorList
 
 func _ready():
+#	node_editor.set_file(null)
 	archive = ChumArchive.new()
 	$VBox/Menu/File.get_popup().connect("id_pressed", self, "_on_menu_file_select")
 
@@ -21,6 +22,7 @@ func _on_menu_file_select(id):
 			get_tree().quit(0)
 
 func load_archive(ngc: String, dgc: String):
+	node_editor.set_file(null)
 	var err = archive.load(ngc, dgc)
 	if err != OK:
 		show_err("Could not open files")
@@ -34,4 +36,4 @@ func show_err(text: String):
 	$ErrDialog.popup_centered()
 
 func _on_Tree_file_selected(file):
-	node_hex.set_file(file)
+	node_editor.set_file(file)

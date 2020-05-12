@@ -3,6 +3,8 @@ use libchum;
 use std::fs::File;
 
 pub mod chumfile;
+pub mod reader;
+pub mod bytedata;
 
 #[derive(NativeClass)]
 #[inherit(Resource)]
@@ -61,6 +63,7 @@ impl ChumArchive {
 fn init(handle: gdnative::init::InitHandle) {
     handle.add_class::<ChumArchive>();
     handle.add_class::<chumfile::ChumFile>();
+    handle.add_class::<bytedata::ByteData>();
 }
 
 godot_gdnative_init!();

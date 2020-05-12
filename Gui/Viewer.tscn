@@ -1,7 +1,7 @@
 [gd_scene load_steps=5 format=2]
 
 [ext_resource path="res://Gui/Viewer.gd" type="Script" id=1]
-[ext_resource path="res://Gui/HexEditor.tscn" type="PackedScene" id=2]
+[ext_resource path="res://Gui/Viewers/HexEditor.tscn" type="PackedScene" id=2]
 [ext_resource path="res://Gui/ArchiveFileSelector.tscn" type="PackedScene" id=6]
 [ext_resource path="res://Gui/FileTree.gd" type="Script" id=7]
 

@@ -1,11 +1,12 @@
 extends HSplitContainer
 
 const MONOFONT := preload("res://Font/Mono.tres")
+const ByteData := preload("res://gdchum/ByteData.gdns")
 
 var select_from := 0
 var select_to := 0
 var is_selecting := false
-var data: PoolByteArray = PoolByteArray()
+var data = ByteData.new()
 var bytes_per_line := 16
 
 onready var node_chars := $Right/Chars
@@ -20,10 +21,10 @@ func _ready():
 	node_scroll.max_value = 1
 
 func get_font_height() -> int:
-	return 16
+	return int(MONOFONT.get_string_size("w").y)
 
 func get_font_width() -> int:
-	return 8
+	return int(MONOFONT.get_string_size("w").x)
 
 func get_scroll_line() -> int:
 	return int(node_scroll.value)
@@ -45,9 +46,10 @@ func get_char(value: int) -> String:
 	else:
 		return "."
 
-func set_data(p_data: PoolByteArray):
+func set_data(p_data):
 	self.data = p_data
 	refresh_view()
+	node_scroll.value = 0
 	node_scroll.max_value = int(ceil(float(data.size() / bytes_per_line)))
 
 func set_file(file):
@@ -59,7 +61,7 @@ func _on_Hex_draw():
 	for i in range(get_first_byte(), get_last_byte()):
 		if i % bytes_per_line == 0:
 			iy += 1
-		var s := "%02X" % data[i]
+		var s = "%02X" % data.get(i)
 		var pos := Vector2()
 		pos.x = get_font_width() * (i % bytes_per_line) * 3 + offset
 		pos.y = get_font_height() * (iy + 1)
@@ -76,7 +78,7 @@ func _on_Chars_draw():
 	for i in range(get_first_byte(), get_last_byte()):
 		if i % bytes_per_line == 0:
 			iy += 1
-		var c := get_char(data[i])
+		var c := get_char(data.get(i))
 		var pos := Vector2()
 		pos.x = get_font_width() * (i % bytes_per_line) + 4
 		pos.y = get_font_height() * iy

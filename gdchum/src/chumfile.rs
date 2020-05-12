@@ -1,11 +1,12 @@
 use gdnative::*;
 use libchum;
+use crate::bytedata::ByteData;
 
 #[derive(NativeClass)]
 #[inherit(Resource)]
 #[register_with(Self::_register)]
 pub struct ChumFile {
-    data: ByteArray,
+    data: Resource,
     nameid: GodotString,
     typeid: GodotString,
     subtypeid: GodotString
@@ -33,12 +34,12 @@ impl ChumFile {
     }
 
     #[export]
-    pub fn get_data(&mut self, _owner: Resource) -> ByteArray {
+    pub fn get_data(&mut self, _owner: Resource) -> Resource {
         self.data.new_ref()
     }
 
     #[export]
-    pub fn set_data(&mut self, _owner: Resource, data: ByteArray) {
+    pub fn set_data(&mut self, _owner: Resource, data: Resource) {
         self.data = data;
     }
 
@@ -76,19 +77,18 @@ impl ChumFile {
         self.nameid = GodotString::from_str(file.get_name_id());
         self.typeid = GodotString::from_str(file.get_type_id());
         self.subtypeid = GodotString::from_str(file.get_subtype_id());
-        let mut data = ByteArray::new();
-        let ogdata = file.get_data();
-        let len = ogdata.len() as i32;
-        data.resize(len);
-        for i in 0..len {
-            data.set(i, ogdata[i as usize]);
-        }
-        self.data = data;
+        let f = Instance::<ByteData>::new();
+        self.data = f.map_mut(|script, res| {
+            script.set_data(file.get_data().to_vec());
+            res
+        }).unwrap();
     }
 
     fn _init(_owner: Resource) -> Self {
+        let f = Instance::<ByteData>::new();
+        let data = f.into_base();
         ChumFile {
-            data: ByteArray::new(),
+            data: data,
             nameid: GodotString::new(),
             typeid: GodotString::new(),
             subtypeid: GodotString::new()

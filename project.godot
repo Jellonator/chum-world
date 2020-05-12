@@ -16,7 +16,7 @@ _global_script_class_icons={
 [application]
 
 config/name="Chum World"
-run/main_scene="res://Gui/Test.tscn"
+run/main_scene="res://Gui/Viewer.tscn"
 config/icon="res://icon.png"
 
 [rendering]

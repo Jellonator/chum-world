@@ -2,40 +2,43 @@ use gdnative::*;
 use libchum;
 use std::fs::File;
 
+pub mod bytedata;
 pub mod chumfile;
 pub mod reader;
-pub mod bytedata;
 
 #[derive(NativeClass)]
 #[inherit(Resource)]
 pub struct ChumArchive {
-    pub archive: Option<libchum::ChumArchive>
+    pub archive: Option<libchum::ChumArchive>,
 }
 
 #[methods]
 impl ChumArchive {
     fn _init(_owner: Resource) -> Self {
-        ChumArchive {
-            archive: None
-        }
+        ChumArchive { archive: None }
     }
 
     #[export]
-    fn load(&mut self, _owner: Resource, ngcpath: gdnative::GodotString, dgcpath: gdnative::GodotString) -> i64 {
+    fn load(
+        &mut self,
+        _owner: Resource,
+        ngcpath: gdnative::GodotString,
+        dgcpath: gdnative::GodotString,
+    ) -> i64 {
         let mut ngcfile = match File::open(ngcpath.to_string()) {
             Ok(x) => x,
-            Err(_) => return gdnative::GodotError::FileBadPath as i64
+            Err(_) => return gdnative::GodotError::FileBadPath as i64,
         };
         let mut dgcfile = match File::open(dgcpath.to_string()) {
             Ok(x) => x,
-            Err(_) => return gdnative::GodotError::FileBadPath as i64
+            Err(_) => return gdnative::GodotError::FileBadPath as i64,
         };
         match libchum::ChumArchive::read_chum_archive(&mut ngcfile, &mut dgcfile) {
             Ok(x) => {
                 self.archive = Some(x);
                 0
             }
-            Err(_) => gdnative::GodotError::FileCantOpen as i64
+            Err(_) => gdnative::GodotError::FileCantOpen as i64,
         }
     }
 
@@ -47,11 +50,12 @@ impl ChumArchive {
                 let f = Instance::<chumfile::ChumFile>::new();
                 f.map_mut(|script, _res| {
                     script.read_from_chumfile(file);
-                }).unwrap();
+                })
+                .unwrap();
                 arr.push(&Variant::from(f.base().new_ref()));
             }
         }
-        return arr
+        return arr;
     }
 
     #[export]

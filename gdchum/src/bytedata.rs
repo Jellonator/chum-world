@@ -6,7 +6,7 @@ use gdnative::*;
 #[derive(NativeClass)]
 #[inherit(Resource)]
 pub struct ByteData {
-    data: Vec<u8>
+    data: Vec<u8>,
 }
 
 #[methods]
@@ -46,7 +46,7 @@ impl ByteData {
     pub fn back(&self, _owner: Resource) -> Variant {
         match self.data.len() {
             0 => Variant::new(),
-            x => (self.data[x-1] as i64).into()
+            x => (self.data[x - 1] as i64).into(),
         }
     }
 
@@ -57,9 +57,7 @@ impl ByteData {
 
     #[export]
     pub fn count(&self, _owner: Resource, value: u8) -> i64 {
-        self.data.iter()
-                 .filter(|x| **x == value)
-                 .count() as i64
+        self.data.iter().filter(|x| **x == value).count() as i64
     }
 
     #[export]
@@ -68,7 +66,8 @@ impl ByteData {
         f.map_mut(|script, res| {
             script.set_data(self.data.clone());
             res
-        }).unwrap()
+        })
+        .unwrap()
     }
 
     #[export]
@@ -118,7 +117,10 @@ impl ByteData {
         if from < 0 {
             from = self.data.len() as i64 + from;
         }
-        if let Some(index) = self.data[..=from as usize].iter().rposition(|x| *x == value) {
+        if let Some(index) = self.data[..=from as usize]
+            .iter()
+            .rposition(|x| *x == value)
+        {
             (index as i64).into()
         } else {
             -1
@@ -129,7 +131,7 @@ impl ByteData {
     pub fn front(&self, _owner: Resource) -> Variant {
         match self.data.len() {
             0 => Variant::new(),
-            _x => (self.data[0] as i64).into()
+            _x => (self.data[0] as i64).into(),
         }
     }
 
@@ -151,16 +153,17 @@ impl ByteData {
     pub fn slice(&self, _owner: Resource, from: i64, to: i64) -> Resource {
         let f = Instance::<ByteData>::new();
         f.map_mut(|script, res| {
-            script.set_data(self.data[from as usize..(to+1) as usize].to_owned());
+            script.set_data(self.data[from as usize..(to + 1) as usize].to_owned());
             res
-        }).unwrap()
+        })
+        .unwrap()
     }
 
     #[export]
     pub fn pop_back(&mut self, _owner: Resource) -> Variant {
         match self.data.len() {
             0 => Variant::new(),
-            _x => (self.data.pop().unwrap() as i64).into()
+            _x => (self.data.pop().unwrap() as i64).into(),
         }
     }
 
@@ -168,7 +171,7 @@ impl ByteData {
     pub fn pop_front(&mut self, _owner: Resource) -> Variant {
         match self.data.len() {
             0 => Variant::new(),
-            _x => (self.data.remove(0) as i64).into()
+            _x => (self.data.remove(0) as i64).into(),
         }
     }
 
@@ -193,8 +196,6 @@ impl ByteData {
     }
 
     fn _init(_owner: Resource) -> Self {
-        ByteData {
-            data: Vec::new()
-        }
+        ByteData { data: Vec::new() }
     }
 }

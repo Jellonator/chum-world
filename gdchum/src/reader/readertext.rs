@@ -1,10 +1,10 @@
-use gdnative::*;
 use crate::bytedata::ByteData;
+use gdnative::*;
 
 pub enum TextType {
     FullText(GodotString),
     ReadOnlyText(GodotString),
-    ErrText
+    ErrText,
 }
 
 pub fn read_text(data: &ByteData) -> TextType {
@@ -12,14 +12,17 @@ pub fn read_text(data: &ByteData) -> TextType {
         x if x < 4 => TextType::ErrText,
         _x => {
             let mut valid = true;
-            let s = data.get_data()[4..].iter().map(|x| {
-                if *x >= 32 && *x <= 126 {
-                    (*x) as char
-                } else {
-                    valid = false;
-                    '�'
-                }
-            }).collect::<String>();
+            let s = data.get_data()[4..]
+                .iter()
+                .map(|x| {
+                    if *x >= 32 && *x <= 126 {
+                        (*x) as char
+                    } else {
+                        valid = false;
+                        '�'
+                    }
+                })
+                .collect::<String>();
             let godots = GodotString::from_str(s);
             if valid {
                 TextType::FullText(godots)
@@ -41,9 +44,7 @@ pub fn read_text_from_res(data: Resource) -> Dictionary {
             return dict;
         }
     };
-    match f.script()
-           .map(|script| read_text(script))
-    {
+    match f.script().map(|script| read_text(script)) {
         Ok(x) => {
             let mut dict = Dictionary::new();
             match x {
@@ -64,7 +65,7 @@ pub fn read_text_from_res(data: Resource) -> Dictionary {
                 }
             }
             dict
-        },
+        }
         _ => {
             let mut dict = Dictionary::new();
             dict.set(&"exists".into(), &false.into());

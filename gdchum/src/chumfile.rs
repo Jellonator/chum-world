@@ -1,6 +1,6 @@
+use crate::bytedata::ByteData;
 use gdnative::*;
 use libchum;
-use crate::bytedata::ByteData;
 
 #[derive(NativeClass)]
 #[inherit(Resource)]
@@ -9,28 +9,32 @@ pub struct ChumFile {
     data: Resource,
     nameid: GodotString,
     typeid: GodotString,
-    subtypeid: GodotString
+    subtypeid: GodotString,
 }
 
 #[methods]
 impl ChumFile {
     fn _register(builder: &init::ClassBuilder<Self>) {
-        builder.add_property("data")
-               .with_mut_getter(Self::get_data)
-               .with_setter(Self::set_data)
-               .done();
-        builder.add_property("name")
-               .with_mut_getter(Self::get_name)
-               .with_setter(Self::set_name)
-               .done();
-        builder.add_property("type")
-               .with_mut_getter(Self::get_type)
-               .with_setter(Self::set_type)
-               .done();
-        builder.add_property("subtype")
-               .with_mut_getter(Self::get_subtype)
-               .with_setter(Self::set_subtype)
-               .done();
+        builder
+            .add_property("data")
+            .with_mut_getter(Self::get_data)
+            .with_setter(Self::set_data)
+            .done();
+        builder
+            .add_property("name")
+            .with_mut_getter(Self::get_name)
+            .with_setter(Self::set_name)
+            .done();
+        builder
+            .add_property("type")
+            .with_mut_getter(Self::get_type)
+            .with_setter(Self::set_type)
+            .done();
+        builder
+            .add_property("subtype")
+            .with_mut_getter(Self::get_subtype)
+            .with_setter(Self::set_subtype)
+            .done();
     }
 
     #[export]
@@ -78,10 +82,12 @@ impl ChumFile {
         self.typeid = GodotString::from_str(file.get_type_id());
         self.subtypeid = GodotString::from_str(file.get_subtype_id());
         let f = Instance::<ByteData>::new();
-        self.data = f.map_mut(|script, res| {
-            script.set_data(file.get_data().to_vec());
-            res
-        }).unwrap();
+        self.data = f
+            .map_mut(|script, res| {
+                script.set_data(file.get_data().to_vec());
+                res
+            })
+            .unwrap();
     }
 
     fn _init(_owner: Resource) -> Self {
@@ -91,7 +97,7 @@ impl ChumFile {
             data: data,
             nameid: GodotString::new(),
             typeid: GodotString::new(),
-            subtypeid: GodotString::new()
+            subtypeid: GodotString::new(),
         }
     }
 }

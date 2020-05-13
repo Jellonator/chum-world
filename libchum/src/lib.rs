@@ -7,6 +7,8 @@ use std::fmt;
 use std::fmt::Display;
 use std::io::Read;
 
+pub mod reader;
+
 /// Hash the given name using the crc32 IEEE algorithm.
 pub fn hash_name(name: &str) -> i32 {
     crc32::checksum_ieee(&name.as_bytes()) as i32

@@ -93,11 +93,10 @@ fn strip_gen_triangles(
         .windows(3)
         .zip(strip_ext.elements.windows(3).into_iter())
         .zip(lists.iter().cycle())
-        .enumerate()
-        .map(|(i, ((vertex_ids, elements), cycle))| {
-            let index0 = i + cycle[0] as usize;
-            let index1 = i + cycle[1] as usize;
-            let index2 = i + cycle[2] as usize;
+        .map(|((vertex_ids, elements), cycle)| {
+            let index0 = cycle[0] as usize;
+            let index1 = cycle[1] as usize;
+            let index2 = cycle[2] as usize;
             Tri {
                 points: [
                     Point {
@@ -142,8 +141,8 @@ impl TMesh {
         io::copy(&mut file.take(96), &mut io::sink())?;
         let _unknown2: u16 = file.read_u16::<BigEndian>()?;
         let padding_mult: u16 = file.read_u16::<BigEndian>()?;
-        let num_vertices: u32 = file.read_u32::<BigEndian>()?;
         // Read coordinate data
+        let num_vertices: u32 = file.read_u32::<BigEndian>()?;
         let vertices: Vec<Vector3> = (0..num_vertices)
             .map(|_| {
                 Ok(Vector3 {

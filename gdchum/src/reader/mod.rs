@@ -1,6 +1,7 @@
 use gdnative::*;
 
 pub mod readertext;
+pub mod readertmesh;
 
 #[derive(NativeClass)]
 #[inherit(Node)]
@@ -11,6 +12,11 @@ impl ChumReader {
     #[export]
     pub fn read_text(&self, _owner: Node, data: Resource) -> Dictionary {
         readertext::read_text_from_res(data)
+    }
+
+    #[export]
+    pub fn read_tmesh(&self, _owner: Node, data: Resource) -> Dictionary {
+        readertmesh::read_tmesh_from_res(data)
     }
 
     #[export]

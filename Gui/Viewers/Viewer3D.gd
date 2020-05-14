@@ -14,6 +14,7 @@ func _on_TextureRect_item_rect_changed():
 	node_viewport.size = node_rect.rect_size
 
 func set_file(file):
+	node_camera.reset_transform()
 	if file == null:
 		node_mesh.hide()
 	else:
@@ -30,3 +31,24 @@ func set_file(file):
 		else:
 			print("DOES NOT EXIST")
 			node_mesh.hide()
+
+func _input(event):
+	if self.has_focus() or node_rect.has_focus() and Input.is_action_pressed("view_look"):
+		if event is InputEventMouseMotion:
+			node_camera.move_mouse(event.relative)
+
+func _physics_process(delta):
+	var tx = node_camera.get_camera_transform()
+	var input_dir := Vector3()
+	if Input.is_action_pressed("view_move_forward"):
+		input_dir += -tx.basis.z
+	if Input.is_action_pressed("view_move_backward"):
+		input_dir += tx.basis.z
+	if Input.is_action_pressed("view_move_left"):
+		input_dir += -tx.basis.x
+	if Input.is_action_pressed("view_move_right"):
+		input_dir += tx.basis.x
+	input_dir = input_dir.normalized()
+	if Input.is_action_pressed("view_move_slow"):
+		input_dir *= 0.5
+	node_camera.move_strafe(input_dir * delta * 2)

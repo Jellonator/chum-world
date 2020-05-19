@@ -51,10 +51,27 @@ margin_top = 32.0
 margin_right = -4.0
 margin_bottom = -4.0
 
-[node name="Tree" type="Tree" parent="VBox/Tabs/Files"]
+[node name="VBox" type="VBoxContainer" parent="VBox/Tabs/Files"]
+margin_right = 128.0
+margin_bottom = 540.0
+
+[node name="HBox" type="HBoxContainer" parent="VBox/Tabs/Files/VBox"]
+margin_right = 128.0
+margin_bottom = 24.0
+
+[node name="LineEdit" type="LineEdit" parent="VBox/Tabs/Files/VBox/HBox"]
+margin_right = 128.0
+margin_bottom = 24.0
+size_flags_horizontal = 3
+
+[node name="Tree" type="Tree" parent="VBox/Tabs/Files/VBox"]
+margin_top = 28.0
 margin_right = 128.0
 margin_bottom = 540.0
 rect_min_size = Vector2( 128, 0 )
+size_flags_horizontal = 3
+size_flags_vertical = 3
+columns = 3
 hide_root = true
 script = ExtResource( 7 )
 
@@ -80,6 +97,7 @@ margin_bottom = -4.0
 margin_right = 83.0
 margin_bottom = 58.0
 popup_exclusive = true
-[connection signal="file_selected" from="VBox/Tabs/Files/Tree" to="." method="_on_Tree_file_selected"]
-[connection signal="item_selected" from="VBox/Tabs/Files/Tree" to="VBox/Tabs/Files/Tree" method="_on_Tree_item_selected"]
+[connection signal="text_changed" from="VBox/Tabs/Files/VBox/HBox/LineEdit" to="VBox/Tabs/Files/VBox/Tree" method="_on_LineEdit_text_changed"]
+[connection signal="file_selected" from="VBox/Tabs/Files/VBox/Tree" to="." method="_on_Tree_file_selected"]
+[connection signal="item_selected" from="VBox/Tabs/Files/VBox/Tree" to="VBox/Tabs/Files/VBox/Tree" method="_on_Tree_item_selected"]
 [connection signal="files_selected" from="ArchiveFileSelector" to="." method="_on_ArchiveFileSelector_files_selected"]

@@ -6,7 +6,7 @@ const MENU_FILE_EXIT := 1
 
 var archive: ChumArchive
 
-onready var node_tree := $VBox/Tabs/Files/Tree
+onready var node_tree := $VBox/Tabs/Files/VBox/Tree
 onready var node_editor := $VBox/Tabs/Files/EditorList
 
 func _ready():

@@ -1,43 +1,54 @@
 use byteorder::{BigEndian, ReadBytesExt};
-use std::io::{self, Read};
+use std::io::{self, Read, Write};
+// use gltf_json;
 
+/// Basic 3d vector
 #[derive(Clone, Copy)]
+#[repr(C)]
 pub struct Vector3 {
     pub x: f32,
     pub y: f32,
     pub z: f32,
 }
 
+/// Basic 2d vector
 #[derive(Clone, Copy)]
+#[repr(C)]
 pub struct Vector2 {
     pub x: f32,
     pub y: f32,
 }
 
+/// A triangle strip
 pub struct Strip {
     pub vertex_ids: Vec<u16>,
     pub tri_order: u32,
 }
 
+/// A combination of a normal index and a texture coordinate index
 pub struct ElementData {
     pub texcoord_id: u16,
     pub normal_id: u16,
 }
 
+/// A triangle strip's extra data
 pub struct StripExt {
     pub elements: Vec<ElementData>,
 }
 
+/// A point
 pub struct Point {
     pub vertex: Vector3,
     pub texcoord: Vector2,
     pub normal: Vector3,
 }
 
+/// A triangle (three points)
 pub struct Tri {
     pub points: [Point; 3],
 }
 
+/// A full triangle mesh
 pub struct TMesh {
     // unknown1: [u8; 96]
     // unknown2: u16
@@ -51,6 +62,7 @@ pub struct TMesh {
     // unknown4: [u8]
 }
 
+/// Read in a triangle strip from a reader
 fn read_strip<R: Read>(file: &mut R) -> io::Result<Strip> {
     let num_elements: u32 = file.read_u32::<BigEndian>()?;
     let vertex_ids: Vec<u16> = (0..num_elements)
@@ -64,6 +76,7 @@ fn read_strip<R: Read>(file: &mut R) -> io::Result<Strip> {
     })
 }
 
+/// Read in a triangle strip's extra data from a reader
 fn read_strip_ext<R: Read>(file: &mut R) -> io::Result<StripExt> {
     let num_elements: u32 = file.read_u32::<BigEndian>()?;
     let elements: Vec<ElementData> = (0..num_elements)
@@ -77,13 +90,10 @@ fn read_strip_ext<R: Read>(file: &mut R) -> io::Result<StripExt> {
     Ok(StripExt { elements })
 }
 
-fn strip_gen_triangles(
+fn strip_gen_triangle_indices(
     strip: &Strip,
-    strip_ext: &StripExt,
-    vertices: &[Vector3],
-    texcoords: &[Vector2],
-    normals: &[Vector3],
-) -> Vec<Tri> {
+    strip_ext: &StripExt
+) -> Vec<[(u16, u16, u16); 3]> {
     let a = strip.tri_order;
     let b = 3 - a;
     let lists = [[0, b, a], [0, a, b]];
@@ -97,22 +107,42 @@ fn strip_gen_triangles(
             let index0 = cycle[0] as usize;
             let index1 = cycle[1] as usize;
             let index2 = cycle[2] as usize;
+            [
+                (vertex_ids[index0], elements[index0].texcoord_id, elements[index0].normal_id),
+                (vertex_ids[index1], elements[index1].texcoord_id, elements[index1].normal_id),
+                (vertex_ids[index2], elements[index2].texcoord_id, elements[index2].normal_id),
+            ]
+        })
+        .collect()
+}
+
+/// Generate triangles from a strip
+fn strip_gen_triangles(
+    strip: &Strip,
+    strip_ext: &StripExt,
+    vertices: &[Vector3],
+    texcoords: &[Vector2],
+    normals: &[Vector3],
+) -> Vec<Tri> {
+    strip_gen_triangle_indices(strip, strip_ext)
+        .iter()
+        .map(|ls| {
             Tri {
                 points: [
                     Point {
-                        vertex: vertices[vertex_ids[index0] as usize],
-                        texcoord: texcoords[elements[index0].texcoord_id as usize],
-                        normal: normals[elements[index0].normal_id as usize],
+                        vertex: vertices[ls[0].0 as usize],
+                        texcoord: texcoords[ls[0].1 as usize],
+                        normal: normals[ls[0].2 as usize],
                     },
                     Point {
-                        vertex: vertices[vertex_ids[index1] as usize],
-                        texcoord: texcoords[elements[index1].texcoord_id as usize],
-                        normal: normals[elements[index1].normal_id as usize],
+                        vertex: vertices[ls[1].0 as usize],
+                        texcoord: texcoords[ls[1].1 as usize],
+                        normal: normals[ls[1].2 as usize],
                     },
                     Point {
-                        vertex: vertices[vertex_ids[index2] as usize],
-                        texcoord: texcoords[elements[index2].texcoord_id as usize],
-                        normal: normals[elements[index2].normal_id as usize],
+                        vertex: vertices[ls[2].0 as usize],
+                        texcoord: texcoords[ls[2].1 as usize],
+                        normal: normals[ls[2].2 as usize],
                     },
                 ],
             }
@@ -121,6 +151,20 @@ fn strip_gen_triangles(
 }
 
 impl TMesh {
+    fn gen_triangle_indices(&self) -> Vec<Vec<[(u16, u16, u16); 3]>> {
+        self.strips
+        .iter()
+        .zip(&self.strips_ext)
+        .map(|(strip, strip_ext)| {
+            strip_gen_triangle_indices(
+                strip,
+                strip_ext
+            )
+        })
+        .collect()
+    }
+
+    /// Generate a triangle from a TMesh
     pub fn gen_triangles(&self) -> Vec<Vec<Tri>> {
         self.strips
             .iter()
@@ -137,6 +181,7 @@ impl TMesh {
             .collect()
     }
 
+    /// Read a TMesh from a file
     pub fn read_from<R: Read>(file: &mut R) -> io::Result<TMesh> {
         io::copy(&mut file.take(96), &mut io::sink())?;
         let _unknown2: u16 = file.read_u16::<BigEndian>()?;
@@ -196,7 +241,31 @@ impl TMesh {
         })
     }
 
+    /// Read a TMesh from data
     pub fn read_data(data: &[u8]) -> io::Result<TMesh> {
         TMesh::read_from(&mut data.as_ref())
+    }
+
+    /// Write a TMesh to an OBJ
+    pub fn export_obj<W: Write>(&self, obj: &mut W) -> io::Result<()> {
+        for vert in &self.vertices {
+            writeln!(obj, "v {} {} {}", vert.x, vert.y, vert.z)?;
+        }
+        for texcoord in &self.texcoords {
+            writeln!(obj, "vt {} {}", texcoord.x, texcoord.y)?;
+        }
+        for normal in &self.normals {
+            writeln!(obj, "vn {} {} {}", normal.x, normal.y, normal.z)?;
+        }
+        for strip in self.gen_triangle_indices() {
+            for tri in strip {
+                write!(obj, "f")?;
+                for (vert, texc, norm) in tri.iter() {
+                    write!(obj, "{}/{}/{} ", vert, texc, norm)?;
+                }
+            }
+            write!(obj, "\n")?;
+        }
+        Ok(())
     }
 }

@@ -7,7 +7,7 @@ func set_file(file):
 		node_edit.text = ""
 		node_edit.readonly = true
 		return
-	var value = ChumReader.read_text(file.data)
+	var value = ChumReader.read_text(file)
 	if value["exists"]:
 		node_edit.text = value["text"]
 		node_edit.readonly = value["readonly"]

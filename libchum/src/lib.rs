@@ -1,13 +1,13 @@
 pub mod dgc;
+pub mod format;
 pub mod ngc;
+pub mod reader;
 use crc::crc32;
 use std::collections::HashMap;
 use std::error::Error;
 use std::fmt;
 use std::fmt::Display;
 use std::io::Read;
-
-pub mod reader;
 
 /// Hash the given name using the crc32 IEEE algorithm.
 pub fn hash_name(name: &str) -> i32 {
@@ -17,9 +17,10 @@ pub fn hash_name(name: &str) -> i32 {
 /// Complete Chum archive.
 /// This is literally all the data that matters.
 pub struct ChumArchive {
-    header: dgc::DgcHeader,
+    header: dgc::TotemHeader,
     files: Vec<ChumFile>,
     names: HashMap<i32, String>,
+    format: format::TotemFormat,
 }
 
 /// A ChumFile that is returned by the Chum Archive
@@ -97,11 +98,12 @@ impl Error for ChumError {}
 
 impl ChumArchive {
     /// Create a new, empty chum archive
-    pub fn new(header: dgc::DgcHeader) -> ChumArchive {
+    pub fn new(header: dgc::TotemHeader, fmt: format::TotemFormat) -> ChumArchive {
         ChumArchive {
             header,
             files: Vec::new(),
             names: HashMap::new(),
+            format: fmt,
         }
     }
 
@@ -148,7 +150,7 @@ impl ChumArchive {
     }
 
     /// Get this archive's Dgc header
-    pub fn get_header(&self) -> &dgc::DgcHeader {
+    pub fn get_header(&self) -> &dgc::TotemHeader {
         &self.header
     }
 
@@ -163,13 +165,13 @@ impl ChumArchive {
     }
 
     /// Split this ChumArchive into an NgcArchive and a DgcArchive
-    pub fn split_archives(&self) -> Option<(ngc::NgcArchive, dgc::DgcArchive)> {
-        let dgc = dgc::DgcArchive::new_from_files(
+    pub fn split_archives(&self) -> Option<(ngc::TotemNameTable, dgc::TotemArchive)> {
+        let dgc = dgc::TotemArchive::new_from_files(
             self.header.clone(),
             self.files
                 .iter()
                 .map(|file| {
-                    dgc::DgcFile::new(
+                    dgc::TotemFile::new(
                         file.data.clone(),
                         hash_name(file.get_type_id()),
                         hash_name(file.get_name_id()),
@@ -177,15 +179,16 @@ impl ChumArchive {
                     )
                 })
                 .collect(),
+            self.format,
         )?;
-        let ngc = ngc::NgcArchive::new(self.names.clone());
+        let ngc = ngc::TotemNameTable::new(self.names.clone());
         Some((ngc, dgc))
     }
 
     /// Merge an NGC and DGC archive
     pub fn merge_archives(
-        ngc: ngc::NgcArchive,
-        dgc: dgc::DgcArchive,
+        ngc: ngc::TotemNameTable,
+        dgc: dgc::TotemArchive,
     ) -> Result<ChumArchive, Box<dyn Error>> {
         // Check NGC data for matching names
         for file in dgc.iter_files() {
@@ -205,6 +208,7 @@ impl ChumArchive {
                 }));
             }
         }
+        let fmt = dgc.get_format();
         // Return archive
         Ok(ChumArchive {
             header: dgc.get_header().clone(),
@@ -224,19 +228,25 @@ impl ChumArchive {
                 })
                 .collect(),
             names: ngc.take_names(),
+            format: fmt,
         })
     }
 
     /// Read the chum archive from two readers
-    pub fn read_chum_archive<R: Read>(
+    pub fn read_chum_archive<R: Read, S: Read>(
         ngc_reader: &mut R,
-        dgc_reader: &mut R,
+        dgc_reader: &mut S,
+        format: format::TotemFormat,
     ) -> Result<ChumArchive, Box<dyn Error>> {
         // Load data
-        let ngc = ngc::NgcArchive::read_from(ngc_reader)?;
-        let dgc = dgc::DgcArchive::read_from(dgc_reader)?;
+        let ngc = ngc::TotemNameTable::read_from(ngc_reader)?;
+        let dgc = dgc::TotemArchive::read_from(dgc_reader, format)?;
         // merge
         ChumArchive::merge_archives(ngc, dgc)
+    }
+
+    pub fn get_format(&self) -> format::TotemFormat {
+        self.format
     }
 }
 

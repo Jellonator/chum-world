@@ -21,15 +21,15 @@ func _on_menu_file_select(id):
 		MENU_FILE_EXIT:
 			get_tree().quit(0)
 
-func load_archive(ngc: String, dgc: String):
+func load_archive(ngc: String, dgc: String, ftype: String):
 	node_editor.set_file(null)
-	var err = archive.load(ngc, dgc)
+	var err = archive.load(ngc, dgc, ftype)
 	if err != OK:
-		show_err("Could not open files")
+		show_err("Could not open files %d" % [err])
 	node_tree.set_archive(archive)
 
-func _on_ArchiveFileSelector_files_selected(ngc: String, dgc: String):
-	load_archive(ngc, dgc)
+func _on_ArchiveFileSelector_files_selected(ngc: String, dgc: String, ftype: String):
+	load_archive(ngc, dgc, ftype)
 
 func show_err(text: String):
 	$ErrDialog.dialog_text = text

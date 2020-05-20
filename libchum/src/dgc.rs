@@ -1,4 +1,4 @@
-use byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
+use crate::format::TotemFormat;
 use std::cmp;
 use std::io::{self, Read, Write};
 use std::mem;
@@ -10,20 +10,20 @@ use std::mem;
 /// junk padding [u8; 0x6FC] (ignored)
 /// data         [u8; chunk size * N] (N is any whole number)
 #[derive(Clone)]
-pub struct DgcHeader {
+pub struct TotemHeader {
     legal_notice: [u8; 0x100],
 }
 
-impl DgcHeader {
+impl TotemHeader {
     /// Create a new DgcHeader
     /// If data is too big, returns None
-    pub fn new(data: &[u8]) -> Option<DgcHeader> {
+    pub fn new(data: &[u8]) -> Option<TotemHeader> {
         if data.len() <= 0x100 {
             let mut headerdata = [0; 0x100];
             for i in 0..data.len() {
                 headerdata[i] = data[i];
             }
-            Some(DgcHeader {
+            Some(TotemHeader {
                 legal_notice: headerdata,
             })
         } else {
@@ -47,16 +47,16 @@ impl DgcHeader {
 /// subtype_id i32 (matches the ID in NGC data)
 ///      This is usually either equal to name_id or some kind of subtype, e.g. "LVL_BBEX"
 /// data       [u8] (size is chunk size - 16)
-pub struct DgcFile {
+pub struct TotemFile {
     data: Vec<u8>,
     type_id: i32,
     name_id: i32,
     subtype_id: i32,
 }
 
-impl DgcFile {
-    pub fn new(data: Vec<u8>, type_id: i32, name_id: i32, subtype_id: i32) -> DgcFile {
-        DgcFile {
+impl TotemFile {
+    pub fn new(data: Vec<u8>, type_id: i32, name_id: i32, subtype_id: i32) -> TotemFile {
+        TotemFile {
             data,
             type_id,
             name_id,
@@ -101,11 +101,11 @@ impl DgcFile {
 
     /// Write this file to the given writer.
     /// Returns the number of bytes that were written.
-    pub fn write_to<W: Write>(&self, writer: &mut W) -> io::Result<usize> {
-        writer.write_u32::<BigEndian>(self.get_total_size() as u32)?;
-        writer.write_i32::<BigEndian>(self.type_id)?;
-        writer.write_i32::<BigEndian>(self.name_id)?;
-        writer.write_i32::<BigEndian>(self.subtype_id)?;
+    pub fn write_to<W: Write>(&self, writer: &mut W, fmt: TotemFormat) -> io::Result<usize> {
+        fmt.write_u32(writer, self.get_total_size() as u32)?;
+        fmt.write_i32(writer, self.type_id)?;
+        fmt.write_i32(writer, self.name_id)?;
+        fmt.write_i32(writer, self.subtype_id)?;
         writer.write_all(&self.data)?;
         Ok(self.get_total_size())
     }
@@ -115,18 +115,18 @@ impl DgcFile {
 /// Format:
 /// num files u32 (implied)
 /// data      [u8; chunk size] (inherited from header)
-pub struct DgcChunk {
-    data: Vec<DgcFile>,
+pub struct TotemChunk {
+    data: Vec<TotemFile>,
 }
 
-impl DgcChunk {
+impl TotemChunk {
     /// Create a new DgcChunk
-    fn new() -> DgcChunk {
-        DgcChunk { data: Vec::new() }
+    fn new() -> TotemChunk {
+        TotemChunk { data: Vec::new() }
     }
 
     /// Add a file to this chunk
-    fn add_file(&mut self, file: DgcFile) {
+    fn add_file(&mut self, file: TotemFile) {
         self.data.push(file);
     }
 
@@ -147,11 +147,16 @@ impl DgcChunk {
     /// exactly how many bytes this chunk should write. If the chunk is too small to fill this
     /// size, then the chunk will zero-pad the rest.
     /// Returns the number of bytes that were written in total to the writer.
-    fn write_to<W: Write>(&self, writer: &mut W, chunk_size: usize) -> io::Result<usize> {
+    fn write_to<W: Write>(
+        &self,
+        writer: &mut W,
+        chunk_size: usize,
+        fmt: TotemFormat,
+    ) -> io::Result<usize> {
         let num_files = self.get_num_files() as u32;
-        writer.write_u32::<BigEndian>(num_files)?;
+        fmt.write_u32(writer, num_files)?;
         for file in &self.data {
-            file.write_to(writer)?;
+            file.write_to(writer, fmt)?;
         }
         let required_padding = chunk_size - self.get_total_size();
         io::copy(&mut io::repeat(0u8).take(required_padding as u64), writer)?;
@@ -164,19 +169,25 @@ impl DgcChunk {
 /// archive sorted into individual chunks. This structure can also serve as an abstraction layer
 /// that can automatically divide up files into chunks without having to to worry about the
 /// details.
-pub struct DgcArchive {
-    header: DgcHeader,
-    data: Vec<DgcChunk>,
+pub struct TotemArchive {
+    header: TotemHeader,
+    data: Vec<TotemChunk>,
     chunk_size: usize,
+    format: TotemFormat,
 }
 
-impl DgcArchive {
-    // Get the header
-    pub fn get_header(&self) -> &DgcHeader {
+impl TotemArchive {
+    /// Get the format
+    pub fn get_format(&self) -> TotemFormat {
+        self.format
+    }
+
+    /// Get the header
+    pub fn get_header(&self) -> &TotemHeader {
         &self.header
     }
 
-    // Get the chunk size
+    /// Get the chunk size
     pub fn get_chunk_size(&self) -> usize {
         self.chunk_size
     }
@@ -184,30 +195,35 @@ impl DgcArchive {
     /// Create a new DgcArchive. Expects a header and a base chunk size as arguments. The header
     /// must not be bigger than 256 bytes. The base chunk size will be automatically rounded up by
     /// 0x800 bytes, and it may change if files are added to this archive.
-    pub fn new(header: DgcHeader, chunk_size: usize) -> Option<DgcArchive> {
+    pub fn new(header: TotemHeader, chunk_size: usize, fmt: TotemFormat) -> Option<TotemArchive> {
         // let mut headerdata = [0; 0x100];
         // headerdata.copy_from_slice(&header.as_bytes());
-        Some(DgcArchive {
+        Some(TotemArchive {
             header: header,
             data: vec![],
             chunk_size: calculate_chunk_size(chunk_size),
+            format: fmt,
         })
     }
 
     /// Create a new DgcArchive with the given filess
-    pub fn new_from_files(header: DgcHeader, files: Vec<DgcFile>) -> Option<DgcArchive> {
-        let mut dgc = DgcArchive::new(header, 0)?;
+    pub fn new_from_files(
+        header: TotemHeader,
+        files: Vec<TotemFile>,
+        fmt: TotemFormat,
+    ) -> Option<TotemArchive> {
+        let mut dgc = TotemArchive::new(header, 0, fmt)?;
         dgc.set_files(files);
         Some(dgc)
     }
 
     /// Iterate over all files in this archive.
-    pub fn iter_files(&self) -> impl Iterator<Item = &DgcFile> {
+    pub fn iter_files(&self) -> impl Iterator<Item = &TotemFile> {
         self.data.iter().flat_map(|chunk| chunk.data.iter())
     }
 
     /// Take all files from this archive
-    pub fn take_files(self) -> Vec<DgcFile> {
+    pub fn take_files(self) -> Vec<TotemFile> {
         self.data
             .into_iter()
             .flat_map(|chunk| chunk.data.into_iter())
@@ -215,7 +231,7 @@ impl DgcArchive {
     }
 
     /// Set the files so that the given files all fit
-    fn set_files(&mut self, mut files: Vec<DgcFile>) {
+    fn set_files(&mut self, mut files: Vec<TotemFile>) {
         // Clear current chunks
         self.data = Vec::new();
         // Sort files by size. Not the most efficient,
@@ -233,7 +249,7 @@ impl DgcArchive {
         //     Fit as many files as possible in the chunk
         while files.len() > 0 {
             // Create a new chunk
-            let mut chunk = DgcChunk::new();
+            let mut chunk = TotemChunk::new();
             // Iterate files
             let mut i = 0;
             // Add file if it fits, otherwise skip
@@ -251,12 +267,12 @@ impl DgcArchive {
 
     /// Add a file to this archive. Will be automatically put into a chunk. This function may
     /// re-distribute files to chunks if the given file is too big to fit into any chunk.
-    pub fn add_file(&mut self, file: DgcFile) {
+    pub fn add_file(&mut self, file: TotemFile) {
         // If new file doesn't fit, use the set_files function to expand this archive's chunk size
         if file.get_total_size() + 4 > self.chunk_size {
             let mut old_chunks = Vec::new();
             mem::swap(&mut self.data, &mut old_chunks);
-            let mut files: Vec<DgcFile> = old_chunks
+            let mut files: Vec<TotemFile> = old_chunks
                 .into_iter()
                 .flat_map(|chunk| chunk.data.into_iter())
                 .collect();
@@ -272,7 +288,7 @@ impl DgcArchive {
             }
         }
         // Otherwise create a new chunk
-        let mut new_chunk = DgcChunk::new();
+        let mut new_chunk = TotemChunk::new();
         new_chunk.add_file(file);
         self.data.push(new_chunk);
     }
@@ -280,19 +296,19 @@ impl DgcArchive {
     /// Write this archive to a writer.
     pub fn write_to<W: Write>(&self, writer: &mut W) -> io::Result<()> {
         writer.write_all(&self.header.legal_notice)?;
-        writer.write_u32::<BigEndian>(self.chunk_size as u32)?;
+        self.format.write_u32(writer, self.chunk_size as u32)?;
         io::copy(&mut io::repeat(0u8).take(0x6FC), writer)?;
         for chunk in &self.data {
-            chunk.write_to(writer, self.chunk_size)?;
+            chunk.write_to(writer, self.chunk_size, self.format)?;
         }
         Ok(())
     }
 
     /// Create an archive from a reader.
-    pub fn read_from<R: Read>(file: &mut R) -> io::Result<DgcArchive> {
+    pub fn read_from<R: Read>(file: &mut R, fmt: TotemFormat) -> io::Result<TotemArchive> {
         let mut legal_notice: [u8; 0x100] = [0; 0x100];
         file.read_exact(&mut legal_notice)?;
-        let size = file.read_u32::<BigEndian>()?;
+        let size = fmt.read_u32(file)?;
         io::copy(&mut file.take(0x6FC), &mut io::sink())?;
         let mut fdata = Vec::new();
         let mut chunks = Vec::new();
@@ -305,14 +321,15 @@ impl DgcArchive {
             );
         }
         for chunk in fdata.chunks(size as usize) {
-            chunks.push(load_chunk(chunk)?);
+            chunks.push(load_chunk(chunk, fmt)?);
         }
-        Ok(DgcArchive {
-            header: DgcHeader {
+        Ok(TotemArchive {
+            header: TotemHeader {
                 legal_notice: legal_notice,
             },
             data: chunks,
             chunk_size: size as usize,
+            format: fmt,
         })
     }
 }
@@ -329,22 +346,23 @@ fn calculate_chunk_size(max_size: usize) -> usize {
 }
 
 /// Load a chunk from the given chunk data.
-fn load_chunk(mut data: &[u8]) -> io::Result<DgcChunk> {
-    let num_files = data.read_u32::<BigEndian>()?;
+fn load_chunk(mut data: &[u8], fmt: TotemFormat) -> io::Result<TotemChunk> {
+    // let num_files = data.read_u32::<BigEndian>()?;
+    let num_files = fmt.read_u32(&mut data)?;
     let mut files = Vec::new();
     for _ in 0..num_files {
-        let file_size = data.read_u32::<BigEndian>()?;
-        let id_type = data.read_i32::<BigEndian>()?;
-        let id1 = data.read_i32::<BigEndian>()?;
-        let id2 = data.read_i32::<BigEndian>()?;
+        let file_size = fmt.read_u32(&mut data)?;
+        let id_type = fmt.read_i32(&mut data)?;
+        let id1 = fmt.read_i32(&mut data)?;
+        let id2 = fmt.read_i32(&mut data)?;
         let mut contents: Vec<u8> = vec![0; file_size as usize - 16];
         data.read_exact(&mut contents)?;
-        files.push(DgcFile {
+        files.push(TotemFile {
             data: contents,
             type_id: id_type,
             name_id: id1,
             subtype_id: id2,
         });
     }
-    Ok(DgcChunk { data: files })
+    Ok(TotemChunk { data: files })
 }

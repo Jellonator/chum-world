@@ -1,4 +1,4 @@
-use byteorder::{BigEndian, ReadBytesExt};
+use crate::format::TotemFormat;
 use std::io::{self, Read, Write};
 // use gltf_json;
 
@@ -63,13 +63,13 @@ pub struct TMesh {
 }
 
 /// Read in a triangle strip from a reader
-fn read_strip<R: Read>(file: &mut R) -> io::Result<Strip> {
-    let num_elements: u32 = file.read_u32::<BigEndian>()?;
+fn read_strip<R: Read>(file: &mut R, fmt: TotemFormat) -> io::Result<Strip> {
+    let num_elements: u32 = fmt.read_u32(file)?;
     let vertex_ids: Vec<u16> = (0..num_elements)
-        .map(|_| file.read_u16::<BigEndian>())
+        .map(|_| fmt.read_u16(file))
         .collect::<io::Result<_>>()?;
-    let _unknown: u32 = file.read_u32::<BigEndian>()?;
-    let tri_order: u32 = file.read_u32::<BigEndian>()?;
+    let _unknown: u32 = fmt.read_u32(file)?;
+    let tri_order: u32 = fmt.read_u32(file)?;
     Ok(Strip {
         vertex_ids,
         tri_order,
@@ -77,23 +77,20 @@ fn read_strip<R: Read>(file: &mut R) -> io::Result<Strip> {
 }
 
 /// Read in a triangle strip's extra data from a reader
-fn read_strip_ext<R: Read>(file: &mut R) -> io::Result<StripExt> {
-    let num_elements: u32 = file.read_u32::<BigEndian>()?;
+fn read_strip_ext<R: Read>(file: &mut R, fmt: TotemFormat) -> io::Result<StripExt> {
+    let num_elements: u32 = fmt.read_u32(file)?;
     let elements: Vec<ElementData> = (0..num_elements)
         .map(|_| {
             Ok(ElementData {
-                texcoord_id: file.read_u16::<BigEndian>()?,
-                normal_id: file.read_u16::<BigEndian>()?,
+                texcoord_id: fmt.read_u16(file)?,
+                normal_id: fmt.read_u16(file)?,
             })
         })
         .collect::<io::Result<_>>()?;
     Ok(StripExt { elements })
 }
 
-fn strip_gen_triangle_indices(
-    strip: &Strip,
-    strip_ext: &StripExt
-) -> Vec<[(u16, u16, u16); 3]> {
+fn strip_gen_triangle_indices(strip: &Strip, strip_ext: &StripExt) -> Vec<[(u16, u16, u16); 3]> {
     let a = strip.tri_order;
     let b = 3 - a;
     let lists = [[0, b, a], [0, a, b]];
@@ -108,9 +105,21 @@ fn strip_gen_triangle_indices(
             let index1 = cycle[1] as usize;
             let index2 = cycle[2] as usize;
             [
-                (vertex_ids[index0], elements[index0].texcoord_id, elements[index0].normal_id),
-                (vertex_ids[index1], elements[index1].texcoord_id, elements[index1].normal_id),
-                (vertex_ids[index2], elements[index2].texcoord_id, elements[index2].normal_id),
+                (
+                    vertex_ids[index0],
+                    elements[index0].texcoord_id,
+                    elements[index0].normal_id,
+                ),
+                (
+                    vertex_ids[index1],
+                    elements[index1].texcoord_id,
+                    elements[index1].normal_id,
+                ),
+                (
+                    vertex_ids[index2],
+                    elements[index2].texcoord_id,
+                    elements[index2].normal_id,
+                ),
             ]
         })
         .collect()
@@ -126,26 +135,24 @@ fn strip_gen_triangles(
 ) -> Vec<Tri> {
     strip_gen_triangle_indices(strip, strip_ext)
         .iter()
-        .map(|ls| {
-            Tri {
-                points: [
-                    Point {
-                        vertex: vertices[ls[0].0 as usize],
-                        texcoord: texcoords[ls[0].1 as usize],
-                        normal: normals[ls[0].2 as usize],
-                    },
-                    Point {
-                        vertex: vertices[ls[1].0 as usize],
-                        texcoord: texcoords[ls[1].1 as usize],
-                        normal: normals[ls[1].2 as usize],
-                    },
-                    Point {
-                        vertex: vertices[ls[2].0 as usize],
-                        texcoord: texcoords[ls[2].1 as usize],
-                        normal: normals[ls[2].2 as usize],
-                    },
-                ],
-            }
+        .map(|ls| Tri {
+            points: [
+                Point {
+                    vertex: vertices[ls[0].0 as usize],
+                    texcoord: texcoords[ls[0].1 as usize],
+                    normal: normals[ls[0].2 as usize],
+                },
+                Point {
+                    vertex: vertices[ls[1].0 as usize],
+                    texcoord: texcoords[ls[1].1 as usize],
+                    normal: normals[ls[1].2 as usize],
+                },
+                Point {
+                    vertex: vertices[ls[2].0 as usize],
+                    texcoord: texcoords[ls[2].1 as usize],
+                    normal: normals[ls[2].2 as usize],
+                },
+            ],
         })
         .collect()
 }
@@ -153,15 +160,10 @@ fn strip_gen_triangles(
 impl TMesh {
     fn gen_triangle_indices(&self) -> Vec<Vec<[(u16, u16, u16); 3]>> {
         self.strips
-        .iter()
-        .zip(&self.strips_ext)
-        .map(|(strip, strip_ext)| {
-            strip_gen_triangle_indices(
-                strip,
-                strip_ext
-            )
-        })
-        .collect()
+            .iter()
+            .zip(&self.strips_ext)
+            .map(|(strip, strip_ext)| strip_gen_triangle_indices(strip, strip_ext))
+            .collect()
     }
 
     /// Generate a triangle from a TMesh
@@ -182,44 +184,44 @@ impl TMesh {
     }
 
     /// Read a TMesh from a file
-    pub fn read_from<R: Read>(file: &mut R) -> io::Result<TMesh> {
+    pub fn read_from<R: Read>(file: &mut R, fmt: TotemFormat) -> io::Result<TMesh> {
         io::copy(&mut file.take(96), &mut io::sink())?;
-        let _unknown2: u16 = file.read_u16::<BigEndian>()?;
-        let padding_mult: u16 = file.read_u16::<BigEndian>()?;
+        let _unknown2: u16 = fmt.read_u16(file)?;
+        let padding_mult: u16 = fmt.read_u16(file)?;
         // Read coordinate data
-        let num_vertices: u32 = file.read_u32::<BigEndian>()?;
+        let num_vertices: u32 = fmt.read_u32(file)?;
         let vertices: Vec<Vector3> = (0..num_vertices)
             .map(|_| {
                 Ok(Vector3 {
-                    x: file.read_f32::<BigEndian>()?,
-                    y: file.read_f32::<BigEndian>()?,
-                    z: file.read_f32::<BigEndian>()?,
+                    x: fmt.read_f32(file)?,
+                    y: fmt.read_f32(file)?,
+                    z: fmt.read_f32(file)?,
                 })
             })
             .collect::<io::Result<_>>()?;
-        let num_texcoords: u32 = file.read_u32::<BigEndian>()?;
+        let num_texcoords: u32 = fmt.read_u32(file)?;
         let texcoords: Vec<Vector2> = (0..num_texcoords)
             .map(|_| {
                 Ok(Vector2 {
-                    x: file.read_f32::<BigEndian>()?,
-                    y: file.read_f32::<BigEndian>()?,
+                    x: fmt.read_f32(file)?,
+                    y: fmt.read_f32(file)?,
                 })
             })
             .collect::<io::Result<_>>()?;
-        let num_normals: u32 = file.read_u32::<BigEndian>()?;
+        let num_normals: u32 = fmt.read_u32(file)?;
         let normals: Vec<Vector3> = (0..num_normals)
             .map(|_| {
                 Ok(Vector3 {
-                    x: file.read_f32::<BigEndian>()?,
-                    y: file.read_f32::<BigEndian>()?,
-                    z: file.read_f32::<BigEndian>()?,
+                    x: fmt.read_f32(file)?,
+                    y: fmt.read_f32(file)?,
+                    z: fmt.read_f32(file)?,
                 })
             })
             .collect::<io::Result<_>>()?;
         // Read strip data
-        let num_strips: u32 = file.read_u32::<BigEndian>()?;
+        let num_strips: u32 = fmt.read_u32(file)?;
         let strips: Vec<Strip> = (0..num_strips)
-            .map(|_| read_strip(file))
+            .map(|_| read_strip(file, fmt))
             .collect::<io::Result<_>>()?;
         // Ignore a few bytes
         io::copy(
@@ -227,9 +229,9 @@ impl TMesh {
             &mut io::sink(),
         )?;
         // Read stripext data
-        let num_strips_ext: u32 = file.read_u32::<BigEndian>()?;
+        let num_strips_ext: u32 = fmt.read_u32(file)?;
         let strips_ext: Vec<StripExt> = (0..num_strips_ext)
-            .map(|_| read_strip_ext(file))
+            .map(|_| read_strip_ext(file, fmt))
             .collect::<io::Result<_>>()?;
         // rest of data is unknown
         Ok(TMesh {
@@ -242,8 +244,8 @@ impl TMesh {
     }
 
     /// Read a TMesh from data
-    pub fn read_data(data: &[u8]) -> io::Result<TMesh> {
-        TMesh::read_from(&mut data.as_ref())
+    pub fn read_data(data: &[u8], fmt: TotemFormat) -> io::Result<TMesh> {
+        TMesh::read_from(&mut data.as_ref(), fmt)
     }
 
     /// Write a TMesh to an OBJ

@@ -8,14 +8,14 @@ use std::io::{self, BufRead, BufReader, Read, Write};
 /// <ID> "FILENAME"
 /// The ID matches the type_id in DGC data
 /// Note that ID is just the crc32::checksum_ieee hash of FILENAME
-pub struct NgcArchive {
+pub struct TotemNameTable {
     names: HashMap<i32, String>,
 }
 
-impl NgcArchive {
+impl TotemNameTable {
     /// Create a new Archive file.
-    pub fn new(names: HashMap<i32, String>) -> NgcArchive {
-        NgcArchive { names }
+    pub fn new(names: HashMap<i32, String>) -> TotemNameTable {
+        TotemNameTable { names }
     }
 
     // Get the hashmap of names
@@ -37,7 +37,7 @@ impl NgcArchive {
     }
 
     /// Read names from the given Reader
-    pub fn read_from<R: Read>(reader: &mut R) -> Result<NgcArchive, Box<dyn Error>> {
+    pub fn read_from<R: Read>(reader: &mut R) -> Result<TotemNameTable, Box<dyn Error>> {
         let file = BufReader::new(reader);
 
         let mut elements = HashMap::new();
@@ -56,6 +56,6 @@ impl NgcArchive {
             elements.insert(id, filename);
         }
 
-        Ok(NgcArchive { names: elements })
+        Ok(TotemNameTable { names: elements })
     }
 }

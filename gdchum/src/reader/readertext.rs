@@ -1,4 +1,5 @@
 use crate::bytedata::ByteData;
+use crate::chumfile::ChumFile;
 use gdnative::*;
 
 pub enum TextType {
@@ -33,21 +34,12 @@ pub fn read_text(data: &ByteData) -> TextType {
     }
 }
 
-pub fn read_text_from_res(data: Resource) -> Dictionary {
-    let f = match Instance::<ByteData>::try_from_base(data) {
-        Some(x) => x,
-        None => {
+pub fn read_text_from_res(data: &ChumFile) -> Dictionary {
+    data.get_bytedata()
+        .script()
+        .map(|x| {
             let mut dict = Dictionary::new();
-            dict.set(&"exists".into(), &false.into());
-            dict.set(&"readonly".into(), &true.into());
-            dict.set(&"text".into(), &"".into());
-            return dict;
-        }
-    };
-    match f.script().map(|script| read_text(script)) {
-        Ok(x) => {
-            let mut dict = Dictionary::new();
-            match x {
+            match read_text(x) {
                 TextType::ErrText => {
                     dict.set(&"exists".into(), &false.into());
                     dict.set(&"readonly".into(), &true.into());
@@ -65,13 +57,6 @@ pub fn read_text_from_res(data: Resource) -> Dictionary {
                 }
             }
             dict
-        }
-        _ => {
-            let mut dict = Dictionary::new();
-            dict.set(&"exists".into(), &false.into());
-            dict.set(&"readonly".into(), &true.into());
-            dict.set(&"text".into(), &"".into());
-            dict
-        }
-    }
+        })
+        .unwrap()
 }

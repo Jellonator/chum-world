@@ -9,8 +9,8 @@ anchor_right = 0.5
 anchor_bottom = 0.5
 margin_left = -160.0
 margin_top = -87.0
-margin_right = 160.0
-margin_bottom = 87.0
+margin_right = 256.0
+margin_bottom = 357.0
 rect_min_size = Vector2( 320, 0 )
 popup_exclusive = true
 window_title = "Select archive files"
@@ -38,49 +38,66 @@ __meta__ = {
 
 [node name="Label" type="Label" parent="Grid"]
 margin_top = 5.0
-margin_right = 28.0
+margin_right = 30.0
 margin_bottom = 19.0
 text = "NGC"
 
 [node name="NGCLine" type="LineEdit" parent="Grid"]
-margin_left = 44.0
-margin_right = 237.0
+margin_left = 46.0
+margin_right = 333.0
 margin_bottom = 24.0
 size_flags_horizontal = 3
 
 [node name="NGCButton" type="Button" parent="Grid"]
-margin_left = 253.0
-margin_right = 304.0
+margin_left = 349.0
+margin_right = 400.0
 margin_bottom = 24.0
 text = "Select"
 
 [node name="Label2" type="Label" parent="Grid"]
 margin_top = 61.0
-margin_right = 28.0
+margin_right = 30.0
 margin_bottom = 75.0
 text = "DGC"
 
 [node name="DGCLine" type="LineEdit" parent="Grid"]
-margin_left = 44.0
+margin_left = 46.0
 margin_top = 56.0
-margin_right = 237.0
+margin_right = 333.0
 margin_bottom = 80.0
 
 [node name="DGCButton" type="Button" parent="Grid"]
-margin_left = 253.0
+margin_left = 349.0
 margin_top = 56.0
-margin_right = 304.0
+margin_right = 400.0
 margin_bottom = 80.0
 text = "Select"
 
+[node name="Label3" type="Label" parent="Grid"]
+margin_top = 115.0
+margin_right = 30.0
+margin_bottom = 129.0
+text = "Type"
+
+[node name="OptionButton" type="OptionButton" parent="Grid"]
+margin_left = 46.0
+margin_top = 112.0
+margin_right = 333.0
+margin_bottom = 132.0
+text = "Nintendo Gamecube (NGC/DGC)"
+align = 2
+items = [ "Nintendo Gamecube (NGC/DGC)", null, false, 0, null, "Playstation 2 (NPS/DPS)", null, false, 1, null ]
+selected = 0
+
 [node name="NGCDialog" type="FileDialog" parent="."]
+visible = true
 margin_left = 8.0
 margin_top = 39.0
 margin_right = 408.0
 margin_bottom = 439.0
 rect_min_size = Vector2( 400, 400 )
 popup_exclusive = true
-window_title = "Open a NGC File"
+window_title = "Open a File"
 resizable = true
 mode = 0
 access = 2
@@ -95,7 +112,7 @@ margin_right = 408.0
 margin_bottom = 439.0
 rect_min_size = Vector2( 400, 400 )
 popup_exclusive = true
-window_title = "Open a DGC File"
+window_title = "Open a File"
 resizable = true
 mode = 0
 access = 2

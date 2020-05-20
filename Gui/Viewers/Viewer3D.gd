@@ -18,7 +18,7 @@ func set_file(file):
 	if file == null:
 		node_mesh.hide()
 	else:
-		var data = ChumReader.read_tmesh(file.data)
+		var data = ChumReader.read_tmesh(file)
 		if data == null:
 			print("INVALID DATA")
 			node_mesh.hide()

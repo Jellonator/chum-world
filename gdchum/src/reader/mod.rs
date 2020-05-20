@@ -7,16 +7,22 @@ pub mod readertmesh;
 #[inherit(Node)]
 pub struct ChumReader;
 
+use crate::chumfile::ChumFile;
+
 #[methods]
 impl ChumReader {
     #[export]
-    pub fn read_text(&self, _owner: Node, data: Resource) -> Dictionary {
-        readertext::read_text_from_res(data)
+    pub fn read_text(&self, _owner: Node, data: Instance<ChumFile>) -> Dictionary {
+        data.script()
+            .map(|x| readertext::read_text_from_res(x))
+            .unwrap()
     }
 
     #[export]
-    pub fn read_tmesh(&self, _owner: Node, data: Resource) -> Dictionary {
-        readertmesh::read_tmesh_from_res(data)
+    pub fn read_tmesh(&self, _owner: Node, data: Instance<ChumFile>) -> Dictionary {
+        data.script()
+            .map(|x| readertmesh::read_tmesh_from_res(x))
+            .unwrap()
     }
 
     #[export]

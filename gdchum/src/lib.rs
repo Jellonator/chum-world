@@ -24,7 +24,16 @@ impl ChumArchive {
         _owner: Resource,
         ngcpath: gdnative::GodotString,
         dgcpath: gdnative::GodotString,
+        fmt: gdnative::GodotString,
     ) -> i64 {
+        let format = match fmt.to_string().as_ref() {
+            "PS2" => libchum::format::TotemFormat::PS2,
+            "NGC" => libchum::format::TotemFormat::NGC,
+            a => {
+                godot_print!("{}", a);
+                return gdnative::GodotError::InvalidParameter as i64;
+            }
+        };
         let mut ngcfile = match File::open(ngcpath.to_string()) {
             Ok(x) => x,
             Err(_) => return gdnative::GodotError::FileBadPath as i64,
@@ -33,7 +42,7 @@ impl ChumArchive {
             Ok(x) => x,
             Err(_) => return gdnative::GodotError::FileBadPath as i64,
         };
-        match libchum::ChumArchive::read_chum_archive(&mut ngcfile, &mut dgcfile) {
+        match libchum::ChumArchive::read_chum_archive(&mut ngcfile, &mut dgcfile, format) {
             Ok(x) => {
                 self.archive = Some(x);
                 0
@@ -49,7 +58,7 @@ impl ChumArchive {
             for file in archive.get_files() {
                 let f = Instance::<chumfile::ChumFile>::new();
                 f.map_mut(|script, _res| {
-                    script.read_from_chumfile(file);
+                    script.read_from_chumfile(file, archive.get_format());
                 })
                 .unwrap();
                 arr.push(&Variant::from(f.base().new_ref()));

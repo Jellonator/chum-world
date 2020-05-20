@@ -10,6 +10,7 @@ pub struct ChumFile {
     nameid: GodotString,
     typeid: GodotString,
     subtypeid: GodotString,
+    format: libchum::format::TotemFormat,
 }
 
 #[methods]
@@ -77,11 +78,16 @@ impl ChumFile {
         self.subtypeid = value;
     }
 
-    pub fn read_from_chumfile(&mut self, file: &libchum::ChumFile) {
+    pub fn read_from_chumfile(
+        &mut self,
+        file: &libchum::ChumFile,
+        fmt: libchum::format::TotemFormat,
+    ) {
         self.nameid = GodotString::from_str(file.get_name_id());
         self.typeid = GodotString::from_str(file.get_type_id());
         self.subtypeid = GodotString::from_str(file.get_subtype_id());
         let f = Instance::<ByteData>::new();
+        self.format = fmt;
         self.data = f
             .map_mut(|script, res| {
                 script.set_data(file.get_data().to_vec());
@@ -98,6 +104,15 @@ impl ChumFile {
             nameid: GodotString::new(),
             typeid: GodotString::new(),
             subtypeid: GodotString::new(),
+            format: libchum::format::TotemFormat::NGC,
         }
+    }
+
+    pub fn get_format(&self) -> libchum::format::TotemFormat {
+        self.format
+    }
+
+    pub fn get_bytedata<'a>(&'a self) -> Instance<ByteData> {
+        Instance::<ByteData>::try_from_base(self.data.new_ref()).unwrap()
     }
 }

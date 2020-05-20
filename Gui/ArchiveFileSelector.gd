@@ -1,6 +1,6 @@
 extends ConfirmationDialog
 
-signal files_selected(ngc, dgc)
+signal files_selected(ngc, dgc, ftype)
 
 func _on_NGCButton_pressed():
 	$NGCDialog.popup_centered()
@@ -15,4 +15,9 @@ func _on_DGCDialog_file_selected(path):
 	$Grid/DGCLine.text = path
 
 func _on_ArchiveFileSelector_confirmed():
-	emit_signal("files_selected", $Grid/NGCLine.text, $Grid/DGCLine.text)
+	var ftype = ""
+	if $Grid/OptionButton.selected == 0:
+		ftype = "NGC"
+	elif $Grid/OptionButton.selected == 1:
+		ftype = "PS2"
+	emit_signal("files_selected", $Grid/NGCLine.text, $Grid/DGCLine.text, ftype)

@@ -120,8 +120,13 @@ pub struct TotemChunk {
 }
 
 impl TotemChunk {
+    /// Iterate over all files in this archive.
+    pub fn iter_files(&self) -> impl Iterator<Item = &TotemFile> {
+        self.data.iter()
+    }
+
     /// Create a new DgcChunk
-    fn new() -> TotemChunk {
+    pub fn new() -> TotemChunk {
         TotemChunk { data: Vec::new() }
     }
 
@@ -133,13 +138,13 @@ impl TotemChunk {
     /// Get the total size of this chunk, including the contents of each file
     /// stored in this chunk, the header data of each file stored in this
     /// chunk, and the header of the chunk itself.
-    fn get_total_size(&self) -> usize {
+    pub fn get_total_size(&self) -> usize {
         // Each chunk has a 4 byte header, and each file has a 16 byte header
         self.data.iter().fold(4, |acc, f| acc + f.get_total_size())
     }
 
     /// Get the number of files stored within this chunk.
-    fn get_num_files(&self) -> usize {
+    pub fn get_num_files(&self) -> usize {
         self.data.len()
     }
 
@@ -220,6 +225,11 @@ impl TotemArchive {
     /// Iterate over all files in this archive.
     pub fn iter_files(&self) -> impl Iterator<Item = &TotemFile> {
         self.data.iter().flat_map(|chunk| chunk.data.iter())
+    }
+
+    /// Iterate over all chunks in this archive.
+    pub fn iter_chunks(&self) -> impl Iterator<Item = &TotemChunk> {
+        self.data.iter()
     }
 
     /// Take all files from this archive

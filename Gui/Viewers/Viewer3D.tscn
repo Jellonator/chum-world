@@ -3,17 +3,12 @@
 [ext_resource path="res://Gui/Viewers/Viewer3D.gd" type="Script" id=1]
 [ext_resource path="res://Gui/Gizmos/Camera.tscn" type="PackedScene" id=2]
 
-[sub_resource type="CubeMesh" id=1]
+[sub_resource type="CubeMesh" id=3]
 
-[sub_resource type="SpatialMaterial" id=2]
+[sub_resource type="SpatialMaterial" id=4]
 params_cull_mode = 2
-emission_enabled = true
-emission = Color( 1, 1, 1, 1 )
-emission_energy = 0.5
-emission_operator = 0
-emission_on_uv2 = false
 
-[sub_resource type="ViewportTexture" id=3]
+[sub_resource type="ViewportTexture" id=5]
 viewport_path = NodePath("Viewport")
 
 [node name="Viewer3D" type="Control"]
@@ -30,17 +25,22 @@ size = Vector2( 16, 16 )
 [node name="Spatial" type="Spatial" parent="Viewport"]
 
 [node name="MeshInstance" type="MeshInstance" parent="Viewport/Spatial"]
-mesh = SubResource( 1 )
-material/0 = SubResource( 2 )
+mesh = SubResource( 3 )
+material/0 = SubResource( 4 )
 
 [node name="Camera" parent="Viewport/Spatial" instance=ExtResource( 2 )]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 4 )
+
+[node name="DirectionalLight" type="DirectionalLight" parent="Viewport/Spatial"]
+transform = Transform( 0.866025, -0.377063, -0.328365, 0, -0.656731, 0.754125, -0.5, -0.653092, -0.568745, 0, 4.64216, -7 )
+light_energy = 0.7
+light_indirect_energy = 0.7
 
 [node name="TextureRect" type="TextureRect" parent="."]
 anchor_right = 1.0
 anchor_bottom = 1.0
 focus_mode = 1
-texture = SubResource( 3 )
+texture = SubResource( 5 )
 expand = true
 flip_v = true
 __meta__ = {

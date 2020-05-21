@@ -7,7 +7,7 @@ use std::collections::HashMap;
 use std::error::Error;
 use std::fmt;
 use std::fmt::Display;
-use std::io::Read;
+use std::io::{Read, Write};
 
 /// Hash the given name using the crc32 IEEE algorithm.
 pub fn hash_name(name: &str) -> i32 {
@@ -105,6 +105,32 @@ impl ChumArchive {
             names: HashMap::new(),
             format: fmt,
         }
+    }
+
+    /// Create a new Chum archive
+    pub fn new_from_files(
+        header: dgc::TotemHeader,
+        fmt: format::TotemFormat,
+        files: Vec<ChumFile>,
+    ) -> Result<ChumArchive, Box<dyn Error>> {
+        let mut archive = ChumArchive::new(header, fmt);
+        for file in &files {
+            let hashname = archive.check_can_add_id(file.get_name_id())?;
+            let hashtype = archive.check_can_add_id(file.get_type_id())?;
+            let hashsubtype = archive.check_can_add_id(file.get_subtype_id())?;
+            // Add names if they don't already exist
+            if let Some(i) = hashname {
+                archive.names.insert(i, file.get_name_id().into());
+            }
+            if let Some(i) = hashtype {
+                archive.names.insert(i, file.get_type_id().into());
+            }
+            if let Some(i) = hashsubtype {
+                archive.names.insert(i, file.get_subtype_id().into());
+            }
+        }
+        archive.files = files;
+        Ok(archive)
     }
 
     /// Check if the given ID can be added.
@@ -243,6 +269,18 @@ impl ChumArchive {
         let dgc = dgc::TotemArchive::read_from(dgc_reader, format)?;
         // merge
         ChumArchive::merge_archives(ngc, dgc)
+    }
+
+    /// Write the chum archive to two writers
+    pub fn write_chum_archive<W: Write, V: Write>(
+        &self,
+        ngc_writer: &mut W,
+        dgc_writer: &mut V,
+    ) -> Result<(), Box<dyn Error>> {
+        let (ngc, dgc) = self.split_archives().unwrap();
+        ngc.write_to(ngc_writer)?;
+        dgc.write_to(dgc_writer)?;
+        Ok(())
     }
 
     pub fn get_format(&self) -> format::TotemFormat {

@@ -2,8 +2,7 @@
 
 [ext_resource path="res://Gui/ArchiveFileSelector.gd" type="Script" id=1]
 
-[node name="ArchiveFileSelector" type="ConfirmationDialog"]
-visible = true
+[node name="ArchiveFileSaver" type="ConfirmationDialog"]
 anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
@@ -16,7 +15,7 @@ rect_min_size = Vector2( 320, 0 )
 popup_exclusive = true
 window_title = "Select archive files"
 resizable = true
-dialog_text = "Select a name file and a data file to open.
+dialog_text = "Select a name file and a data file to save to.
 "
 script = ExtResource( 1 )
 __meta__ = {
@@ -97,10 +96,8 @@ margin_right = 408.0
 margin_bottom = 439.0
 rect_min_size = Vector2( 400, 400 )
 popup_exclusive = true
-window_title = "Open a File"
 resizable = true
-dialog_text = "Name file to open"
-mode = 0
+dialog_text = "Name file to write to"
 access = 2
 filters = PoolStringArray( "*.NGC;*.ngc;*.NPS;*.nps" )
 current_dir = "/home/jellonator/Workspace/CPP/ChumWorld"
@@ -113,10 +110,8 @@ margin_right = 408.0
 margin_bottom = 439.0
 rect_min_size = Vector2( 400, 400 )
 popup_exclusive = true
-window_title = "Open a File"
 resizable = true
-dialog_text = "Data file to open"
-mode = 0
+dialog_text = "Data file to write to"
 access = 2
 filters = PoolStringArray( "*.DGC;*.dgc;*.DPS;*.dps" )
 current_dir = "/home/jellonator/Workspace/CPP/ChumWorld"

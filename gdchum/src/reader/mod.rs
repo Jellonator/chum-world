@@ -1,5 +1,6 @@
 use gdnative::*;
 
+pub mod readerbitmap;
 pub mod readertext;
 pub mod readertmesh;
 
@@ -22,6 +23,13 @@ impl ChumReader {
     pub fn read_tmesh(&self, _owner: Node, data: Instance<ChumFile>) -> Dictionary {
         data.script()
             .map(|x| readertmesh::read_tmesh_from_res(x))
+            .unwrap()
+    }
+
+    #[export]
+    pub fn read_bitmap(&self, _owner: Node, data: Instance<ChumFile>) -> Dictionary {
+        data.script()
+            .map(|x| readerbitmap::read_bitmap_from_res(x))
             .unwrap()
     }
 

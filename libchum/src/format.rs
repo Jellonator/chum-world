@@ -24,6 +24,18 @@ impl TotemFormat {
             TotemFormat::PS2 => writer.write_i32::<LittleEndian>(value),
         }
     }
+    pub fn write_u24<W: Write>(&self, writer: &mut W, value: u32) -> io::Result<()> {
+        match self {
+            TotemFormat::NGC => writer.write_u24::<BigEndian>(value),
+            TotemFormat::PS2 => writer.write_u24::<LittleEndian>(value),
+        }
+    }
+    pub fn write_i24<W: Write>(&self, writer: &mut W, value: i32) -> io::Result<()> {
+        match self {
+            TotemFormat::NGC => writer.write_i24::<BigEndian>(value),
+            TotemFormat::PS2 => writer.write_i24::<LittleEndian>(value),
+        }
+    }
     pub fn write_u16<W: Write>(&self, writer: &mut W, value: u16) -> io::Result<()> {
         match self {
             TotemFormat::NGC => writer.write_u16::<BigEndian>(value),
@@ -64,6 +76,18 @@ impl TotemFormat {
             TotemFormat::PS2 => reader.read_i32::<LittleEndian>(),
         }
     }
+    pub fn read_u24<R: Read>(&self, reader: &mut R) -> io::Result<u32> {
+        match self {
+            TotemFormat::NGC => reader.read_u24::<BigEndian>(),
+            TotemFormat::PS2 => reader.read_u24::<LittleEndian>(),
+        }
+    }
+    pub fn read_i24<R: Read>(&self, reader: &mut R) -> io::Result<i32> {
+        match self {
+            TotemFormat::NGC => reader.read_i24::<BigEndian>(),
+            TotemFormat::PS2 => reader.read_i24::<LittleEndian>(),
+        }
+    }
     pub fn read_u16<R: Read>(&self, reader: &mut R) -> io::Result<u16> {
         match self {
             TotemFormat::NGC => reader.read_u16::<BigEndian>(),
@@ -95,5 +119,43 @@ impl TotemFormat {
         let mut buf = Vec::new();
         reader.read_to_end(&mut buf)?;
         Ok(buf)
+    }
+    pub fn skip_n_bytes<R: Read>(&self, reader: &mut R, n: u64) -> io::Result<()> {
+        io::copy(&mut reader.take(n), &mut io::sink())?;
+        Ok(())
+    }
+    // Read into functions
+    pub fn read_u4_into<R: Read>(&self, reader: &mut R, dst: &mut [u8]) -> io::Result<()> {
+        for i in 0..(dst.len() / 2) {
+            let value = self.read_u8(reader)?;
+            dst[i * 2] = value >> 4;
+            dst[i * 2 + 1] = value & 0x0F;
+        }
+        if dst.len() % 2 == 1 {
+            let value = self.read_u8(reader)?;
+            dst[dst.len() - 1] = value >> 4;
+        }
+        Ok(())
+    }
+    pub fn read_u24_into<R: Read>(&self, reader: &mut R, dst: &mut [u32]) -> io::Result<()> {
+        for i in 0..dst.len() {
+            dst[i] = self.read_u24(reader)?;
+        }
+        Ok(())
+    }
+    pub fn read_u32_into<R: Read>(&self, reader: &mut R, dst: &mut [u32]) -> io::Result<()> {
+        match self {
+            TotemFormat::NGC => reader.read_u32_into::<BigEndian>(dst),
+            TotemFormat::PS2 => reader.read_u32_into::<LittleEndian>(dst),
+        }
+    }
+    pub fn read_u16_into<R: Read>(&self, reader: &mut R, dst: &mut [u16]) -> io::Result<()> {
+        match self {
+            TotemFormat::NGC => reader.read_u16_into::<BigEndian>(dst),
+            TotemFormat::PS2 => reader.read_u16_into::<LittleEndian>(dst),
+        }
+    }
+    pub fn read_u8_into<R: Read>(&self, reader: &mut R, dst: &mut [u8]) -> io::Result<()> {
+        reader.read_exact(dst)
     }
 }

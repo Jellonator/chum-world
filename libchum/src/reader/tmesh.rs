@@ -1,6 +1,5 @@
 use crate::format::TotemFormat;
 use std::io::{self, Read, Write};
-// use gltf_json;
 
 /// Basic 3d vector
 #[derive(Clone, Copy)]

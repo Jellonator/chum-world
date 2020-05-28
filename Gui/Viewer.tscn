@@ -1,7 +1,8 @@
-[gd_scene load_steps=5 format=2]
+[gd_scene load_steps=6 format=2]
 
 [ext_resource path="res://Gui/Viewer.gd" type="Script" id=1]
 [ext_resource path="res://Gui/EditorList.tscn" type="PackedScene" id=2]
+[ext_resource path="res://Gui/ArchiveFileSaver.tscn" type="PackedScene" id=3]
 [ext_resource path="res://Gui/ArchiveFileSelector.tscn" type="PackedScene" id=6]
 [ext_resource path="res://Gui/FileTree.gd" type="Script" id=7]
 
@@ -91,7 +92,21 @@ margin_top = 32.0
 margin_right = -4.0
 margin_bottom = -4.0
 
+[node name="Label" type="Label" parent="VBox/Tabs/3D View"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+text = "Not implemented yet.
+Still figuring out the world/node formats."
+align = 1
+valign = 1
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
 [node name="ArchiveFileSelector" parent="." instance=ExtResource( 6 )]
+visible = false
+
+[node name="ArchiveFileSaver" parent="." instance=ExtResource( 3 )]
 
 [node name="ErrDialog" type="AcceptDialog" parent="."]
 margin_right = 83.0

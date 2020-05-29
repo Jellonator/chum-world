@@ -22,6 +22,7 @@ pub struct Vector2 {
 pub struct Strip {
     pub vertex_ids: Vec<u16>,
     pub tri_order: u32,
+    pub material: u32,
 }
 
 /// A combination of a normal index and a texture coordinate index
@@ -67,11 +68,12 @@ fn read_strip<R: Read>(file: &mut R, fmt: TotemFormat) -> io::Result<Strip> {
     let vertex_ids: Vec<u16> = (0..num_elements)
         .map(|_| fmt.read_u16(file))
         .collect::<io::Result<_>>()?;
-    let _unknown: u32 = fmt.read_u32(file)?;
+    let material: u32 = fmt.read_u32(file)?;
     let tri_order: u32 = fmt.read_u32(file)?;
     Ok(Strip {
         vertex_ids,
         tri_order,
+        material,
     })
 }
 
@@ -124,6 +126,11 @@ fn strip_gen_triangle_indices(strip: &Strip, strip_ext: &StripExt) -> Vec<[(u16,
         .collect()
 }
 
+pub struct TriangleSurface {
+    pub material: u32,
+    pub tris: Vec<Tri>,
+}
+
 /// Generate triangles from a strip
 fn strip_gen_triangles(
     strip: &Strip,
@@ -166,20 +173,46 @@ impl TMesh {
     }
 
     /// Generate a triangle from a TMesh
-    pub fn gen_triangles(&self) -> Vec<Vec<Tri>> {
-        self.strips
+    pub fn gen_triangles(&self) -> Vec<TriangleSurface> {
+        let mut values: Vec<(u32, Vec<Tri>)> = self
+            .strips
             .iter()
             .zip(&self.strips_ext)
             .map(|(strip, strip_ext)| {
-                strip_gen_triangles(
-                    strip,
-                    strip_ext,
-                    &self.vertices,
-                    &self.texcoords,
-                    &self.normals,
+                (
+                    strip.material,
+                    strip_gen_triangles(
+                        strip,
+                        strip_ext,
+                        &self.vertices,
+                        &self.texcoords,
+                        &self.normals,
+                    ),
                 )
             })
-            .collect()
+            .collect();
+        values.sort_by_key(|x| x.0);
+        if values.len() == 0 {
+            Vec::new()
+        } else {
+            let mut material = values[0].0;
+            let mut ret: Vec<TriangleSurface> = Vec::new();
+            ret.push(TriangleSurface {
+                material,
+                tris: Vec::new(),
+            });
+            for value in values.iter_mut() {
+                if value.0 != material {
+                    material = value.0;
+                    ret.push(TriangleSurface {
+                        material,
+                        tris: Vec::new(),
+                    });
+                }
+                ret.last_mut().unwrap().tris.append(&mut value.1);
+            }
+            ret
+        }
     }
 
     /// Read a TMesh from a file

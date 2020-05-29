@@ -12,12 +12,39 @@ pub fn read_tmesh(data: &ByteData, fmt: libchum::format::TotemFormat) -> Option<
         }
     };
     let mut mesh = ArrayMesh::new();
-    for trivec in tmesh.gen_triangles() {
+    let generated_tris = tmesh.gen_triangles();
+    let num = generated_tris.len();
+    let colors = [
+        Color::rgb(0.05, 0.05, 0.05),
+        Color::rgb(0.95, 0.95, 0.95),
+        Color::rgb(0.95, 0.05, 0.05),
+        Color::rgb(0.05, 0.95, 0.05),
+        Color::rgb(0.05, 0.05, 0.95),
+        Color::rgb(0.95, 0.95, 0.05),
+        Color::rgb(0.05, 0.95, 0.95),
+        Color::rgb(0.95, 0.05, 0.95),
+        Color::rgb(0.50, 0.50, 0.50),
+        Color::rgb(0.95, 0.50, 0.05),
+        Color::rgb(0.05, 0.50, 0.95),
+        Color::rgb(0.95, 0.05, 0.50),
+        Color::rgb(0.05, 0.95, 0.50),
+        Color::rgb(0.50, 0.95, 0.05),
+        Color::rgb(0.50, 0.05, 0.95),
+        Color::rgb(0.50, 0.50, 0.95),
+        Color::rgb(0.50, 0.50, 0.05),
+        Color::rgb(0.50, 0.05, 0.50),
+        Color::rgb(0.50, 0.95, 0.50),
+        Color::rgb(0.05, 0.50, 0.50),
+        Color::rgb(0.95, 0.50, 0.50),
+    ];
+    godot_print!("There are {} colors", num);
+    for (i, trivec) in generated_tris.into_iter().enumerate() {
         let mut verts = Vector3Array::new();
         let mut texcoords = Vector2Array::new();
         let mut normals = Vector3Array::new();
         let mut meshdata = VariantArray::new();
-        for tri in trivec {
+        let mut colordata = ColorArray::new();
+        for tri in trivec.tris {
             for point in &tri.points {
                 verts.push(&Vector3::new(
                     point.vertex.x,
@@ -30,12 +57,14 @@ pub fn read_tmesh(data: &ByteData, fmt: libchum::format::TotemFormat) -> Option<
                     point.normal.y,
                     point.normal.z,
                 ));
+                colordata.push(&colors[i % colors.len()]);
             }
         }
         meshdata.resize(ArrayMesh::ARRAY_MAX as i32);
         meshdata.set(ArrayMesh::ARRAY_VERTEX as i32, &Variant::from(&verts));
         meshdata.set(ArrayMesh::ARRAY_NORMAL as i32, &Variant::from(&normals));
         meshdata.set(ArrayMesh::ARRAY_TEX_UV as i32, &Variant::from(&texcoords));
+        meshdata.set(ArrayMesh::ARRAY_COLOR as i32, &Variant::from(&colordata));
         mesh.add_surface_from_arrays(
             Mesh::PRIMITIVE_TRIANGLES,
             meshdata,

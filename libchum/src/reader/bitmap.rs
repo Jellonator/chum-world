@@ -177,7 +177,7 @@ fn read_palette<R: Read>(
     file: &mut R,
     fmt: TotemFormat,
     palette_format: u8,
-    num: usize
+    num: usize,
 ) -> io::Result<Vec<Color>> {
     match palette_format {
         PALETTE_A3RGB5 => {
@@ -266,7 +266,10 @@ impl Bitmap {
         let opacity_level: u8 = fmt.read_u8(file)?;
         let _unk: u8 = fmt.read_u8(file)?;
         let _filter: u8 = fmt.read_u8(file)?;
-        println!("Format: ({} {} {} {} {}", format, _flags, palette_format, opacity_level, _filter);
+        println!(
+            "Format: ({} {} {} {} {}",
+            format, _flags, palette_format, opacity_level, _filter
+        );
         // TODO: Handle irregular image sizes for arrange_blocks
         let data: Vec<Color> = match format {
             FORMAT_C4 => {

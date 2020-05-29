@@ -18,6 +18,9 @@ impl ChumArchive {
         ChumArchive { archive: None }
     }
 
+    // #[export]
+    // fn get_file_from_hash(hash: i64
+
     #[export]
     fn load(
         &mut self,

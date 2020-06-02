@@ -18,8 +18,8 @@ pub fn hash_name(name: &str) -> i32 {
 /// This is literally all the data that matters.
 pub struct ChumArchive {
     header: dgc::TotemHeader,
-    files: Vec<ChumFile>,
-    names: HashMap<i32, String>,
+    names: HashMap<i32, String>, // a separate HashMap used to check for name collisions
+    files: HashMap<i32, ChumFile>,
     format: format::TotemFormat,
 }
 
@@ -101,7 +101,7 @@ impl ChumArchive {
     pub fn new(header: dgc::TotemHeader, fmt: format::TotemFormat) -> ChumArchive {
         ChumArchive {
             header,
-            files: Vec::new(),
+            files: HashMap::new(),
             names: HashMap::new(),
             format: fmt,
         }
@@ -114,6 +114,7 @@ impl ChumArchive {
         files: Vec<ChumFile>,
     ) -> Result<ChumArchive, Box<dyn Error>> {
         let mut archive = ChumArchive::new(header, fmt);
+        // check add to name map
         for file in &files {
             let hashname = archive.check_can_add_id(file.get_name_id())?;
             let hashtype = archive.check_can_add_id(file.get_type_id())?;
@@ -129,7 +130,11 @@ impl ChumArchive {
                 archive.names.insert(i, file.get_subtype_id().into());
             }
         }
-        archive.files = files;
+        // create file map
+        archive.files = files
+            .into_iter()
+            .map(|x| (hash_name(x.get_name_id()), x))
+            .collect();
         Ok(archive)
     }
 
@@ -142,8 +147,10 @@ impl ChumArchive {
         match self.names.get(&hash) {
             Some(existing) => {
                 if existing == s {
+                    // OK if values are equivalent
                     Ok(None)
                 } else {
+                    // errors otherwise
                     Err(Box::new(ChumError::NameCollisionError {
                         id: hash,
                         existing_name: existing.into(),
@@ -160,18 +167,28 @@ impl ChumArchive {
         let hashname = self.check_can_add_id(file.get_name_id())?;
         let hashtype = self.check_can_add_id(file.get_type_id())?;
         let hashsubtype = self.check_can_add_id(file.get_subtype_id())?;
-        // Add names if they don't already exist
+        let typestr = file.get_type_id().to_string();
+        let subtypestr = file.get_subtype_id().to_string();
+        // Add name if it doesn't already exist
         if let Some(i) = hashname {
             self.names.insert(i, file.get_name_id().into());
+            // Add file
+            self.files.insert(i, file);
+        } else {
+            // Name must not already exist
+            return Err(Box::new(ChumError::NameCollisionError {
+                id: hash_name(file.get_name_id()),
+                existing_name: file.get_name_id().into(), // existing is same as new name
+                new_name: file.get_name_id().into(),
+            }));
         }
+        // add type/subtype
         if let Some(i) = hashtype {
-            self.names.insert(i, file.get_type_id().into());
+            self.names.insert(i, typestr);
         }
         if let Some(i) = hashsubtype {
-            self.names.insert(i, file.get_subtype_id().into());
+            self.names.insert(i, subtypestr);
         }
-        // Add file
-        self.files.push(file);
         Ok(())
     }
 
@@ -182,12 +199,41 @@ impl ChumArchive {
 
     /// Get all files in this archive
     pub fn get_files(&self) -> impl Iterator<Item = &ChumFile> {
-        self.files.iter()
+        self.files.values()
     }
 
     /// Take all the files from this archive
     pub fn take_files(self) -> impl Iterator<Item = ChumFile> {
+        self.files.into_iter().map(|(_i, x)| x)
+    }
+
+    /// Get all files in this archive along with their hash
+    pub fn get_files_hash(&self) -> impl Iterator<Item = (&i32, &ChumFile)> {
+        self.files.iter()
+    }
+
+    /// Take all files in this archive along with their hash
+    pub fn take_files_hash(self) -> impl Iterator<Item = (i32, ChumFile)> {
         self.files.into_iter()
+    }
+
+    /// Get a file from its hash
+    pub fn get_file_from_hash(&self, hash: i32) -> Option<&ChumFile> {
+        self.files.get(&hash)
+    }
+
+    /// Get a file from its name
+    pub fn get_file_from_name(&self, name: &str) -> Option<&ChumFile> {
+        let hash = hash_name(&name);
+        if let Some(x) = self.names.get(&hash) {
+            if x != name {
+                None
+            } else {
+                self.files.get(&hash)
+            }
+        } else {
+            None
+        }
     }
 
     /// Split this ChumArchive into an NgcArchive and a DgcArchive
@@ -195,7 +241,7 @@ impl ChumArchive {
         let dgc = dgc::TotemArchive::new_from_files(
             self.header.clone(),
             self.files
-                .iter()
+                .values()
                 .map(|file| {
                     dgc::TotemFile::new(
                         file.data.clone(),
@@ -245,12 +291,15 @@ impl ChumArchive {
                     let type_id = file.get_type_id();
                     let name_id = file.get_name_id();
                     let subtype_id = file.get_subtype_id();
-                    ChumFile {
-                        data: file.take_data(),
-                        type_id: ngc.get_names()[&type_id].clone(),
-                        name_id: ngc.get_names()[&name_id].clone(),
-                        subtype_id: ngc.get_names()[&subtype_id].clone(),
-                    }
+                    (
+                        name_id,
+                        ChumFile {
+                            data: file.take_data(),
+                            type_id: ngc.get_names()[&type_id].clone(),
+                            name_id: ngc.get_names()[&name_id].clone(),
+                            subtype_id: ngc.get_names()[&subtype_id].clone(),
+                        },
+                    )
                 })
                 .collect(),
             names: ngc.take_names(),

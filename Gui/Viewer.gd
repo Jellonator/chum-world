@@ -26,6 +26,7 @@ func load_archive(ngc: String, dgc: String, ftype: String):
 	var err = archive.load(ngc, dgc, ftype)
 	if err != OK:
 		show_err("Could not open files %d" % [err])
+	ChumReader.clear_cache()
 	node_tree.set_archive(archive)
 
 func _on_ArchiveFileSelector_files_selected(ngc: String, dgc: String, ftype: String):

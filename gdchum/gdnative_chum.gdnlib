@@ -7,7 +7,7 @@ reloadable=true
 
 [entry]
 
-X11.64="res://gdchum/target/debug/libgdchum.so"
+X11.64="res://gdchum/target/release/libgdchum.so"
 
 [dependencies]
 

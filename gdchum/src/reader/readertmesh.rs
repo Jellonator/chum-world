@@ -38,12 +38,16 @@ pub fn read_tmesh(data: &ByteData, fmt: libchum::format::TotemFormat) -> Option<
         Color::rgb(0.95, 0.50, 0.50),
     ];
     godot_print!("There are {} colors", num);
+    for (i, mat) in tmesh.get_materials().iter().enumerate() {
+        godot_print!("Material {:>2} is 0x{:08X}", i, mat);
+    }
     for (i, trivec) in generated_tris.into_iter().enumerate() {
         let mut verts = Vector3Array::new();
         let mut texcoords = Vector2Array::new();
         let mut normals = Vector3Array::new();
         let mut meshdata = VariantArray::new();
         let mut colordata = ColorArray::new();
+        godot_print!("Strip {:>2} has material {:>4}", i, trivec.material);
         for tri in trivec.tris {
             for point in &tri.points {
                 verts.push(&Vector3::new(

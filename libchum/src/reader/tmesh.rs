@@ -60,6 +60,7 @@ pub struct TMesh {
     // unknown3: [u8; num_strips * padding_mult]
     strips_ext: Vec<StripExt>,
     // unknown4: [u8]
+    materials: Vec<u32>
 }
 
 /// Read in a triangle strip from a reader
@@ -164,6 +165,10 @@ fn strip_gen_triangles(
 }
 
 impl TMesh {
+    pub fn get_materials(&self) -> &[u32] {
+        &self.materials
+    }
+
     fn gen_triangle_indices(&self) -> Vec<Vec<[(u16, u16, u16); 3]>> {
         self.strips
             .iter()
@@ -265,13 +270,28 @@ impl TMesh {
         let strips_ext: Vec<StripExt> = (0..num_strips_ext)
             .map(|_| read_strip_ext(file, fmt))
             .collect::<io::Result<_>>()?;
-        // rest of data is unknown
+        // read material data
+        let num_materials: u32 = fmt.read_u32(file)?;
+        let materials: Vec<u32> = (0..num_materials)
+            .map(|_| fmt.read_u32(file))
+            .collect::<io::Result<_>>()?;
+        // read unknown data
+        let num_unk1: u32 = fmt.read_u32(file)?;
+        fmt.skip_n_bytes(file, num_unk1 as u64 * 16)?;
+        let num_unk2: u32 = fmt.read_u32(file)?;
+        fmt.skip_n_bytes(file, num_unk2 as u64 * 80)?;
+        let num_unk3: u32 = fmt.read_u32(file)?;
+        fmt.skip_n_bytes(file, num_unk3 as u64 * 36)?;
+        let num_unk4: u32 = fmt.read_u32(file)?; // always 0?
+        let num_strip_order: u32 = fmt.read_u32(file)?;
+        println!("UNKNOWN: ({} {} {} {})", num_unk1, num_unk2, num_unk3, num_unk4);
         Ok(TMesh {
             vertices,
             texcoords,
             normals,
             strips,
             strips_ext,
+            materials
         })
     }
 

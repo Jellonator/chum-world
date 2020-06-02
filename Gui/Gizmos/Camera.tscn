@@ -11,7 +11,7 @@ script = ExtResource( 1 )
 
 [node name="Camera" type="Camera" parent="PivotY/PivotX"]
 
-[node name="SpotLight" type="SpotLight" parent="."]
-light_energy = 0.25
-light_indirect_energy = 0.25
+[node name="SpotLight" type="SpotLight" parent="PivotY/PivotX/Camera"]
+light_energy = 0.35
+light_indirect_energy = 0.35
 spot_range = 100.0

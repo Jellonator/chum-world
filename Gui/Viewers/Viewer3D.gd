@@ -26,8 +26,8 @@ func set_file(file):
 			print("LOADED: ", data)
 			node_mesh.mesh = data["mesh"]
 			node_mesh.show()
-			for i in range(node_mesh.get_surface_material_count()):
-				node_mesh.set_surface_material(i, mat)
+#			for i in range(node_mesh.get_surface_material_count()):
+#				node_mesh.set_surface_material(i, mat)
 		else:
 			print("DOES NOT EXIST")
 			node_mesh.hide()

@@ -1,6 +1,7 @@
 use crate::bytedata::ByteData;
 use gdnative::*;
 use libchum;
+use crate::ChumArchive;
 
 #[derive(NativeClass)]
 #[inherit(Resource)]
@@ -13,6 +14,7 @@ pub struct ChumFile {
     namestr: String,
     typestr: String,
     subtypestr: String,
+    parent: Option<Resource>,
     format: libchum::format::TotemFormat,
 }
 
@@ -97,10 +99,15 @@ impl ChumFile {
         libchum::hash_name(&self.namestr)
     }
 
+    pub fn get_archive_instance(&self) -> Instance<ChumArchive> {
+        Instance::try_from_base(self.parent.as_ref().unwrap().new_ref()).unwrap()
+    }
+
     pub fn read_from_chumfile(
         &mut self,
         file: &libchum::ChumFile,
         fmt: libchum::format::TotemFormat,
+        parent: Resource
     ) {
         self.nameid = GodotString::from_str(file.get_name_id());
         self.typeid = GodotString::from_str(file.get_type_id());
@@ -110,6 +117,7 @@ impl ChumFile {
         self.subtypestr = file.get_subtype_id().into();
         let f = Instance::<ByteData>::new();
         self.format = fmt;
+        self.parent = Some(parent);
         self.data = f
             .map_mut(|script, res| {
                 script.set_data(file.get_data().to_vec());
@@ -130,6 +138,7 @@ impl ChumFile {
             typestr: String::new(),
             subtypestr: String::new(),
             format: libchum::format::TotemFormat::NGC,
+            parent: None
         }
     }
 

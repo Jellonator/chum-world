@@ -3,3 +3,4 @@
 
 pub mod bitmap;
 pub mod tmesh;
+pub mod material;

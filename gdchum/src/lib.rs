@@ -55,19 +55,37 @@ impl ChumArchive {
     }
 
     #[export]
-    fn get_file_list(&self, _owner: Resource) -> gdnative::VariantArray {
+    fn get_file_list(&self, owner: Resource) -> gdnative::VariantArray {
         let mut arr = gdnative::VariantArray::new();
         if let Some(archive) = &self.archive {
             for file in archive.get_files() {
                 let f = Instance::<chumfile::ChumFile>::new();
                 f.map_mut(|script, _res| {
-                    script.read_from_chumfile(file, archive.get_format());
+                    script.read_from_chumfile(file, archive.get_format(), owner.new_ref());
                 })
                 .unwrap();
                 arr.push(&Variant::from(f.base().new_ref()));
             }
         }
         return arr;
+    }
+
+    #[export]
+    pub fn get_file_from_hash(&self, owner: Resource, id: i32) -> Option<Instance<chumfile::ChumFile>> {
+        if let Some(archive) = &self.archive {
+            if let Some(file) = archive.get_file_from_hash(id) {
+                let f = Instance::<chumfile::ChumFile>::new();
+                f.map_mut(|script, _res| {
+                    script.read_from_chumfile(file, archive.get_format(), owner.new_ref());
+                })
+                .unwrap();
+                Some(f)
+            } else {
+                None
+            }
+        } else {
+            None
+        }
     }
 
     #[export]

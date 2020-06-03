@@ -111,7 +111,7 @@ impl Color {
     }
 }
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum AlphaLevel {
     Opaque, // alpha is always 255
     Bit,    // alpha is always either 0 or 255

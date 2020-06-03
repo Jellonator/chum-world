@@ -4,7 +4,7 @@ use std::collections::HashMap;
 pub mod readerbitmap;
 pub mod readertext;
 pub mod readertmesh;
-
+pub mod readermaterial;
 #[derive(NativeClass)]
 #[inherit(Node)]
 pub struct ChumReader {
@@ -17,6 +17,9 @@ use crate::chumfile::ChumFile;
 impl ChumReader {
     #[export]
     pub fn read_text(&mut self, _owner: Node, data: Instance<ChumFile>) -> Dictionary {
+        self.read_text_nodeless(data)
+    }
+    pub fn read_text_nodeless(&mut self, data: Instance<ChumFile>) -> Dictionary {
         data.script()
             .map(|x| {
                 let hash = x.get_name_hash();
@@ -33,13 +36,16 @@ impl ChumReader {
 
     #[export]
     pub fn read_tmesh(&mut self, _owner: Node, data: Instance<ChumFile>) -> Dictionary {
+        self.read_tmesh_nodeless(data)
+    }
+    pub fn read_tmesh_nodeless(&mut self, data: Instance<ChumFile>) -> Dictionary {
         data.script()
             .map(|x| {
                 let hash = x.get_name_hash();
                 if let Some(data) = self.cache.get(&hash) {
                     data.new_ref()
                 } else {
-                    let value = readertmesh::read_tmesh_from_res(x);
+                    let value = readertmesh::read_tmesh_from_res(x, self);
                     self.cache.insert(hash, value.new_ref());
                     value
                 }
@@ -49,6 +55,9 @@ impl ChumReader {
 
     #[export]
     pub fn read_bitmap(&mut self, _owner: Node, data: Instance<ChumFile>) -> Dictionary {
+        self.read_bitmap_nodeless(data)
+    }
+    pub fn read_bitmap_nodeless(&mut self, data: Instance<ChumFile>) -> Dictionary {
         data.script()
             .map(|x| {
                 let hash = x.get_name_hash();
@@ -56,6 +65,25 @@ impl ChumReader {
                     data.new_ref()
                 } else {
                     let value = readerbitmap::read_bitmap_from_res(x);
+                    self.cache.insert(hash, value.new_ref());
+                    value
+                }
+            })
+            .unwrap()
+    }
+
+    #[export]
+    pub fn read_material(&mut self, _owner: Node, data: Instance<ChumFile>) -> Dictionary {
+        self.read_material_nodeless(data)
+    }
+    pub fn read_material_nodeless(&mut self, data: Instance<ChumFile>) -> Dictionary {
+        data.script()
+            .map(|x| {
+                let hash = x.get_name_hash();
+                if let Some(data) = self.cache.get(&hash) {
+                    data.new_ref()
+                } else {
+                    let value = readermaterial::read_material_from_res(x, self);
                     self.cache.insert(hash, value.new_ref());
                     value
                 }

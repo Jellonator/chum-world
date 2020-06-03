@@ -2,8 +2,9 @@ use crate::bytedata::ByteData;
 use crate::chumfile::ChumFile;
 use gdnative::*;
 use libchum::reader::tmesh;
+use crate::reader::ChumReader;
 
-pub fn read_tmesh(data: &ByteData, fmt: libchum::format::TotemFormat) -> Option<(Reference, Vec<i32>)> {
+pub fn read_tmesh(data: &ByteData, fmt: libchum::format::TotemFormat, reader: &mut ChumReader, file: &ChumFile) -> Option<Reference> {
     let tmesh = match tmesh::TMesh::read_data(data.get_data(), fmt) {
         Ok(x) => x,
         Err(_) => {
@@ -16,29 +17,6 @@ pub fn read_tmesh(data: &ByteData, fmt: libchum::format::TotemFormat) -> Option<
     let num = generated_tris.len();
     let mesh_materials = tmesh.get_materials();
     let mut materials = Vec::new();
-    // let colors = [
-    //     Color::rgb(0.05, 0.05, 0.05),
-    //     Color::rgb(0.95, 0.95, 0.95),
-    //     Color::rgb(0.95, 0.05, 0.05),
-    //     Color::rgb(0.05, 0.95, 0.05),
-    //     Color::rgb(0.05, 0.05, 0.95),
-    //     Color::rgb(0.95, 0.95, 0.05),
-    //     Color::rgb(0.05, 0.95, 0.95),
-    //     Color::rgb(0.95, 0.05, 0.95),
-    //     Color::rgb(0.50, 0.50, 0.50),
-    //     Color::rgb(0.95, 0.50, 0.05),
-    //     Color::rgb(0.05, 0.50, 0.95),
-    //     Color::rgb(0.95, 0.05, 0.50),
-    //     Color::rgb(0.05, 0.95, 0.50),
-    //     Color::rgb(0.50, 0.95, 0.05),
-    //     Color::rgb(0.50, 0.05, 0.95),
-    //     Color::rgb(0.50, 0.50, 0.95),
-    //     Color::rgb(0.50, 0.50, 0.05),
-    //     Color::rgb(0.50, 0.05, 0.50),
-    //     Color::rgb(0.50, 0.95, 0.50),
-    //     Color::rgb(0.05, 0.50, 0.50),
-    //     Color::rgb(0.95, 0.50, 0.50),
-    // ];
     godot_print!("There are {} colors", num);
     for (i, mat) in tmesh.get_materials().iter().enumerate() {
         godot_print!("Material {:>2} is 0x{:08X}", i, mat);
@@ -78,21 +56,36 @@ pub fn read_tmesh(data: &ByteData, fmt: libchum::format::TotemFormat) -> Option<
             97280,
         )
     }
-    Some((mesh.to_reference(), materials))
+    let archiveinstance = file.get_archive_instance();
+    archiveinstance.map(|archive, res| {
+        for (i, mat) in materials.iter().enumerate() {
+            if let Some(materialfile) = archive.get_file_from_hash(res.new_ref(), *mat) {
+                let materialdict = reader.read_material_nodeless(materialfile);
+                if materialdict.get(&"exists".into()) == true.into() {
+                    let material: Material = materialdict.get(&"material".into()).try_to_object().unwrap();
+                    mesh.surface_set_material(i as i64, Some(material));
+                } else {
+                    godot_warn!("Material {} could not be loaded!", i);
+                }
+            } else {
+                godot_warn!("Material {} does not exist!", i);
+            }
+        }
+    }).unwrap();
+    Some(mesh.to_reference())
 }
 
-pub fn read_tmesh_from_res(data: &ChumFile) -> Dictionary {
+pub fn read_tmesh_from_res(data: &ChumFile, reader: &mut ChumReader) -> Dictionary {
     let fmt = data.get_format();
     godot_print!("FORMAT: {:?}", fmt);
     data.get_bytedata()
         .script()
         .map(|x| {
             let mut dict = Dictionary::new();
-            match read_tmesh(x, fmt) {
+            match read_tmesh(x, fmt, reader, data) {
                 Some(mesh) => {
                     dict.set(&"exists".into(), &true.into());
-                    dict.set(&"mesh".into(), &mesh.0.to_variant());
-                    dict.set(&"materials".into(), &mesh.1.to_variant());
+                    dict.set(&"mesh".into(), &mesh.to_variant());
                 }
                 None => {
                     godot_print!("read_tmesh returned None");

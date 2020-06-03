@@ -95,7 +95,7 @@ fn read_strip_ext<R: Read>(file: &mut R, fmt: TotemFormat) -> io::Result<StripEx
 fn strip_gen_triangle_indices(strip: &Strip, strip_ext: &StripExt) -> Vec<[(u16, u16, u16); 3]> {
     let a = strip.tri_order;
     let b = 3 - a;
-    let lists = [[0, b, a], [0, a, b]];
+    let lists = [[0, a, b], [0, b, a]];
     // Rust doesn't prevent you from writing bad code
     strip
         .vertex_ids

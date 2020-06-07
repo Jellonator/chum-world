@@ -1,7 +1,7 @@
 use crate::bytedata::ByteData;
+use crate::ChumArchive;
 use gdnative::*;
 use libchum;
-use crate::ChumArchive;
 
 #[derive(NativeClass)]
 #[inherit(Resource)]
@@ -107,7 +107,7 @@ impl ChumFile {
         &mut self,
         file: &libchum::ChumFile,
         fmt: libchum::format::TotemFormat,
-        parent: Resource
+        parent: Resource,
     ) {
         self.nameid = GodotString::from_str(file.get_name_id());
         self.typeid = GodotString::from_str(file.get_type_id());
@@ -138,7 +138,7 @@ impl ChumFile {
             typestr: String::new(),
             subtypestr: String::new(),
             format: libchum::format::TotemFormat::NGC,
-            parent: None
+            parent: None,
         }
     }
 

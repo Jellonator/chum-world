@@ -71,7 +71,11 @@ impl ChumArchive {
     }
 
     #[export]
-    pub fn get_file_from_hash(&self, owner: Resource, id: i32) -> Option<Instance<chumfile::ChumFile>> {
+    pub fn get_file_from_hash(
+        &self,
+        owner: Resource,
+        id: i32,
+    ) -> Option<Instance<chumfile::ChumFile>> {
         if let Some(archive) = &self.archive {
             if let Some(file) = archive.get_file_from_hash(id) {
                 let f = Instance::<chumfile::ChumFile>::new();

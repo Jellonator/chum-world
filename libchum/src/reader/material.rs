@@ -1,9 +1,12 @@
+use crate::common;
 use crate::format::TotemFormat;
 use std::io::{self, Read};
 
 pub struct Material {
-    texture: i32,
-    texture_reflection: i32
+    pub color: [f32; 4],
+    pub transform: common::Mat3x3,
+    pub texture: i32,
+    pub texture_reflection: i32,
 }
 
 impl Material {
@@ -17,12 +20,21 @@ impl Material {
 
     /// Read a TMesh from a file
     pub fn read_from<R: Read>(file: &mut R, fmt: TotemFormat) -> io::Result<Material> {
-        fmt.skip_n_bytes(file, 101)?; // unknown data
+        let mut coldata = [0.0; 4];
+        fmt.read_f32_into(file, &mut coldata)?;
+        fmt.skip_n_bytes(file, 3 * 4)?; // Unknown
+        fmt.skip_n_bytes(file, 4)?; // Junk
+        let mut matdata = [0.0; 9];
+        fmt.read_f32_into(file, &mut matdata)?;
+        fmt.skip_n_bytes(file, 20)?; // Junk(probably)
+        fmt.skip_n_bytes(file, 13)?; // Unknown
         let tex = fmt.read_i32(file)?;
         let tex_ref = fmt.read_i32(file)?;
         Ok(Material {
+            color: coldata,
+            transform: common::Mat3x3 { mat: matdata },
             texture: tex,
-            texture_reflection: tex_ref
+            texture_reflection: tex_ref,
         })
     }
 

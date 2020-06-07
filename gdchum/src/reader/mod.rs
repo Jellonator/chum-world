@@ -2,13 +2,14 @@ use gdnative::*;
 use std::collections::HashMap;
 
 pub mod readerbitmap;
+pub mod readermaterial;
+pub mod readersurface;
 pub mod readertext;
 pub mod readertmesh;
-pub mod readermaterial;
 #[derive(NativeClass)]
 #[inherit(Node)]
 pub struct ChumReader {
-    cache: HashMap<i32, Dictionary>
+    cache: HashMap<i32, Dictionary>,
 }
 
 use crate::chumfile::ChumFile;
@@ -46,6 +47,25 @@ impl ChumReader {
                     data.new_ref()
                 } else {
                     let value = readertmesh::read_tmesh_from_res(x, self);
+                    self.cache.insert(hash, value.new_ref());
+                    value
+                }
+            })
+            .unwrap()
+    }
+
+    #[export]
+    pub fn read_surface(&mut self, _owner: Node, data: Instance<ChumFile>) -> Dictionary {
+        self.read_surface_nodeless(data)
+    }
+    pub fn read_surface_nodeless(&mut self, data: Instance<ChumFile>) -> Dictionary {
+        data.script()
+            .map(|x| {
+                let hash = x.get_name_hash();
+                if let Some(data) = self.cache.get(&hash) {
+                    data.new_ref()
+                } else {
+                    let value = readersurface::read_surface_from_res(x, self);
                     self.cache.insert(hash, value.new_ref());
                     value
                 }
@@ -104,7 +124,7 @@ impl ChumReader {
 
     fn _init(_owner: Node) -> Self {
         ChumReader {
-            cache: HashMap::new()
+            cache: HashMap::new(),
         }
     }
 }

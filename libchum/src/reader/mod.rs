@@ -2,5 +2,7 @@
 // interpretation of common file types.
 
 pub mod bitmap;
-pub mod tmesh;
 pub mod material;
+pub mod materialanim;
+pub mod surface;
+pub mod tmesh;

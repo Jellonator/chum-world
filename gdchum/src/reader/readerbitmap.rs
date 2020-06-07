@@ -3,7 +3,10 @@ use crate::chumfile::ChumFile;
 use gdnative::*;
 use libchum::reader::bitmap;
 
-pub fn read_bitmap(data: &ByteData, fmt: libchum::format::TotemFormat) -> Option<(Reference, bool)> {
+pub fn read_bitmap(
+    data: &ByteData,
+    fmt: libchum::format::TotemFormat,
+) -> Option<(Reference, bool)> {
     let bitmap = match bitmap::Bitmap::read_data(data.get_data(), fmt) {
         Ok(x) => x,
         Err(err) => {
@@ -26,7 +29,10 @@ pub fn read_bitmap(data: &ByteData, fmt: libchum::format::TotemFormat) -> Option
         Image::FORMAT_RGBA8,
         data,
     );
-    Some((image.to_reference(), bitmap.get_alpha_level() != bitmap::AlphaLevel::Opaque))
+    Some((
+        image.to_reference(),
+        bitmap.get_alpha_level() != bitmap::AlphaLevel::Opaque,
+    ))
 }
 
 pub fn read_bitmap_from_res(data: &ChumFile) -> Dictionary {

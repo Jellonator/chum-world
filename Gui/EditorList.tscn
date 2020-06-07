@@ -50,9 +50,10 @@ text = "Nothing to view"
 
 [node name="Viewer3D" parent="TabContainer/Viewer" instance=ExtResource( 4 )]
 visible = false
-margin_top = 576.0
-margin_right = -8.0
-margin_bottom = 564.0
+margin_left = 4.0
+margin_top = 8.0
+margin_right = -4.0
+margin_bottom = -4.0
 
 [node name="TextureViewer" type="TextureRect" parent="TabContainer/Viewer"]
 visible = false

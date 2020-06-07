@@ -15,9 +15,10 @@ func _on_TextureRect_item_rect_changed():
 
 func set_file(file):
 	node_camera.reset_transform()
+	print("========================================")
 	if file == null:
 		node_mesh.hide()
-	else:
+	elif file.type == "MESH":
 		var data = ChumReader.read_tmesh(file)
 		if data == null:
 			print("INVALID DATA")
@@ -26,11 +27,24 @@ func set_file(file):
 			print("LOADED: ", data)
 			node_mesh.mesh = data["mesh"]
 			node_mesh.show()
-#			for i in range(node_mesh.get_surface_material_count()):
-#				node_mesh.set_surface_material(i, mat)
 		else:
 			print("DOES NOT EXIST")
 			node_mesh.hide()
+	elif file.type == "SURFACE":
+		var data = ChumReader.read_surface(file)
+		if data == null:
+			print("INVALID DATA")
+			node_mesh.hide()
+		elif data["exists"]:
+			print("LOADED: ", data)
+			node_mesh.mesh = data["mesh"]
+			node_mesh.show()
+		else:
+			print("DOES NOT EXIST")
+			node_mesh.hide()
+	else:
+		node_mesh.hide()
+		print("UNRECOGNIZED TYPE ", file.type)
 
 func _input(event):
 	if self.has_focus() or node_rect.has_focus() and Input.is_action_pressed("view_look"):

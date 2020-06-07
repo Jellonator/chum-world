@@ -1,10 +1,15 @@
 use crate::bytedata::ByteData;
 use crate::chumfile::ChumFile;
+use crate::reader::ChumReader;
 use gdnative::*;
 use libchum::reader::tmesh;
-use crate::reader::ChumReader;
 
-pub fn read_tmesh(data: &ByteData, fmt: libchum::format::TotemFormat, reader: &mut ChumReader, file: &ChumFile) -> Option<Reference> {
+pub fn read_tmesh(
+    data: &ByteData,
+    fmt: libchum::format::TotemFormat,
+    reader: &mut ChumReader,
+    file: &ChumFile,
+) -> Option<Reference> {
     let tmesh = match tmesh::TMesh::read_data(data.get_data(), fmt) {
         Ok(x) => x,
         Err(_) => {
@@ -57,21 +62,26 @@ pub fn read_tmesh(data: &ByteData, fmt: libchum::format::TotemFormat, reader: &m
         )
     }
     let archiveinstance = file.get_archive_instance();
-    archiveinstance.map(|archive, res| {
-        for (i, mat) in materials.iter().enumerate() {
-            if let Some(materialfile) = archive.get_file_from_hash(res.new_ref(), *mat) {
-                let materialdict = reader.read_material_nodeless(materialfile);
-                if materialdict.get(&"exists".into()) == true.into() {
-                    let material: Material = materialdict.get(&"material".into()).try_to_object().unwrap();
-                    mesh.surface_set_material(i as i64, Some(material));
+    archiveinstance
+        .map(|archive, res| {
+            for (i, mat) in materials.iter().enumerate() {
+                if let Some(materialfile) = archive.get_file_from_hash(res.new_ref(), *mat) {
+                    let materialdict = reader.read_material_nodeless(materialfile);
+                    if materialdict.get(&"exists".into()) == true.into() {
+                        let material: Material = materialdict
+                            .get(&"material".into())
+                            .try_to_object()
+                            .unwrap();
+                        mesh.surface_set_material(i as i64, Some(material));
+                    } else {
+                        godot_warn!("Material {} could not be loaded!", i);
+                    }
                 } else {
-                    godot_warn!("Material {} could not be loaded!", i);
+                    godot_warn!("Material {} does not exist!", i);
                 }
-            } else {
-                godot_warn!("Material {} does not exist!", i);
             }
-        }
-    }).unwrap();
+        })
+        .unwrap();
     Some(mesh.to_reference())
 }
 

@@ -1,22 +1,6 @@
+use crate::common::*;
 use crate::format::TotemFormat;
 use std::io::{self, Read, Write};
-
-/// Basic 3d vector
-#[derive(Clone, Copy)]
-#[repr(C)]
-pub struct Vector3 {
-    pub x: f32,
-    pub y: f32,
-    pub z: f32,
-}
-
-/// Basic 2d vector
-#[derive(Clone, Copy)]
-#[repr(C)]
-pub struct Vector2 {
-    pub x: f32,
-    pub y: f32,
-}
 
 /// A triangle strip
 pub struct Strip {
@@ -34,18 +18,6 @@ pub struct ElementData {
 /// A triangle strip's extra data
 pub struct StripExt {
     pub elements: Vec<ElementData>,
-}
-
-/// A point
-pub struct Point {
-    pub vertex: Vector3,
-    pub texcoord: Vector2,
-    pub normal: Vector3,
-}
-
-/// A triangle (three points)
-pub struct Tri {
-    pub points: [Point; 3],
 }
 
 /// A full triangle mesh

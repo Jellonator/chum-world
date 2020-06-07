@@ -155,6 +155,12 @@ impl TotemFormat {
             TotemFormat::PS2 => reader.read_u16_into::<LittleEndian>(dst),
         }
     }
+    pub fn read_f32_into<R: Read>(&self, reader: &mut R, dst: &mut [f32]) -> io::Result<()> {
+        match self {
+            TotemFormat::NGC => reader.read_f32_into::<BigEndian>(dst),
+            TotemFormat::PS2 => reader.read_f32_into::<LittleEndian>(dst),
+        }
+    }
     pub fn read_u8_into<R: Read>(&self, reader: &mut R, dst: &mut [u8]) -> io::Result<()> {
         reader.read_exact(dst)
     }

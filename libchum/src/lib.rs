@@ -1,7 +1,9 @@
+pub mod common;
 pub mod dgc;
 pub mod format;
 pub mod ngc;
 pub mod reader;
+
 use crc::crc32;
 use std::collections::HashMap;
 use std::error::Error;

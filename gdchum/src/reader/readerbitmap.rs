@@ -37,7 +37,6 @@ pub fn read_bitmap(
 
 pub fn read_bitmap_from_res(data: &ChumFile) -> Dictionary {
     let fmt = data.get_format();
-    godot_print!("FORMAT: {:?}", fmt);
     data.get_bytedata()
         .script()
         .map(|x| {

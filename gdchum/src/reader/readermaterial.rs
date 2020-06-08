@@ -93,7 +93,6 @@ pub fn read_material(
 
 pub fn read_material_from_res(data: &ChumFile, reader: &mut ChumReader) -> Dictionary {
     let fmt = data.get_format();
-    godot_print!("FORMAT: {:?}", fmt);
     data.get_bytedata()
         .script()
         .map(|x| {

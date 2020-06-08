@@ -18,7 +18,7 @@ pub fn read_surface(
         }
     };
     let mut mesh = ArrayMesh::new();
-    let surfaces = surfaceobj.generate_meshes();
+    let surfaces = surfaceobj.generate_meshes(surface::SurfaceGenMode::SingleQuad);
     let mut materials = Vec::new();
     for surface in surfaces {
         let mut verts = Vector3Array::new();
@@ -79,7 +79,6 @@ pub fn read_surface(
 
 pub fn read_surface_from_res(data: &ChumFile, reader: &mut ChumReader) -> Dictionary {
     let fmt = data.get_format();
-    godot_print!("FORMAT: {:?}", fmt);
     data.get_bytedata()
         .script()
         .map(|x| {

@@ -25,8 +25,11 @@ pub fn read_materialanim(
             {
                 let materialdict = reader.read_material_nodeless_nocache(materialfile);
                 if materialdict.get(&"exists".into()) == true.into() {
-                    let res: Resource = materialdict.get(&"material".into()).try_to_object().unwrap();
-                    reader.add_materialanim(res.clone(), matanimdata);
+                    let res: Resource = materialdict
+                        .get(&"material".into())
+                        .try_to_object()
+                        .unwrap();
+                    reader.add_materialanim(res.clone(), matanimdata, archive, res.new_ref());
                     Some(res)
                 } else {
                     None
@@ -40,7 +43,6 @@ pub fn read_materialanim(
 
 pub fn read_materialanim_from_res(data: &ChumFile, reader: &mut ChumReader) -> Dictionary {
     let fmt = data.get_format();
-    godot_print!("FORMAT: {:?}", fmt);
     data.get_bytedata()
         .script()
         .map(|x| {

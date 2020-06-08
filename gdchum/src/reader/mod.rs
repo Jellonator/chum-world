@@ -1,36 +1,137 @@
+use crate::ChumArchive;
 use gdnative::*;
-use std::collections::HashMap;
 use libchum::reader::materialanim;
+use std::collections::HashMap;
 
 pub mod readerbitmap;
 pub mod readermaterial;
+pub mod readermaterialanim;
 pub mod readersurface;
 pub mod readertext;
 pub mod readertmesh;
-pub mod readermaterialanim;
 
 pub struct MaterialAnimEntry {
     resource: Resource,
     data: materialanim::MaterialAnimation,
-    time: f32
+    textures: Vec<Option<Texture>>,
+    time: f32,
 }
 
 #[derive(NativeClass)]
 #[inherit(Node)]
 pub struct ChumReader {
     cache: HashMap<i32, Dictionary>,
-    materialanims: Vec<MaterialAnimEntry>
+    materialanims: Vec<MaterialAnimEntry>,
 }
 
 use crate::chumfile::ChumFile;
 
 #[methods]
 impl ChumReader {
-    pub fn add_materialanim(&mut self, resource: Resource, data: materialanim::MaterialAnimation) {
+    #[export]
+    pub fn _physics_process(&mut self, _owner: Node, delta: f32) {
+        // godot_print!("{}", delta);
+        for entry in &mut self.materialanims {
+            if entry.data.length <= 1.0 / 60.0 {
+                continue;
+            }
+            entry.time = (entry.time + delta) % entry.data.length;
+            let frame: u16 = (entry.time * 60.0) as u16;
+
+            let mut material: ShaderMaterial = entry.resource.cast().unwrap();
+            if let Some(i) = entry.data.track_texture.find_frame_index(frame) {
+                material.set_shader_param("arg_texture".into(), entry.textures[i].to_variant());
+            }
+            if let Some((a, b, t)) = entry.data.track_color.find_frame(frame) {
+                let color = Vector3::new(
+                    a[0] * (1.0 - t) + b[0] * t,
+                    a[1] * (1.0 - t) + b[1] * t,
+                    a[2] * (1.0 - t) + b[2] * t,
+                );
+                material.set_shader_param("arg_color".into(), color.to_variant());
+            }
+            if let Some((a, b, t)) = entry.data.track_alpha.find_frame(frame) {
+                let alpha = a * (1.0 - t) + b * t;
+                material.set_shader_param("arg_alpha".into(), alpha.to_variant());
+            }
+            if entry.data.track_stretch.len() > 0
+                || entry.data.track_scroll.len() > 0
+                || entry.data.track_rotation.len() > 0
+            {
+                let scale = if let Some((a, b, t)) = entry.data.track_stretch.find_frame(frame) {
+                    let v = a.lerp(b, t);
+                    Vector2::new(v.x, v.y)
+                } else {
+                    Vector2::new(1.0, 1.0)
+                };
+                let scroll = if let Some((a, b, t)) = entry.data.track_scroll.find_frame(frame) {
+                    let v = a.lerp(b, t);
+                    Vector2::new(v.x, v.y)
+                } else {
+                    Vector2::new(0.0, 0.0)
+                };
+                let rotation = if let Some((a, b, t)) = entry.data.track_rotation.find_frame(frame)
+                {
+                    a * (1.0 - t) + b * t
+                } else {
+                    0.0
+                };
+                let tx = Transform2D::identity()
+                    .post_translate(Vector2::new(-0.5, -0.5))
+                    .post_translate(scroll)
+                    .post_scale(scale.x, scale.y)
+                    .post_rotate(Angle {
+                        radians: rotation.into(),
+                    })
+                    .post_translate(-Vector2::new(0.5, 0.5));
+                let realtx = Transform {
+                    basis: Basis {
+                        elements: [
+                            Vector3::new(tx.m11, tx.m12, 0.0),
+                            Vector3::new(tx.m21, tx.m22, 0.0),
+                            Vector3::new(tx.m31, tx.m32, 1.0),
+                        ],
+                    },
+                    origin: Vector3::new(0.0, 0.0, 0.0),
+                };
+                material.set_shader_param("arg_texcoord_transform".into(), realtx.to_variant());
+            }
+        }
+    }
+
+    pub fn add_materialanim(
+        &mut self,
+        resource: Resource,
+        data: materialanim::MaterialAnimation,
+        archive: &ChumArchive,
+        res: Resource,
+    ) {
+        let mut textures = Vec::with_capacity(data.track_texture.len());
+        for track in &data.track_texture.frames {
+            let id = track.data;
+            textures.push(match archive.get_file_from_hash(res.clone(), id) {
+                Some(texturefile) => {
+                    let texturedict = self.read_bitmap_nodeless(texturefile);
+                    if texturedict.get(&"exists".into()) == true.into() {
+                        godot_print!("Found material for {}", id);
+                        let image: Image =
+                            texturedict.get(&"bitmap".into()).try_to_object().unwrap();
+                        let mut texture: ImageTexture = ImageTexture::new();
+                        texture.create_from_image(Some(image), 2);
+                        Some(texture.cast().unwrap())
+                    } else {
+                        godot_warn!("Material {} has invalid bitmap", id);
+                        None
+                    }
+                }
+                None => None,
+            });
+        }
         self.materialanims.push(MaterialAnimEntry {
             time: 0.0,
             data,
-            resource
+            textures,
+            resource,
         });
     }
 
@@ -171,7 +272,7 @@ impl ChumReader {
     fn _init(_owner: Node) -> Self {
         ChumReader {
             cache: HashMap::new(),
-            materialanims: Vec::new()
+            materialanims: Vec::new(),
         }
     }
 }

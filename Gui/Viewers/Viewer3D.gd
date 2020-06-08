@@ -6,6 +6,12 @@ onready var node_rect := $TextureRect
 onready var node_mesh := $Viewport/Spatial/MeshInstance
 onready var mat = node_mesh.get_surface_material(0)
 
+const MIN_SPEED = 0.0125
+const MAX_SPEED = 128
+const SPEED_MULT = 1.25
+
+var speed = 2.0
+
 func _ready():
 	node_viewport.size = node_rect.rect_size
 	node_rect.connect("item_rect_changed", self, "_on_TextureRect_item_rect_changed")
@@ -47,9 +53,18 @@ func set_file(file):
 		print("UNRECOGNIZED TYPE ", file.type)
 
 func _input(event):
-	if self.has_focus() or node_rect.has_focus() and Input.is_action_pressed("view_look"):
-		if event is InputEventMouseMotion:
-			node_camera.move_mouse(event.relative)
+	if self.has_focus() or node_rect.has_focus():
+		if Input.is_action_pressed("view_look"):
+			if event is InputEventMouseMotion:
+				node_camera.move_mouse(event.relative)
+		if event.is_action_pressed("view_speed_increase"):
+			print(randi())
+			speed = clamp(speed * SPEED_MULT, MIN_SPEED, MAX_SPEED)
+			$SpeedLabel.text = "Speed: " + str(speed)
+		if event.is_action_pressed("view_speed_decrease"):
+			print(randi())
+			speed = clamp(speed / SPEED_MULT, MIN_SPEED, MAX_SPEED)
+			$SpeedLabel.text = "Speed: " + str(speed)
 
 func _physics_process(delta):
 	var tx = node_camera.get_camera_transform()
@@ -65,4 +80,4 @@ func _physics_process(delta):
 	input_dir = input_dir.normalized()
 	if Input.is_action_pressed("view_move_slow"):
 		input_dir *= 0.5
-	node_camera.move_strafe(input_dir * delta * 2)
+	node_camera.move_strafe(input_dir * delta * speed)

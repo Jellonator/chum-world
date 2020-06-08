@@ -58,47 +58,15 @@ pub fn read_surface(
         .map(|archive, res| {
             for (i, mat) in materials.iter().enumerate() {
                 if let Some(materialfile) = archive.get_file_from_hash(res.new_ref(), *mat) {
-                    let typestr = materialfile
-                        .script()
-                        .map(|x| x.get_type_str().to_owned())
-                        .unwrap();
-                    match typestr.as_str() {
-                        "BITMAP" => {
-                            let bitmapdict = reader.read_bitmap_nodeless(materialfile);
-                            if bitmapdict.get(&"exists".into()) == true.into() {
-                                let image: Image =
-                                    bitmapdict.get(&"bitmap".into()).try_to_object().unwrap();
-                                let mut material = SpatialMaterial::new();
-                                let mut texture: ImageTexture = ImageTexture::new();
-                                texture.create_from_image(Some(image), 0);
-                                material.set_texture(
-                                    SpatialMaterial::TEXTURE_ALBEDO,
-                                    Some(texture.cast().unwrap()),
-                                );
-                                material.set_feature(
-                                    SpatialMaterial::FEATURE_TRANSPARENT,
-                                    bitmapdict.get(&"hasalpha".into()).to_bool(),
-                                );
-                                mesh.surface_set_material(i as i64, Some(material.cast().unwrap()));
-                            } else {
-                                godot_warn!("Bitmap {}/{:08X} could not be loaded!", i, mat);
-                            }
-                        }
-                        "MATERIAL" => {
-                            let materialdict = reader.read_material_nodeless(materialfile);
-                            if materialdict.get(&"exists".into()) == true.into() {
-                                let material: Material = materialdict
-                                    .get(&"material".into())
-                                    .try_to_object()
-                                    .unwrap();
-                                mesh.surface_set_material(i as i64, Some(material));
-                            } else {
-                                godot_warn!("Material {}/{:08X} could not be loaded!", i, mat);
-                            }
-                        }
-                        other => {
-                            godot_warn!("Material {}/{:08X} has invalid type {}!", i, mat, other);
-                        }
+                    let materialdict = reader.read_materialanim_nodeless(materialfile);
+                    if materialdict.get(&"exists".into()) == true.into() {
+                        let material: Material = materialdict
+                            .get(&"material".into())
+                            .try_to_object()
+                            .unwrap();
+                        mesh.surface_set_material(i as i64, Some(material));
+                    } else {
+                        godot_warn!("Material {}/{:08X} could not be loaded!", i, mat);
                     }
                 } else {
                     godot_warn!("Material {}/{:08X} does not exist!", i, mat);

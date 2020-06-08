@@ -39,7 +39,7 @@ pub fn read_material(
                         let image: Image =
                             texturedict.get(&"bitmap".into()).try_to_object().unwrap();
                         let mut texture: ImageTexture = ImageTexture::new();
-                        texture.create_from_image(Some(image), 0);
+                        texture.create_from_image(Some(image), 2);
                         material.set_shader_param("has_texture".into(), true.into());
                         material.set_shader_param("arg_texture".into(), texture.into());
                     } else {
@@ -59,7 +59,7 @@ pub fn read_material(
                         let image: Image =
                             texturedict.get(&"bitmap".into()).try_to_object().unwrap();
                         let mut texture: ImageTexture = ImageTexture::new();
-                        texture.create_from_image(Some(image), 0);
+                        texture.create_from_image(Some(image), 2);
                         material.set_shader_param("has_reflection".into(), true.into());
                         material.set_shader_param("arg_reflection".into(), texture.into());
                     } else {

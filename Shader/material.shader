@@ -10,8 +10,13 @@ uniform bool has_texture = false;
 uniform bool has_reflection = false;
 
 void fragment() {
-	vec4 uvpos = vec4(UV.x, UV.y, 1.0, 0.0);
-	uvpos = arg_texcoord_transform * uvpos;
+	mat3 realmat = mat3(
+		arg_texcoord_transform[0].xyz,
+		arg_texcoord_transform[1].xyz,
+		arg_texcoord_transform[2].xyz
+	);
+	vec3 uvpos = vec3(UV.x, UV.y, 1.0);
+	uvpos = uvpos * realmat;
 	vec4 col1;
 	if (has_texture) {
 		col1 = texture(arg_texture, uvpos.xy);

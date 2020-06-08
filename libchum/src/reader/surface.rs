@@ -62,17 +62,17 @@ impl SurfaceObject {
                     },
                     Point {
                         vertex: curves[1][0],
-                        texcoord: surface.texcoords[0],
+                        texcoord: surface.texcoords[1],
                         normal: normal1,
                     },
                     Point {
                         vertex: curves[2][0],
-                        texcoord: surface.texcoords[0],
+                        texcoord: surface.texcoords[2],
                         normal: normal2,
                     },
                     Point {
                         vertex: curves[3][0],
-                        texcoord: surface.texcoords[0],
+                        texcoord: surface.texcoords[3],
                         normal: normal3,
                     },
                 ],

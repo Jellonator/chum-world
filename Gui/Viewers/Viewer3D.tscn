@@ -33,7 +33,7 @@ material/0 = SubResource( 2 )
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 4 )
 
 [node name="DirectionalLight" type="DirectionalLight" parent="Viewport/Spatial"]
-transform = Transform( 0.866025, -0.377063, -0.328365, 0, -0.656731, 0.754125, -0.5, -0.653092, -0.568745, 0, 4.64216, -7 )
+transform = Transform( 0.866025, -0.377063, -0.328365, 0.165521, -0.403501, 0.899883, -0.471808, -0.833673, -0.287031, 0, 15.1487, 5.34027 )
 light_energy = 0.5
 light_indirect_energy = 0.5
 

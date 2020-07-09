@@ -52,3 +52,8 @@ func show_err(text: String):
 
 func _on_Tree_file_selected(file):
 	node_editor.set_file(file)
+
+var export_mode := 0
+var export_file = null
+func _on_SaveDialog_file_selected(path):
+	export_file.export_to(export_mode, path)

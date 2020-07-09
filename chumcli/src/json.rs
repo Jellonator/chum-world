@@ -11,6 +11,8 @@ use std::path::{Path, PathBuf};
 pub struct JsonData {
     pub header: String,
     pub files: Vec<JsonDataFile>,
+    #[serde(default)]
+    pub unused_names: Vec<String>
 }
 
 impl JsonData {
@@ -67,6 +69,7 @@ pub fn extract_archive(
     let mut json_data = JsonData {
         header: String::from_utf8_lossy(archive.get_header().get_legal_notice()).to_string(),
         files: Vec::new(),
+        unused_names: archive.find_unused_names().iter().map(|x| x.to_string()).collect()
     };
     // Iterate files
     for file in archive.get_files() {

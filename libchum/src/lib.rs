@@ -1,11 +1,13 @@
 pub mod common;
 pub mod dgc;
+pub mod export;
 pub mod format;
 pub mod ngc;
 pub mod reader;
+pub mod util;
 
 use crc::crc32;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::error::Error;
 use std::fmt;
 use std::fmt::Display;
@@ -257,6 +259,17 @@ impl ChumArchive {
         )?;
         let ngc = ngc::TotemNameTable::new(self.names.clone());
         Some((ngc, dgc))
+    }
+
+    /// Find unused names
+    pub fn find_unused_names(&self) -> HashSet<&str> {
+        let mut set: HashSet<&str> = self.names.values().map(|x| x.as_str()).collect();
+        for file in self.files.values() {
+            set.remove(file.get_name_id());
+            set.remove(file.get_type_id());
+            set.remove(file.get_subtype_id());
+        }
+        set
     }
 
     /// Merge an NGC and DGC archive

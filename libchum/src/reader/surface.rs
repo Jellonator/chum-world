@@ -1,6 +1,10 @@
 use crate::common::*;
+use crate::export::ChumExport;
 use crate::format::TotemFormat;
-use std::io::{self, Read};
+use crate::util::bezierpatch;
+use std::collections::HashMap;
+use std::error::Error;
+use std::io::{self, Read, Write};
 
 pub struct SurfaceObject {
     pub vertices: Vec<Vector3>,
@@ -31,10 +35,10 @@ pub struct OutMesh {
 
 #[derive(Copy, Clone)]
 pub enum SurfaceGenMode {
-    SingleQuad, // Generates a single quad
-                // ControlPointsAsVertices, // Generates 9 quads
-                // SplineInterp(usize), // Spline interpolation
-                // NURBSInterp(usize), // NURBS interpolation
+    SingleQuad,              // Generates a single quad
+    ControlPointsAsVertices, // Generates 9 quads
+    // SplineInterp(usize), // Spline interpolation
+    BezierInterp(usize), // NURBS interpolation
 }
 
 fn generate_surface_singlequad(
@@ -70,7 +74,11 @@ fn generate_surface_singlequad(
     quads
 }
 
-/*fn generate_surface_quad9(curves: &[[Vector3; 4]; 4], normals: &[Vector3; 4], texcoords: &[Vector2; 4]) -> Vec<Quad> {
+fn generate_surface_quad9(
+    curves: &[[Vector3; 4]; 4],
+    normals: &[Vector3; 4],
+    texcoords: &[Vector2; 4],
+) -> Vec<Quad> {
     let mut quads = Vec::with_capacity(9);
     let pts_tl = curves[0][1] - curves[0][0] + curves[3][2];
     let pts_tr = curves[0][2] - curves[0][3] + curves[1][1];
@@ -78,28 +86,28 @@ fn generate_surface_singlequad(
     let pts_br = curves[2][1] - curves[1][3] + curves[1][2];
     let points = [
         [curves[0][0], curves[0][1], curves[0][2], curves[0][3]],
-        [curves[3][2],       pts_tl,       pts_tr, curves[1][1]],
-        [curves[3][1],       pts_bl,       pts_br, curves[1][2]],
+        [curves[3][2], pts_tl, pts_tr, curves[1][1]],
+        [curves[3][1], pts_bl, pts_br, curves[1][2]],
         [curves[2][3], curves[2][2], curves[2][1], curves[1][3]],
     ];
     let mut ttexc = [[Vector2::new(); 4]; 4];
     let mut tnorm = [[Vector3::new(); 4]; 4];
     for ix in 0..4 {
         for iy in 0..4 {
-            let totaldisx = (points[iy][0] - points[iy][ix]).len() + (points[iy][ix] - points[iy][3]).len();
-            let totaldisy = (points[0][ix] - points[iy][ix]).len() + (points[iy][ix] - points[3][ix]).len();
+            let totaldisx =
+                (points[iy][0] - points[iy][ix]).len() + (points[iy][ix] - points[iy][3]).len();
+            let totaldisy =
+                (points[0][ix] - points[iy][ix]).len() + (points[iy][ix] - points[3][ix]).len();
             let t_x = (points[iy][0] - points[iy][ix]).len() / totaldisx;
             let t_y = (points[0][ix] - points[iy][ix]).len() / totaldisy;
-            ttexc[ix][iy] =
-                texcoords[0] * (1.0 - t_x) * (1.0 - t_y) +
-                texcoords[1] * (      t_x) * (1.0 - t_y) +
-                texcoords[2] * (      t_x) * (      t_y) +
-                texcoords[3] * (1.0 - t_x) * (      t_y);
-            tnorm[ix][iy] =
-                normals[0] * (1.0 - t_x) * (1.0 - t_y) +
-                normals[1] * (      t_x) * (1.0 - t_y) +
-                normals[2] * (      t_x) * (      t_y) +
-                normals[3] * (1.0 - t_x) * (      t_y);
+            ttexc[iy][ix] = texcoords[0] * (1.0 - t_x) * (1.0 - t_y)
+                + texcoords[1] * (t_x) * (1.0 - t_y)
+                + texcoords[2] * (t_x) * (t_y)
+                + texcoords[3] * (1.0 - t_x) * (t_y);
+            tnorm[iy][ix] = normals[0] * (1.0 - t_x) * (1.0 - t_y)
+                + normals[1] * (t_x) * (1.0 - t_y)
+                + normals[2] * (t_x) * (t_y)
+                + normals[3] * (1.0 - t_x) * (t_y);
         }
     }
     for ix in 0..3 {
@@ -112,26 +120,64 @@ fn generate_surface_singlequad(
                         normal: tnorm[iy][ix],
                     },
                     Point {
-                        vertex: points[iy][ix+1],
-                        texcoord: ttexc[iy][ix+1],
-                        normal: tnorm[iy][ix+1],
+                        vertex: points[iy][ix + 1],
+                        texcoord: ttexc[iy][ix + 1],
+                        normal: tnorm[iy][ix + 1],
                     },
                     Point {
-                        vertex: points[iy+1][ix+1],
-                        texcoord: ttexc[iy+1][ix+1],
-                        normal: tnorm[iy+1][ix+1],
+                        vertex: points[iy + 1][ix + 1],
+                        texcoord: ttexc[iy + 1][ix + 1],
+                        normal: tnorm[iy + 1][ix + 1],
                     },
                     Point {
-                        vertex: points[iy+1][ix],
-                        texcoord: ttexc[iy+1][ix],
-                        normal: tnorm[iy+1][ix],
+                        vertex: points[iy + 1][ix],
+                        texcoord: ttexc[iy + 1][ix],
+                        normal: tnorm[iy + 1][ix],
                     },
                 ],
             });
         }
     }
     quads
-}*/
+}
+
+fn generate_surface_bezier(
+    curves: &[[Vector3; 4]; 4],
+    normals: &[Vector3; 4],
+    texcoords: &[Vector2; 4],
+    steps: usize,
+) -> Vec<Quad> {
+    let pts_tl = curves[0][1] - curves[0][0] + curves[3][2];
+    let pts_tr = curves[0][2] - curves[0][3] + curves[1][1];
+    let pts_bl = curves[2][2] - curves[2][3] + curves[3][1];
+    let pts_br = curves[2][1] - curves[1][3] + curves[1][2];
+    let points = [
+        [curves[0][0], curves[0][1], curves[0][2], curves[0][3]],
+        [curves[3][2], pts_tl, pts_tr, curves[1][1]],
+        [curves[3][1], pts_bl, pts_br, curves[1][2]],
+        [curves[2][3], curves[2][2], curves[2][1], curves[1][3]],
+    ];
+    let vertices = bezierpatch::precompute_surface_texnorm(
+        &points,
+        steps,
+        steps,
+        &[[texcoords[0], texcoords[1]], [texcoords[3], texcoords[2]]],
+        &[[normals[0], normals[1]], [normals[3], normals[2]]]);
+    let mut quads = Vec::new();
+    for iy in 0..steps {
+        for ix in 0..steps {
+            quads.push(Quad {
+                points: [
+                    vertices[iy][ix].clone(),
+                    vertices[iy][ix + 1].clone(),
+                    vertices[iy + 1][ix + 1].clone(),
+                    vertices[iy + 1][ix].clone(),
+                ],
+            });
+        }
+    }
+    quads
+}
 
 pub fn generate_surface(
     curves: &[[Vector3; 4]; 4],
@@ -141,7 +187,10 @@ pub fn generate_surface(
 ) -> Vec<Quad> {
     match mode {
         SurfaceGenMode::SingleQuad => generate_surface_singlequad(curves, normals, texcoords),
-        // SurfaceGenMode::ControlPointsAsVertices => generate_surface_quad9(curves, normals, texcoords),
+        SurfaceGenMode::ControlPointsAsVertices => {
+            generate_surface_quad9(curves, normals, texcoords)
+        }
+        SurfaceGenMode::BezierInterp(n) => generate_surface_bezier(curves, normals, texcoords, n),
     }
 }
 
@@ -262,5 +311,102 @@ impl SurfaceObject {
     /// Read a SurfaceObject from data
     pub fn read_data(data: &[u8], fmt: TotemFormat) -> io::Result<SurfaceObject> {
         SurfaceObject::read_from(&mut data.as_ref(), fmt)
+    }
+
+    pub fn begin_export<'a>(&'a self, mode: SurfaceExportMode) -> SurfaceExport<'a> {
+        SurfaceExport {
+            surface: self,
+            genmode: mode,
+        }
+    }
+}
+
+pub enum SurfaceExportMode {
+    Mesh(SurfaceGenMode),
+    // Surface
+}
+
+pub struct SurfaceExport<'a> {
+    pub surface: &'a SurfaceObject,
+    pub genmode: SurfaceExportMode,
+}
+
+fn insert_if_not_exist<T, U>(hashmap: &mut HashMap<T, U>, key: T, value: U) -> bool
+where
+    T: Eq + std::hash::Hash,
+{
+    if hashmap.contains_key(&key) {
+        false
+    } else {
+        hashmap.insert(key, value);
+        true
+    }
+}
+
+impl<'a> SurfaceExport<'a> {
+    fn export_mesh<W>(&self, writer: &mut W, mode: SurfaceGenMode) -> Result<(), Box<dyn Error>>
+    where
+        W: Write,
+    {
+        let mut vertices = HashMap::<Vector3, u64>::new();
+        let mut normals = HashMap::<Vector3, u64>::new();
+        let mut texcoords = HashMap::<Vector2, u64>::new();
+        let gen = self.surface.generate_meshes(mode);
+        for mesh in gen.iter() {
+            for quad in mesh.quads.iter() {
+                for point in quad.points.iter() {
+                    let nvert = vertices.len() as u64;
+                    if insert_if_not_exist(&mut vertices, point.vertex, nvert + 1) {
+                        writeln!(
+                            writer,
+                            "v {} {} {}",
+                            point.vertex.x, point.vertex.y, point.vertex.z
+                        )?;
+                    }
+                    let nnorm = normals.len() as u64;
+                    if insert_if_not_exist(&mut normals, point.normal, nnorm + 1) {
+                        writeln!(
+                            writer,
+                            "vn {} {} {}",
+                            -point.normal.x, -point.normal.y, -point.normal.z
+                        )?;
+                    }
+                    let ntex = texcoords.len() as u64;
+                    if insert_if_not_exist(&mut texcoords, point.texcoord, ntex + 1) {
+                        writeln!(writer, "vt {} {}", point.texcoord.x, point.texcoord.y)?;
+                    }
+                }
+            }
+        }
+        for mesh in gen.iter() {
+            for quad in mesh.quads.iter() {
+                write!(writer, "f")?;
+                for point in quad.points.iter() {
+                    write!(
+                        writer,
+                        " {}/{}/{}",
+                        vertices[&point.vertex],
+                        texcoords[&point.texcoord],
+                        normals[&point.normal]
+                    )?;
+                }
+                writeln!(writer, "")?;
+            }
+        }
+        Ok(())
+    }
+}
+
+impl<'a> ChumExport for SurfaceExport<'a> {
+    fn export<W>(&self, writer: &mut W) -> Result<(), Box<dyn Error>>
+    where
+        W: Write,
+    {
+        match self.genmode {
+            SurfaceExportMode::Mesh(x) => {
+                self.export_mesh(writer, x)?;
+            }
+        }
+        Ok(())
     }
 }

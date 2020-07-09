@@ -18,7 +18,7 @@ pub fn read_surface(
         }
     };
     let mut mesh = ArrayMesh::new();
-    let surfaces = surfaceobj.generate_meshes(surface::SurfaceGenMode::SingleQuad);
+    let surfaces = surfaceobj.generate_meshes(surface::SurfaceGenMode::BezierInterp(10));
     let mut materials = Vec::new();
     for surface in surfaces {
         let mut verts = Vector3Array::new();
@@ -27,18 +27,20 @@ pub fn read_surface(
         let mut meshdata = VariantArray::new();
         // let mut colordata = ColorArray::new();
         for quad in surface.quads {
-            for point in &quad.points {
-                verts.push(&Vector3::new(
-                    point.vertex.x,
-                    point.vertex.y,
-                    point.vertex.z,
-                ));
-                texcoords.push(&Vector2::new(point.texcoord.x, point.texcoord.y));
-                normals.push(&Vector3::new(
-                    point.normal.x,
-                    point.normal.y,
-                    point.normal.z,
-                ));
+            for tri in &quad.tris() {
+                for point in &tri.points {
+                    verts.push(&Vector3::new(
+                        point.vertex.x,
+                        point.vertex.y,
+                        point.vertex.z,
+                    ));
+                    texcoords.push(&Vector2::new(point.texcoord.x, point.texcoord.y));
+                    normals.push(&Vector3::new(
+                        point.normal.x,
+                        point.normal.y,
+                        point.normal.z,
+                    ));
+                }
             }
         }
         materials.push(surface.material_index);
@@ -47,7 +49,7 @@ pub fn read_surface(
         meshdata.set(ArrayMesh::ARRAY_NORMAL as i32, &Variant::from(&normals));
         meshdata.set(ArrayMesh::ARRAY_TEX_UV as i32, &Variant::from(&texcoords));
         mesh.add_surface_from_arrays(
-            Mesh::PRIMITIVE_TRIANGLE_FAN,
+            Mesh::PRIMITIVE_TRIANGLES,
             meshdata,
             VariantArray::new(),
             97280,

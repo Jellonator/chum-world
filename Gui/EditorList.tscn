@@ -19,7 +19,19 @@ __meta__ = {
 "_edit_use_anchors_": false
 }
 
+[node name="HBoxContainer" type="HBoxContainer" parent="."]
+margin_right = 1024.0
+margin_bottom = 20.0
+
+[node name="ExportButton" type="MenuButton" parent="HBoxContainer"]
+margin_right = 111.0
+margin_bottom = 20.0
+text = "Export File As..."
+flat = false
+items = [ "Raw Binary (.bin)", null, 0, false, false, 0, 0, null, "", false, "Text (.txt)", null, 0, false, false, 1, 0, null, "", false, "Model (.obj)", null, 0, false, false, 2, 0, null, "", false, "Texture (.png)", null, 0, false, false, 3, 0, null, "", false ]
+
 [node name="TabContainer" type="TabContainer" parent="."]
+margin_top = 24.0
 margin_right = 1024.0
 margin_bottom = 600.0
 size_flags_vertical = 3
@@ -43,9 +55,9 @@ script = ExtResource( 6 )
 
 [node name="Label" type="Label" parent="TabContainer/Viewer/Default"]
 margin_left = 458.0
-margin_top = 275.0
+margin_top = 263.0
 margin_right = 558.0
-margin_bottom = 289.0
+margin_bottom = 277.0
 text = "Nothing to view"
 
 [node name="Viewer3D" parent="TabContainer/Viewer" instance=ExtResource( 4 )]

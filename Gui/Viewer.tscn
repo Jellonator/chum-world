@@ -112,7 +112,17 @@ visible = false
 margin_right = 83.0
 margin_bottom = 58.0
 popup_exclusive = true
+
+[node name="SaveDialog" type="FileDialog" parent="."]
+margin_left = 59.0
+margin_top = 66.0
+margin_right = 754.0
+margin_bottom = 548.0
+access = 2
+current_dir = "/home/jellonator/Workspace/Rust/ChumWorld"
+current_path = "/home/jellonator/Workspace/Rust/ChumWorld/"
 [connection signal="text_changed" from="VBox/Tabs/Files/VBox/HBox/LineEdit" to="VBox/Tabs/Files/VBox/Tree" method="_on_LineEdit_text_changed"]
 [connection signal="file_selected" from="VBox/Tabs/Files/VBox/Tree" to="." method="_on_Tree_file_selected"]
 [connection signal="item_selected" from="VBox/Tabs/Files/VBox/Tree" to="VBox/Tabs/Files/VBox/Tree" method="_on_Tree_item_selected"]
 [connection signal="files_selected" from="ArchiveFileSelector" to="." method="_on_ArchiveFileSelector_files_selected"]
+[connection signal="file_selected" from="SaveDialog" to="." method="_on_SaveDialog_file_selected"]

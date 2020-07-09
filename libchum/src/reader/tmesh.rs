@@ -1,5 +1,7 @@
 use crate::common::*;
+use crate::export::ChumExport;
 use crate::format::TotemFormat;
+use std::error::Error;
 use std::io::{self, Read, Write};
 
 /// A triangle strip
@@ -294,6 +296,45 @@ impl TMesh {
                 }
             }
             write!(obj, "\n")?;
+        }
+        Ok(())
+    }
+}
+
+impl ChumExport for TMesh {
+    fn export<W>(&self, writer: &mut W) -> Result<(), Box<dyn Error>>
+    where
+        W: Write,
+    {
+        for v in &self.vertices {
+            writeln!(writer, "v {} {} {}", v.x, v.y, v.z)?;
+        }
+        for vt in &self.texcoords {
+            writeln!(writer, "vt {} {}", vt.x, vt.y)?;
+        }
+        for vn in &self.normals {
+            writeln!(writer, "vn {} {} {}", vn.x, vn.y, vn.z)?;
+        }
+        for (strip, strip_ext) in self.strips.iter().zip(self.strips_ext.iter()) {
+            let a = strip.tri_order;
+            let b = 3 - a;
+            let lists = [[0, a, b], [0, b, a]];
+            // Rust doesn't prevent you from writing bad code
+            for ((vertex_ids, elements), cycle) in strip
+                .vertex_ids
+                .windows(3)
+                .zip(strip_ext.elements.windows(3).into_iter())
+                .zip(lists.iter().cycle())
+            {
+                write!(writer, "f")?;
+                for i in cycle {
+                    let texcoord = elements[*i as usize].texcoord_id + 1;
+                    let normal = elements[*i as usize].normal_id + 1;
+                    let vertex = vertex_ids[*i as usize] + 1;
+                    write!(writer, " {}/{}/{}", vertex, texcoord, normal)?;
+                }
+                writeln!(writer, "")?;
+            }
         }
         Ok(())
     }

@@ -1,7 +1,9 @@
 use crate::bytedata::ByteData;
 use crate::ChumArchive;
 use gdnative::*;
-use libchum;
+use libchum::{self, export::ChumExport, reader};
+use std::fs::File;
+use std::io::Write;
 
 #[derive(NativeClass)]
 #[inherit(Resource)]
@@ -17,6 +19,12 @@ pub struct ChumFile {
     parent: Option<Resource>,
     format: libchum::format::TotemFormat,
 }
+
+// Direct copy of res://Gui/EditorList.gd
+const EXPORT_ID_BIN: i64 = 0;
+const EXPORT_ID_TEXT: i64 = 1;
+const EXPORT_ID_MODEL: i64 = 2;
+const EXPORT_ID_TEXTURE: i64 = 3;
 
 #[methods]
 impl ChumFile {
@@ -81,6 +89,98 @@ impl ChumFile {
     #[export]
     pub fn set_subtype(&mut self, _owner: Resource, value: GodotString) {
         self.subtypeid = value;
+    }
+
+    fn export_to_bitmap(&mut self, path: &str) {
+        let mut buffer = File::create(path).unwrap();
+        self.get_bytedata()
+            .map(|bytedata, _| {
+                let bitmap =
+                    match reader::bitmap::Bitmap::read_data(bytedata.get_data(), self.format) {
+                        Ok(x) => x,
+                        Err(err) => {
+                            panic!("BITMAP file invalid: {}", err);
+                        }
+                    };
+                bitmap.export(&mut buffer).unwrap();
+            })
+            .unwrap();
+    }
+
+    fn export_to_binary(&mut self, path: &str) {
+        let mut buffer = File::create(path).unwrap();
+        self.get_bytedata()
+            .map(|bytedata, _| {
+                buffer.write_all(bytedata.get_data()).unwrap();
+            })
+            .unwrap();
+    }
+
+    fn export_mesh_to_obj(&mut self, path: &str) {
+        let mut buffer = File::create(path).unwrap();
+        self.get_bytedata()
+            .map(|bytedata, _| {
+                let tmesh = match reader::tmesh::TMesh::read_data(bytedata.get_data(), self.format)
+                {
+                    Ok(x) => x,
+                    Err(err) => {
+                        panic!("MESH file invalid: {}", err);
+                    }
+                };
+                tmesh.export(&mut buffer).unwrap();
+            })
+            .unwrap();
+    }
+
+    fn export_surface_to_obj(&mut self, path: &str) {
+        let mut buffer = File::create(path).unwrap();
+        self.get_bytedata()
+            .map(|bytedata, _| {
+                let surf = match reader::surface::SurfaceObject::read_data(
+                    bytedata.get_data(),
+                    self.format,
+                ) {
+                    Ok(x) => x,
+                    Err(err) => {
+                        panic!("MESH file invalid: {}", err);
+                    }
+                };
+                surf.begin_export(reader::surface::SurfaceExportMode::Mesh(
+                    reader::surface::SurfaceGenMode::BezierInterp(10),
+                ))
+                .export(&mut buffer)
+                .unwrap();
+            })
+            .unwrap();
+    }
+
+    fn export_to_txt(&mut self, path: &str) {
+        let mut buffer = File::create(path).unwrap();
+        self.get_bytedata()
+            .map(|bytedata, _| {
+                buffer.write_all(&bytedata.get_data()[4..]).unwrap();
+            })
+            .unwrap();
+    }
+
+    #[export]
+    pub fn export_to(&mut self, _owner: Resource, export_type: i64, path: GodotString) {
+        let pathstr: String = format!("{}", path);
+        match export_type {
+            EXPORT_ID_BIN => self.export_to_binary(&pathstr),
+            EXPORT_ID_TEXT => self.export_to_txt(&pathstr),
+            EXPORT_ID_TEXTURE => self.export_to_bitmap(&pathstr),
+            EXPORT_ID_MODEL => match &self.typestr.as_str() {
+                &"MESH" => self.export_mesh_to_obj(&pathstr),
+                &"SURFACE" => self.export_surface_to_obj(&pathstr),
+                other => {
+                    panic!("Unexpected type for OBJ export {}", other);
+                }
+            },
+            other => {
+                panic!("Unexpected export type {}", other);
+            }
+        };
     }
 
     pub fn get_name_str(&self) -> &str {

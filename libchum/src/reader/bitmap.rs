@@ -1,5 +1,8 @@
+use crate::export::ChumExport;
 use crate::format::TotemFormat;
-use std::io::{self, Read};
+use std::error::Error;
+use std::io::{self, Read, Write};
+use std::slice;
 
 const FORMAT_C4: u8 = 1;
 const FORMAT_C8: u8 = 2;
@@ -11,6 +14,9 @@ const FORMAT_RGB888: u8 = 13;
 const PALETTE_A3RGB5: u8 = 1;
 const PALETTE_RGB565: u8 = 2;
 const PALETTE_RGBA8888: u8 = 3;
+
+use image;
+use image::Pixel;
 
 #[derive(Clone, Copy, Debug)]
 pub struct Color {
@@ -255,6 +261,10 @@ impl Bitmap {
         self.alpha
     }
 
+    pub fn pos_to_index(&self, x: u32, y: u32) -> usize {
+        return x as usize * self.width as usize + y as usize;
+    }
+
     /// Read a Bitmap from a file
     pub fn read_from<R: Read>(file: &mut R, fmt: TotemFormat) -> io::Result<Bitmap> {
         let width: u32 = fmt.read_u32(file)?;
@@ -335,5 +345,73 @@ impl Bitmap {
     /// Read a TMesh from data
     pub fn read_data(data: &[u8], fmt: TotemFormat) -> io::Result<Bitmap> {
         Bitmap::read_from(&mut data.as_ref(), fmt)
+    }
+}
+
+impl image::GenericImageView for Bitmap {
+    type Pixel = image::Rgba<u8>;
+    type InnerImageView = Self;
+    fn dimensions(&self) -> (u32, u32) {
+        (self.width, self.height)
+    }
+    fn bounds(&self) -> (u32, u32, u32, u32) {
+        (0, 0, self.width, self.height)
+    }
+    fn get_pixel(&self, x: u32, y: u32) -> Self::Pixel {
+        let col = &self.data[self.pos_to_index(x, y)];
+        let ptr = &col.r as *const u8;
+        unsafe {
+            // this is fine
+            *Self::Pixel::from_slice(slice::from_raw_parts(ptr, 4))
+        }
+    }
+    fn inner(&self) -> &Self::InnerImageView {
+        self
+    }
+}
+impl image::GenericImage for Bitmap {
+    type InnerImage = Self;
+    fn get_pixel_mut(&mut self, x: u32, y: u32) -> &mut Self::Pixel {
+        let idx = self.pos_to_index(x, y);
+        let col = &mut self.data[idx];
+        let ptr = &mut col.r;
+        unsafe {
+            // this is fine
+            Self::Pixel::from_slice_mut(slice::from_raw_parts_mut(ptr, 4))
+        }
+    }
+    fn put_pixel(&mut self, x: u32, y: u32, pixel: Self::Pixel) {
+        let idx = self.pos_to_index(x, y);
+        self.data[idx] = Color {
+            r: pixel[0],
+            g: pixel[1],
+            b: pixel[2],
+            a: pixel[3],
+        }
+    }
+    fn blend_pixel(&mut self, x: u32, y: u32, pixel: Self::Pixel) {
+        self.get_pixel_mut(x, y).blend(&pixel);
+    }
+    fn inner_mut(&mut self) -> &mut Self::InnerImage {
+        return self;
+    }
+}
+
+impl ChumExport for Bitmap {
+    fn export<W>(&self, writer: &mut W) -> Result<(), Box<dyn Error>>
+    where
+        W: Write,
+    {
+        let encoder = image::png::PNGEncoder::new(writer);
+        unsafe {
+            let ptr = self.data.as_ptr() as *const u8;
+            encoder.encode(
+                slice::from_raw_parts(ptr, self.data.len() * 4),
+                self.width,
+                self.height,
+                image::ColorType::Rgba8,
+            )?;
+        }
+        Ok(())
     }
 }

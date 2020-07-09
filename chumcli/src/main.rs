@@ -49,7 +49,7 @@ fn load_archive(matches: &clap::ArgMatches) -> Result<ChumArchive, Box<dyn Error
 /// Info command.
 /// Gets information about the given archive.
 fn cmd_info(matches: &clap::ArgMatches) -> Result<(), Box<dyn Error>> {
-    let (dgc, _ngc) = load_archive_raw(matches)?;
+    let (dgc, ngc) = load_archive_raw(matches)?;
     let chunk_size = dgc.get_chunk_size();
     let mut max_file_size = 0usize;
     let mut min_file_size = usize::max_value();
@@ -88,6 +88,12 @@ fn cmd_info(matches: &clap::ArgMatches) -> Result<(), Box<dyn Error>> {
         "Minimum size: {}B, Maximum size: {}B",
         min_file_size, max_file_size
     );
+    let archive = ChumArchive::merge_archives(ngc, dgc)?;
+    let unused = archive.find_unused_names();
+    println!("There are {} unused names", unused.len());
+    for v in unused {
+        println!("    {}", v);
+    }
     Ok(())
 }
 

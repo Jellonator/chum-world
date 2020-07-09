@@ -7,8 +7,10 @@ reloadable=true
 
 [entry]
 
+Windows.64="res://gdchum/target/x86_64-pc-windows-gnu/release/gdchum.dll"
 X11.64="res://gdchum/target/debug/libgdchum.so"
 
 [dependencies]
 
+Windows.64=[  ]
 X11.64=[  ]

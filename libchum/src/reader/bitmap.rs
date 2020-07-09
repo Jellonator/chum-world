@@ -1,9 +1,16 @@
+//! Used for BITMAP file conversion.
+//! See https://github.com/Jellonator/chum-world/wiki/BITMAP for more information.
+
 use crate::export::ChumExport;
 use crate::format::TotemFormat;
 use std::error::Error;
 use std::io::{self, Read, Write};
 use std::slice;
+use image;
+use image::Pixel;
 
+
+// Image formats
 const FORMAT_C4: u8 = 1;
 const FORMAT_C8: u8 = 2;
 const FORMAT_RGB565: u8 = 8;
@@ -11,12 +18,10 @@ const FORMAT_A3RGB565: u8 = 10;
 const FORMAT_ARGB8888: u8 = 12;
 const FORMAT_RGB888: u8 = 13;
 
+// Palette format
 const PALETTE_A3RGB5: u8 = 1;
 const PALETTE_RGB565: u8 = 2;
 const PALETTE_RGBA8888: u8 = 3;
-
-use image;
-use image::Pixel;
 
 #[derive(Clone, Copy, Debug)]
 pub struct Color {
@@ -41,6 +46,7 @@ impl Default for Color {
 
 #[allow(non_snake_case)]
 impl Color {
+    /// Create a Color from an RGB565 value.
     pub fn from_RGB565(value: u16) -> Color {
         let red = ((value & 0b11111_000000_00000) >> 8) as u8;
         let green = ((value & 0b00000_111111_00000) >> 3) as u8;
@@ -53,6 +59,11 @@ impl Color {
         }
     }
 
+    /// Create a Color from an A3RGB5 value.
+    /// This format in particular is special; the first bit determines
+    /// the format of the rest of the Color.
+    /// If the first bit is 0, then the format is RGB555 (15 bits),
+    /// otherwise if the first bit is 1, then the format is A3RGB444 (15 bits).
     pub fn from_A3RGB5(value: u16) -> Color {
         if value & 0b10000000_00000000 != 0 {
             let red = ((value & 0b011111_00000_00000) >> 7) as u8;
@@ -78,6 +89,7 @@ impl Color {
         }
     }
 
+    /// Create a Color from an ARGB8888 value.
     pub fn from_ARGB8888(value: u32) -> Color {
         let alpha = ((value & 0b11111111_00000000_00000000_00000000) >> 24) as u8;
         let red = ((value & 0b00000000_11111111_00000000_00000000) >> 16) as u8;
@@ -91,6 +103,7 @@ impl Color {
         };
     }
 
+    /// Create a Color from an RGBA8888 value.
     pub fn from_RGBA8888(value: u32) -> Color {
         let red = ((value & 0b11111111_00000000_00000000_00000000) >> 24) as u8;
         let green = ((value & 0b00000000_11111111_00000000_00000000) >> 16) as u8;
@@ -104,6 +117,7 @@ impl Color {
         };
     }
 
+    /// Create a Color from an RGB888 value.
     pub fn from_RGB888(value: u32) -> Color {
         let red = ((value & 0b00000000_11111111_00000000_00000000) >> 16) as u8;
         let green = ((value & 0b00000000_00000000_11111111_00000000) >> 8) as u8;
@@ -117,13 +131,18 @@ impl Color {
     }
 }
 
+/// The alpha level.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum AlphaLevel {
-    Opaque, // alpha is always 255
-    Bit,    // alpha is always either 0 or 255
-    Blend,  // alpha can be any value
+    /// alpha is always 255
+    Opaque,
+    /// alpha is always either 0 or 255
+    Bit,
+    /// alpha can be any value
+    Blend,
 }
 
+/// The BITMAP data. Contains colors for all pixels in the bitmap.
 #[derive(Clone, Debug)]
 pub struct Bitmap {
     data: Vec<Color>,
@@ -132,6 +151,7 @@ pub struct Bitmap {
     height: u32,
 }
 
+/// Convert a chunk index to an index into Bitmap's data array.
 fn get_chunk_index(
     index: usize,
     blockwidth: usize,
@@ -150,6 +170,7 @@ fn get_chunk_index(
     return iy * imagewidth + ix;
 }
 
+/// Arrange the pixel data into a Vector following bitmap chunk rules.
 fn arrange_blocks<T>(
     data: Vec<T>,
     blockwidth: usize,
@@ -179,6 +200,8 @@ where
     newdata
 }
 
+/// Read a palette from the file.
+/// The palette format and the number of colors must be provided.
 fn read_palette<R: Read>(
     file: &mut R,
     fmt: TotemFormat,
@@ -214,6 +237,7 @@ fn read_palette<R: Read>(
     }
 }
 
+/// Read the interleaved color format (FORMAT_ARGB8888)
 fn read_u32_interleaved<R: Read>(
     file: &mut R,
     fmt: TotemFormat,
@@ -241,26 +265,32 @@ fn read_u32_interleaved<R: Read>(
 }
 
 impl Bitmap {
+    /// Get the size
     pub fn get_size(&self) -> (u32, u32) {
         (self.width, self.height)
     }
 
+    /// Get the width
     pub fn get_width(&self) -> u32 {
         self.width
     }
 
+    /// Get the height
     pub fn get_height(&self) -> u32 {
         self.height
     }
 
+    /// Get this bitmap's color data as a slice
     pub fn get_data(&self) -> &[Color] {
         &self.data
     }
 
+    /// Get this bitmap's alpha level
     pub fn get_alpha_level(&self) -> AlphaLevel {
         self.alpha
     }
 
+    /// Convert a 2d position to an index
     pub fn pos_to_index(&self, x: u32, y: u32) -> usize {
         return x as usize * self.width as usize + y as usize;
     }

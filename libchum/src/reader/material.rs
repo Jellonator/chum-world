@@ -1,7 +1,10 @@
+//! See https://github.com/Jellonator/chum-world/wiki/MATERIAL for more information
+
 use crate::common;
 use crate::format::TotemFormat;
 use std::io::{self, Read};
 
+/// Material data
 pub struct Material {
     pub color: [f32; 4],
     pub transform: common::Mat3x3,
@@ -10,10 +13,12 @@ pub struct Material {
 }
 
 impl Material {
+    /// Get the ID for this material's texture
     pub fn get_texture(&self) -> i32 {
         self.texture
     }
 
+    /// Get the ID for this material's reflection. Might be 0.
     pub fn get_texture_reflection(&self) -> i32 {
         self.texture_reflection
     }

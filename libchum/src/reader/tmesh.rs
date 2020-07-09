@@ -66,6 +66,7 @@ fn read_strip_ext<R: Read>(file: &mut R, fmt: TotemFormat) -> io::Result<StripEx
     Ok(StripExt { elements })
 }
 
+/// Get a vector of triangle indices in (vertex, texcoord, normal) order.
 fn strip_gen_triangle_indices(strip: &Strip, strip_ext: &StripExt) -> Vec<[(u16, u16, u16); 3]> {
     let a = strip.tri_order;
     let b = 3 - a;
@@ -101,6 +102,7 @@ fn strip_gen_triangle_indices(strip: &Strip, strip_ext: &StripExt) -> Vec<[(u16,
         .collect()
 }
 
+/// A triangle surface, contains a material and a list of triangles
 pub struct TriangleSurface {
     pub material_index: u32,
     pub tris: Vec<Tri>,
@@ -139,10 +141,12 @@ fn strip_gen_triangles(
 }
 
 impl TMesh {
+    /// Get the materials that this mesh uses
     pub fn get_materials(&self) -> &[i32] {
         &self.materials
     }
 
+    /// Generate triangle indices
     fn gen_triangle_indices(&self) -> Vec<Vec<[(u16, u16, u16); 3]>> {
         self.strips
             .iter()
@@ -151,7 +155,7 @@ impl TMesh {
             .collect()
     }
 
-    /// Generate a triangle from a TMesh
+    /// Generate triangle surfaces from a TMesh
     pub fn gen_triangles(&self) -> Vec<TriangleSurface> {
         let mut values: Vec<(u32, Vec<Tri>)> = self
             .strips

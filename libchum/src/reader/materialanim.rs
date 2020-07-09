@@ -1,26 +1,39 @@
+//! See https://github.com/Jellonator/chum-world/wiki/MATERIALANIM for more information
+
 use crate::common::*;
 use crate::format::TotemFormat;
 use std::io::{self, Read};
 
+/// Interpolation method
 #[derive(Clone, Copy)]
 pub enum Interpolation {
+    /// Discrete interpolation (1)
     Discrete,
+    /// Linear interpolation (2)
     Linear,
+    /// Unknown interpolation (3)
     Unknown,
+    /// Invalid interpolation (error)
     Invalid,
 }
 
+/// A single frame in a track
 pub struct TrackFrame<T> {
     pub frame: u16,
     pub data: T,
 }
 
+/// A full track, including a list of frames and interpolation method
 pub struct Track<T> {
     pub interp: Interpolation,
     pub frames: Vec<TrackFrame<T>>,
 }
 
 impl<T> Track<T> {
+    /// Find the frame value that the given frame refers to.
+    /// Most of the time, the frame index will be between two frames.
+    /// Because of this, this function returns the values of the frame before
+    /// and the frame after, as well as a float for interpolation.
     pub fn find_frame(&self, frame: u16) -> Option<(&T, &T, f32)> {
         if self.frames.len() == 0 {
             None
@@ -44,6 +57,8 @@ impl<T> Track<T> {
             ))
         }
     }
+
+    /// Find the index for the frame at or before the given frame.
     pub fn find_frame_index(&self, frame: u16) -> Option<usize> {
         if self.frames.len() == 0 {
             None
@@ -60,11 +75,13 @@ impl<T> Track<T> {
         }
     }
 
+    /// Get the number of frames in this track
     pub fn len(&self) -> usize {
         self.frames.len()
     }
 }
 
+/// Material animation file
 pub struct MaterialAnimation {
     pub length: f32,
     pub material_id: i32,
@@ -80,6 +97,7 @@ pub struct MaterialAnimation {
     // pub track_unk3:  Track<[u8; 4]>,
 }
 
+/// Match a u16 to an interpolation value
 fn u16_to_interp(value: u16) -> Interpolation {
     match value {
         1 => Interpolation::Discrete,
@@ -89,6 +107,7 @@ fn u16_to_interp(value: u16) -> Interpolation {
     }
 }
 
+/// Read a track of type T from the given file.
 fn read_track<T, F, R>(file: &mut R, fmt: TotemFormat, func: F) -> io::Result<Track<T>>
 where
     F: Fn(&mut R, TotemFormat) -> io::Result<T>,
@@ -105,6 +124,7 @@ where
     Ok(Track { interp, frames })
 }
 
+/// Read a texture track (Separate from read_track because the texture ID comes before the frame)
 fn read_texture_track<T, F, R>(file: &mut R, fmt: TotemFormat, func: F) -> io::Result<Track<T>>
 where
     F: Fn(&mut R, TotemFormat) -> io::Result<T>,

@@ -1,30 +1,6 @@
 use crate::common::*;
 
-pub fn factorial(n: u64) -> u64 {
-    let mut ret = 1;
-    for i in 0..n {
-        ret *= i;
-    }
-    return ret;
-}
-
-pub fn polynomial(n: u64, i: u64) -> u64 {
-    return factorial(n) / (factorial(i) * factorial(n - i));
-}
-
-pub fn curve(n: u64, i: u64, u: f32) -> f32 {
-    return polynomial(n, i) as f32 * u.powi(i as i32) * (1.0 - u).powi((n - i) as i32);
-}
-
-pub fn coefficients(u: f32) -> [f32; 4] {
-    [
-        (1.0 - u).powi(3),
-        3.0 * (1.0 - u).powi(2) * u,
-        3.0 * (1.0 - u) * u.powi(2),
-        u.powi(3),
-    ]
-}
-
+/// Evaluate bezier through points at t.
 pub fn eval_bezier(points: &[Vector3; 4], t: f32) -> Vector3 {
     let b0 = (1.0 - t) * (1.0 - t) * (1.0 - t);
     let b1 = 3.0 * t * (1.0 - t) * (1.0 - t);
@@ -33,6 +9,8 @@ pub fn eval_bezier(points: &[Vector3; 4], t: f32) -> Vector3 {
     return points[0] * b0 + points[1] * b1 + points[2] * b2 + points[3] * b3;
 }
 
+/// Evaluate a surface patch through points at the position (u, v).
+/// u and v should be in the range [0, 1]
 pub fn evaluate_surface(points: &[[Vector3; 4]; 4], u: f32, v: f32) -> Vector3 {
     let mut pu = [Vector3::new(); 4];
     for i in 0..4 {
@@ -41,6 +19,9 @@ pub fn evaluate_surface(points: &[[Vector3; 4]; 4], u: f32, v: f32) -> Vector3 {
     return eval_bezier(&pu, v);
 }
 
+/// Precompute a surface patch so that (usteps, vsteps) quads can be generated.
+/// The resulting Vec<Vec<Vector3>> will have a size of usteps+1, and each 
+/// Vec<Vector3> will have a size of vsteps+1
 pub fn precompute_surface(
     points: &[[Vector3; 4]; 4],
     usteps: usize,

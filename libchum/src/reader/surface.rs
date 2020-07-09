@@ -1,3 +1,5 @@
+//! See https://github.com/Jellonator/chum-world/wiki/SURFACE for more information
+
 use crate::common::*;
 use crate::export::ChumExport;
 use crate::format::TotemFormat;
@@ -6,6 +8,7 @@ use std::collections::HashMap;
 use std::error::Error;
 use std::io::{self, Read, Write};
 
+/// A surface object; contains entire surface object information
 pub struct SurfaceObject {
     pub vertices: Vec<Vector3>,
     pub surfaces: Vec<Surface>,
@@ -13,14 +16,18 @@ pub struct SurfaceObject {
     pub normals: Vec<Vector3>,
 }
 
+/// A single surface.
 pub struct Surface {
     pub texcoords: [Vector2; 4],
+    /// indices into normals
     pub normal_ids: [u16; 4],
+    /// indices into curves
     pub curve_ids: [u16; 4],
     pub curve_order: u32,
     pub material_id: i32,
 }
 
+/// A single curve (indices into vertices)
 pub struct Curve {
     pub p1: u16,
     pub p2: u16,
@@ -28,19 +35,24 @@ pub struct Curve {
     pub p2_t: u16,
 }
 
+/// Output mesh
 pub struct OutMesh {
     pub material_index: i32,
     pub quads: Vec<Quad>,
 }
 
+/// The surface generation mode
 #[derive(Copy, Clone)]
 pub enum SurfaceGenMode {
-    SingleQuad,              // Generates a single quad
-    ControlPointsAsVertices, // Generates 9 quads
-    // SplineInterp(usize), // Spline interpolation
-    BezierInterp(usize), // NURBS interpolation
+    /// Generate each surface as a quad
+    SingleQuad,
+    /// Generate each surface as 9 quads, with control points as vertices
+    ControlPointsAsVertices,
+    /// Bezier interpolation
+    BezierInterp(usize),
 }
 
+/// Generate a single quad
 fn generate_surface_singlequad(
     curves: &[[Vector3; 4]; 4],
     normals: &[Vector3; 4],
@@ -74,6 +86,7 @@ fn generate_surface_singlequad(
     quads
 }
 
+/// Generate 9 quads
 fn generate_surface_quad9(
     curves: &[[Vector3; 4]; 4],
     normals: &[Vector3; 4],
@@ -92,26 +105,18 @@ fn generate_surface_quad9(
     ];
     let mut ttexc = [[Vector2::new(); 4]; 4];
     let mut tnorm = [[Vector3::new(); 4]; 4];
+    let texvals = [[texcoords[0], texcoords[1]], [texcoords[3], texcoords[2]]];
+    let normvals = [[normals[0], normals[1]], [normals[3], normals[2]]];
     for ix in 0..4 {
         for iy in 0..4 {
-            let totaldisx =
-                (points[iy][0] - points[iy][ix]).len() + (points[iy][ix] - points[iy][3]).len();
-            let totaldisy =
-                (points[0][ix] - points[iy][ix]).len() + (points[iy][ix] - points[3][ix]).len();
-            let t_x = (points[iy][0] - points[iy][ix]).len() / totaldisx;
-            let t_y = (points[0][ix] - points[iy][ix]).len() / totaldisy;
-            ttexc[iy][ix] = texcoords[0] * (1.0 - t_x) * (1.0 - t_y)
-                + texcoords[1] * (t_x) * (1.0 - t_y)
-                + texcoords[2] * (t_x) * (t_y)
-                + texcoords[3] * (1.0 - t_x) * (t_y);
-            tnorm[iy][ix] = normals[0] * (1.0 - t_x) * (1.0 - t_y)
-                + normals[1] * (t_x) * (1.0 - t_y)
-                + normals[2] * (t_x) * (t_y)
-                + normals[3] * (1.0 - t_x) * (t_y);
+            let u = (ix as f32) / 3.0;
+            let v = (iy as f32) / 3.0;
+            ttexc[iy][ix] = Vector2::qlerp(&texvals, u, v);
+            tnorm[iy][ix] = Vector3::qlerp(&normvals, u, v);
         }
     }
-    for ix in 0..3 {
-        for iy in 0..3 {
+    for iy in 0..3 {
+        for ix in 0..3 {
             quads.push(Quad {
                 points: [
                     Point {
@@ -141,6 +146,7 @@ fn generate_surface_quad9(
     quads
 }
 
+/// Generate quads using bezier surface interpolation
 fn generate_surface_bezier(
     curves: &[[Vector3; 4]; 4],
     normals: &[Vector3; 4],
@@ -179,6 +185,7 @@ fn generate_surface_bezier(
     quads
 }
 
+/// Generate a surface with the given mode
 pub fn generate_surface(
     curves: &[[Vector3; 4]; 4],
     normals: &[Vector3; 4],
@@ -195,6 +202,7 @@ pub fn generate_surface(
 }
 
 impl SurfaceObject {
+    /// Generate an entire mesh using the given surface generation mode
     pub fn generate_meshes(&self, mode: SurfaceGenMode) -> Vec<OutMesh> {
         let mut out = Vec::with_capacity(self.surfaces.len());
         for surface in &self.surfaces {
@@ -313,6 +321,7 @@ impl SurfaceObject {
         SurfaceObject::read_from(&mut data.as_ref(), fmt)
     }
 
+    /// Create a SurfaceExport object with the given export mode
     pub fn begin_export<'a>(&'a self, mode: SurfaceExportMode) -> SurfaceExport<'a> {
         SurfaceExport {
             surface: self,
@@ -321,16 +330,20 @@ impl SurfaceObject {
     }
 }
 
+/// Surface export mode
 pub enum SurfaceExportMode {
     Mesh(SurfaceGenMode),
     // Surface
 }
 
+/// Surface export object
 pub struct SurfaceExport<'a> {
     pub surface: &'a SurfaceObject,
     pub genmode: SurfaceExportMode,
 }
 
+/// Insert the key-value pair into the given hashmap if it does not already exist.
+/// Returns true if the value was successfully inserted.
 fn insert_if_not_exist<T, U>(hashmap: &mut HashMap<T, U>, key: T, value: U) -> bool
 where
     T: Eq + std::hash::Hash,
@@ -344,6 +357,7 @@ where
 }
 
 impl<'a> SurfaceExport<'a> {
+    /// Export as a mesh with the given generation mode
     fn export_mesh<W>(&self, writer: &mut W, mode: SurfaceGenMode) -> Result<(), Box<dyn Error>>
     where
         W: Write,

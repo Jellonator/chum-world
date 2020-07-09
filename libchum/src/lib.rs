@@ -68,10 +68,13 @@ impl ChumFile {
 }
 
 #[derive(Debug)]
+/// Error type for loading Chum files
 pub enum ChumError {
+    /// A name does not exist in the name table for this file
     NameMissingError {
         id: i32,
     },
+    /// Two strings share the same CRC32 hash
     NameCollisionError {
         id: i32,
         existing_name: String,
@@ -347,6 +350,7 @@ impl ChumArchive {
         Ok(())
     }
 
+    /// Get the format for this archive
     pub fn get_format(&self) -> format::TotemFormat {
         self.format
     }

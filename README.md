@@ -1,6 +1,6 @@
 # Chum World
 
-A program for inspecting files in the Gamecube game Spongebob: Revenge of the Flying Dutchman. 
+A program for inspecting files in the Gamecube games Spongebob: Revenge of the Flying Dutchman and Jimmy Neutron: Boy Genius.
 
 This project is divided into four parts: libchum, gdchum, the Chum GUI, and chumcli.
 

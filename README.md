@@ -2,9 +2,9 @@
 
 A program for inspecting files in the Gamecube games Spongebob: Revenge of the Flying Dutchman and Jimmy Neutron: Boy Genius.
 
-To download the latest Chum World release, check out the [https://github.com/Jellonator/chum-world/releases](Chum World Releases) page.
+To download the latest Chum World release, check out the [Chum World Releases](https://github.com/Jellonator/chum-world/releases) page.
 
-For information on each of the file formats, check out the [https://github.com/Jellonator/chum-world/wiki](Chum World Wiki).
+For information on each of the file formats, check out the [Chum World Wiki](https://github.com/Jellonator/chum-world/wiki).
 
 This project is divided into four parts: libchum, gdchum, the Chum GUI, and chumcli.
 

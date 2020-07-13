@@ -3,9 +3,11 @@ extends Control
 const ChumArchive := preload("res://gdchum/ChumArchive.gdns")
 const MENU_FILE_OPEN := 0
 const MENU_FILE_EXIT := 1
+const MENU_FILE_SAVE_AS := 2
 
 var archive: ChumArchive
 
+onready var node_menu_file := $VBox/Menu/File
 onready var node_tree := $VBox/Tabs/Files/VBox/Tree
 onready var node_editor := $VBox/Tabs/Files/EditorList
 
@@ -34,12 +36,18 @@ func _on_menu_file_select(id):
 			$ArchiveFileSelector.popup_centered()
 		MENU_FILE_EXIT:
 			get_tree().quit(0)
+		MENU_FILE_SAVE_AS:
+			$ArchiveFileSaver.popup_centered()
 
 func load_archive(ngc: String, dgc: String, ftype: String):
 	node_editor.set_file(null)
 	var err = archive.load(ngc, dgc, ftype)
+	var popup = node_menu_file.get_popup()
 	if err != OK:
 		show_err("Could not open files %d" % [err])
+		popup.set_item_disabled(popup.get_item_id(MENU_FILE_SAVE_AS), true)
+	else:
+		popup.set_item_disabled(popup.get_item_id(MENU_FILE_SAVE_AS), false)
 	ChumReader.clear_cache()
 	node_tree.set_archive(archive)
 
@@ -57,3 +65,6 @@ var export_mode := 0
 var export_file = null
 func _on_SaveDialog_file_selected(path):
 	export_file.export_to(export_mode, path)
+
+func _on_ArchiveFileSaver_files_selected(ngc, dgc, ftype):
+	archive.save(ngc, dgc)

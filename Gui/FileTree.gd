@@ -79,8 +79,8 @@ func do_search(text: String):
 		item.set_meta("file", file)
 		item.set_meta("category", false)
 
-func set_archive(archive):
-	self.archive = archive
+func set_archive(p_archive):
+	self.archive = p_archive
 	self.archive_files = archive.get_file_list()
 	archive_files.sort_custom(self, "_sort_file")
 	do_search("")

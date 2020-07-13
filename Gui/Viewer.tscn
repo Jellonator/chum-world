@@ -33,7 +33,7 @@ margin_right = 35.0
 margin_bottom = 20.0
 text = "File"
 flat = false
-items = [ "Open", null, 0, false, false, 0, 0, null, "", false, "Exit", null, 0, false, false, 1, 0, null, "", false ]
+items = [ "Open Archive", null, 0, false, false, 0, 0, null, "", false, "Save Archive As", null, 0, false, true, 2, 0, null, "", false, "Exit", null, 0, false, false, 1, 0, null, "", false ]
 
 [node name="Tabs" type="TabContainer" parent="VBox"]
 margin_top = 24.0
@@ -125,4 +125,5 @@ current_path = "/home/jellonator/Workspace/Rust/ChumWorld/"
 [connection signal="file_selected" from="VBox/Tabs/Files/VBox/Tree" to="." method="_on_Tree_file_selected"]
 [connection signal="item_selected" from="VBox/Tabs/Files/VBox/Tree" to="VBox/Tabs/Files/VBox/Tree" method="_on_Tree_item_selected"]
 [connection signal="files_selected" from="ArchiveFileSelector" to="." method="_on_ArchiveFileSelector_files_selected"]
+[connection signal="files_selected" from="ArchiveFileSaver" to="." method="_on_ArchiveFileSaver_files_selected"]
 [connection signal="file_selected" from="SaveDialog" to="." method="_on_SaveDialog_file_selected"]

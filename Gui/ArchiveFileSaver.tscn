@@ -74,15 +74,16 @@ margin_bottom = 80.0
 text = "Select"
 
 [node name="Label3" type="Label" parent="Grid"]
+visible = false
 margin_top = 115.0
 margin_right = 38.0
 margin_bottom = 129.0
 text = "Type"
 
 [node name="OptionButton" type="OptionButton" parent="Grid"]
-margin_left = 54.0
+visible = false
 margin_top = 112.0
-margin_right = 333.0
+margin_right = 234.0
 margin_bottom = 132.0
 text = "Nintendo Gamecube (NGC/DGC)"
 align = 2
@@ -100,8 +101,8 @@ resizable = true
 dialog_text = "Name file to write to"
 access = 2
 filters = PoolStringArray( "*.NGC;*.ngc;*.NPS;*.nps" )
-current_dir = "/home/jellonator/Workspace/CPP/ChumWorld"
-current_path = "/home/jellonator/Workspace/CPP/ChumWorld/"
+current_dir = "/home/jellonator/Workspace/Rust/ChumWorld"
+current_path = "/home/jellonator/Workspace/Rust/ChumWorld/"
 
 [node name="DGCDialog" type="FileDialog" parent="."]
 margin_left = 8.0
@@ -114,8 +115,8 @@ resizable = true
 dialog_text = "Data file to write to"
 access = 2
 filters = PoolStringArray( "*.DGC;*.dgc;*.DPS;*.dps" )
-current_dir = "/home/jellonator/Workspace/CPP/ChumWorld"
-current_path = "/home/jellonator/Workspace/CPP/ChumWorld/"
+current_dir = "/home/jellonator/Workspace/Rust/ChumWorld"
+current_path = "/home/jellonator/Workspace/Rust/ChumWorld/"
 [connection signal="confirmed" from="." to="." method="_on_ArchiveFileSelector_confirmed"]
 [connection signal="pressed" from="Grid/NGCButton" to="." method="_on_NGCButton_pressed"]
 [connection signal="pressed" from="Grid/DGCButton" to="." method="_on_DGCButton_pressed"]

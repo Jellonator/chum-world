@@ -20,7 +20,7 @@ pub fn evaluate_surface(points: &[[Vector3; 4]; 4], u: f32, v: f32) -> Vector3 {
 }
 
 /// Precompute a surface patch so that (usteps, vsteps) quads can be generated.
-/// The resulting Vec<Vec<Vector3>> will have a size of usteps+1, and each 
+/// The resulting Vec<Vec<Vector3>> will have a size of usteps+1, and each
 /// Vec<Vector3> will have a size of vsteps+1
 pub fn precompute_surface(
     points: &[[Vector3; 4]; 4],
@@ -40,7 +40,12 @@ pub fn precompute_surface(
     vec
 }
 
-pub fn eval_bezier_texnorm(points: &[Vector3; 4], t: f32, tx: &[Vector2; 2], nm: &[Vector3; 2]) -> Point {
+pub fn eval_bezier_texnorm(
+    points: &[Vector3; 4],
+    t: f32,
+    tx: &[Vector2; 2],
+    nm: &[Vector3; 2],
+) -> Point {
     let b0 = (1.0 - t) * (1.0 - t) * (1.0 - t);
     let b1 = 3.0 * t * (1.0 - t) * (1.0 - t);
     let b2 = 3.0 * t * t * (1.0 - t);
@@ -48,11 +53,17 @@ pub fn eval_bezier_texnorm(points: &[Vector3; 4], t: f32, tx: &[Vector2; 2], nm:
     Point {
         vertex: points[0] * b0 + points[1] * b1 + points[2] * b2 + points[3] * b3,
         texcoord: tx[0].lerp(&tx[1], t),
-        normal: nm[0].lerp(&nm[1], t)
+        normal: nm[0].lerp(&nm[1], t),
     }
 }
 
-pub fn evaluate_surface_texnorm(points: &[[Vector3; 4]; 4], u: f32, v: f32, tx: &[[Vector2; 2]; 2], nm: &[[Vector3; 2]; 2]) -> Point {
+pub fn evaluate_surface_texnorm(
+    points: &[[Vector3; 4]; 4],
+    u: f32,
+    v: f32,
+    tx: &[[Vector2; 2]; 2],
+    nm: &[[Vector3; 2]; 2],
+) -> Point {
     let mut pu = [Vector3::new(); 4];
     for i in 0..4 {
         pu[i] = eval_bezier(&points[i], u);
@@ -60,7 +71,7 @@ pub fn evaluate_surface_texnorm(points: &[[Vector3; 4]; 4], u: f32, v: f32, tx: 
     Point {
         vertex: eval_bezier(&pu, v),
         texcoord: Vector2::qlerp(tx, u, v),
-        normal: Vector3::qlerp(nm, u, v)
+        normal: Vector3::qlerp(nm, u, v),
     }
 }
 
@@ -69,7 +80,7 @@ pub fn precompute_surface_texnorm(
     usteps: usize,
     vsteps: usize,
     tx: &[[Vector2; 2]; 2],
-    nm: &[[Vector3; 2]; 2]
+    nm: &[[Vector3; 2]; 2],
 ) -> Vec<Vec<Point>> {
     let mut vec = Vec::with_capacity(usteps);
     for iu in 0..=usteps {

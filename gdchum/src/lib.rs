@@ -19,6 +19,32 @@ impl ChumArchive {
     }
 
     #[export]
+    fn save(
+        &mut self,
+        _owner: Resource,
+        ngcpath: gdnative::GodotString,
+        dgcpath: gdnative::GodotString,
+    ) -> i64 {
+        let mut ngcfile = match File::create(ngcpath.to_string()) {
+            Ok(x) => x,
+            Err(_) => return gdnative::GodotError::FileCantOpen as i64,
+        };
+        let mut dgcfile = match File::create(dgcpath.to_string()) {
+            Ok(x) => x,
+            Err(_) => return gdnative::GodotError::FileCantOpen as i64,
+        };
+        match self
+            .archive
+            .as_ref()
+            .unwrap()
+            .write_chum_archive(&mut ngcfile, &mut dgcfile)
+        {
+            Ok(_) => 0,
+            Err(_) => gdnative::GodotError::FileCantWrite as i64,
+        }
+    }
+
+    #[export]
     fn load(
         &mut self,
         _owner: Resource,

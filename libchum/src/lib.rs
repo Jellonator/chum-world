@@ -65,15 +65,18 @@ impl ChumFile {
     pub fn get_subtype_id(&self) -> &str {
         &self.subtype_id
     }
+
+    /// Replace this file's data
+    pub fn replace_data(&mut self, data: Vec<u8>) {
+        self.data = data;
+    }
 }
 
 #[derive(Debug)]
 /// Error type for loading Chum files
 pub enum ChumError {
     /// A name does not exist in the name table for this file
-    NameMissingError {
-        id: i32,
-    },
+    NameMissingError { id: i32 },
     /// Two strings share the same CRC32 hash
     NameCollisionError {
         id: i32,
@@ -237,6 +240,25 @@ impl ChumArchive {
                 None
             } else {
                 self.files.get(&hash)
+            }
+        } else {
+            None
+        }
+    }
+
+    /// Get a mutable file from its hash
+    pub fn get_file_from_hash_mut(&mut self, hash: i32) -> Option<&mut ChumFile> {
+        self.files.get_mut(&hash)
+    }
+
+    /// Get a mutable file from its name
+    pub fn get_file_from_name_mut(&mut self, name: &str) -> Option<&mut ChumFile> {
+        let hash = hash_name(&name);
+        if let Some(x) = self.names.get(&hash) {
+            if x != name {
+                None
+            } else {
+                self.files.get_mut(&hash)
             }
         } else {
             None

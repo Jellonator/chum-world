@@ -1,16 +1,15 @@
-use crate::bytedata::ByteData;
 use crate::chumfile::ChumFile;
 use crate::reader::ChumReader;
 use gdnative::*;
 use libchum::reader::surface;
 
 pub fn read_surface(
-    data: &ByteData,
+    data: &Vec<u8>,
     fmt: libchum::format::TotemFormat,
     reader: &mut ChumReader,
     file: &ChumFile,
 ) -> Option<Reference> {
-    let surfaceobj = match surface::SurfaceObject::read_data(data.get_data(), fmt) {
+    let surfaceobj = match surface::SurfaceObject::read_data(data, fmt) {
         Ok(x) => x,
         Err(_) => {
             godot_print!("SURFACE file invalid");
@@ -81,21 +80,16 @@ pub fn read_surface(
 
 pub fn read_surface_from_res(data: &ChumFile, reader: &mut ChumReader) -> Dictionary {
     let fmt = data.get_format();
-    data.get_bytedata()
-        .script()
-        .map(|x| {
-            let mut dict = Dictionary::new();
-            match read_surface(x, fmt, reader, data) {
-                Some(mesh) => {
-                    dict.set(&"exists".into(), &true.into());
-                    dict.set(&"mesh".into(), &mesh.to_variant());
-                }
-                None => {
-                    godot_print!("read_tmesh returned None");
-                    dict.set(&"exists".into(), &false.into());
-                }
-            }
-            dict
-        })
-        .unwrap()
+    let mut dict = Dictionary::new();
+    match read_surface(&data.get_data_as_vec(), fmt, reader, data) {
+        Some(mesh) => {
+            dict.set(&"exists".into(), &true.into());
+            dict.set(&"mesh".into(), &mesh.to_variant());
+        }
+        None => {
+            godot_print!("read_tmesh returned None");
+            dict.set(&"exists".into(), &false.into());
+        }
+    }
+    dict
 }

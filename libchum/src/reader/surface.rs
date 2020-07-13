@@ -168,7 +168,8 @@ fn generate_surface_bezier(
         steps,
         steps,
         &[[texcoords[0], texcoords[1]], [texcoords[3], texcoords[2]]],
-        &[[normals[0], normals[1]], [normals[3], normals[2]]]);
+        &[[normals[0], normals[1]], [normals[3], normals[2]]],
+    );
     let mut quads = Vec::new();
     for iy in 0..steps {
         for ix in 0..steps {
@@ -399,9 +400,7 @@ impl<'a> SurfaceExport<'a> {
                     write!(
                         writer,
                         " {}/{}/{}",
-                        vertices[&point.vertex],
-                        texcoords[&point.texcoord],
-                        normals[&point.normal]
+                        vertices[&point.vertex], texcoords[&point.texcoord], normals[&point.normal]
                     )?;
                 }
                 writeln!(writer, "")?;

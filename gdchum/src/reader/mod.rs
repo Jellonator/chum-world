@@ -140,16 +140,13 @@ impl ChumReader {
         self.read_text_nodeless(data)
     }
     pub fn read_text_nodeless(&mut self, data: Instance<ChumFile>) -> Dictionary {
+        // This is the only file that does not use the cache.
+        // This is because any file can be viewed as text, so cacheing it as
+        // text can mess up the cache.
         data.script()
             .map(|x| {
-                let hash = x.get_name_hash();
-                if let Some(data) = self.cache.get(&hash) {
-                    data.new_ref()
-                } else {
-                    let value = readertext::read_text_from_res(x);
-                    self.cache.insert(hash, value.new_ref());
-                    value
-                }
+                let value = readertext::read_text_from_res(x);
+                value
             })
             .unwrap()
     }
@@ -267,6 +264,11 @@ impl ChumReader {
     pub fn clear_cache(&mut self, _owner: Node) {
         self.cache.clear();
         self.materialanims.clear();
+    }
+
+    #[export]
+    pub fn invalidate(&mut self, _owner: Node, value: i32) {
+        self.cache.remove(&value);
     }
 
     fn _init(_owner: Node) -> Self {

@@ -46,10 +46,10 @@ impl Vector3 {
 
     /// Linear interpolation between four points
     pub fn qlerp(values: &[[Vector3; 2]; 2], t_x: f32, t_y: f32) -> Vector3 {
-        values[0][0] * (1.0 - t_x) * (1.0 - t_y) +
-        values[0][1] * (t_x) * (1.0 - t_y) +
-        values[1][1] * (t_x) * (t_y) +
-        values[1][0] * (1.0 - t_x) * (t_y)
+        values[0][0] * (1.0 - t_x) * (1.0 - t_y)
+            + values[0][1] * (t_x) * (1.0 - t_y)
+            + values[1][1] * (t_x) * (t_y)
+            + values[1][0] * (1.0 - t_x) * (t_y)
     }
 
     /// Get the length of this vector
@@ -143,10 +143,10 @@ impl Vector2 {
 
     /// Two-way linear interpolation
     pub fn qlerp(values: &[[Vector2; 2]; 2], t_x: f32, t_y: f32) -> Vector2 {
-        values[0][0] * (1.0 - t_x) * (1.0 - t_y) +
-        values[0][1] * (t_x) * (1.0 - t_y) +
-        values[1][1] * (t_x) * (t_y) +
-        values[1][0] * (1.0 - t_x) * (t_y)
+        values[0][0] * (1.0 - t_x) * (1.0 - t_y)
+            + values[0][1] * (t_x) * (1.0 - t_y)
+            + values[1][1] * (t_x) * (t_y)
+            + values[1][0] * (1.0 - t_x) * (t_y)
     }
 
     /// Length of the vector

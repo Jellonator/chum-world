@@ -3,12 +3,11 @@
 
 use crate::export::ChumExport;
 use crate::format::TotemFormat;
+use image;
+use image::Pixel;
 use std::error::Error;
 use std::io::{self, Read, Write};
 use std::slice;
-use image;
-use image::Pixel;
-
 
 // Image formats
 const FORMAT_C4: u8 = 1;
@@ -349,11 +348,18 @@ impl Bitmap {
                 arrange_blocks(data, 4, 4, width as usize, height as usize)
             }
             FORMAT_RGB888 => {
-                let mut data = vec![0; (width * height) as usize];
-                fmt.read_u24_into(file, &mut data)?;
-                data.into_iter()
-                    .map(|col| Color::from_RGB888(col))
-                    .collect()
+                let mut data = Vec::with_capacity((width * height) as usize);
+                for _ in 0..(width * height) {
+                    let mut buf = [0; 3];
+                    fmt.read_u8_into(file, &mut buf)?;
+                    data.push(Color {
+                        r: buf[2],
+                        g: buf[1],
+                        b: buf[0],
+                        a: 255,
+                    });
+                }
+                data
                 // linear format, no blocks necessary
                 // TODO: Handle weird format
             }

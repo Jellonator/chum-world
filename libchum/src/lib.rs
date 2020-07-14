@@ -1,3 +1,5 @@
+#[macro_use]
+pub mod structure;
 pub mod common;
 pub mod dgc;
 pub mod export;

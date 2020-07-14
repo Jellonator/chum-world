@@ -12,7 +12,7 @@ pub fn read_bitmap(data: &Vec<u8>, fmt: libchum::format::TotemFormat) -> Option<
     };
     let mut image = Image::new();
     let mut data = ByteArray::new();
-    for color in bitmap.get_data() {
+    for color in bitmap.get_data_as_vec().into_iter() {
         data.push(color.r);
         data.push(color.g);
         data.push(color.b);

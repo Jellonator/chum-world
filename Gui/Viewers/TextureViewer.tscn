@@ -1,0 +1,139 @@
+[gd_scene load_steps=3 format=2]
+
+[ext_resource path="res://Gui/Viewers/TextureViewer.gd" type="Script" id=1]
+[ext_resource path="res://icon.png" type="Texture" id=2]
+
+[node name="TextureViewer" type="VBoxContainer"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+margin_left = 4.0
+margin_top = 8.0
+margin_right = -4.0
+margin_bottom = -4.0
+script = ExtResource( 1 )
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="HBox" type="HBoxContainer" parent="."]
+margin_right = 1016.0
+margin_bottom = 20.0
+
+[node name="Button" type="Button" parent="HBox"]
+margin_right = 108.0
+margin_bottom = 20.0
+text = "Import Texture"
+
+[node name="TextureViewer" type="TextureRect" parent="."]
+margin_top = 24.0
+margin_right = 1016.0
+margin_bottom = 588.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+texture = ExtResource( 2 )
+expand = true
+stretch_mode = 6
+
+[node name="ConfirmationDialog" type="ConfirmationDialog" parent="."]
+margin_top = 428.0
+margin_right = 936.0
+margin_bottom = 588.0
+rect_min_size = Vector2( 200, 160 )
+popup_exclusive = true
+window_title = "Import Image"
+resizable = true
+dialog_text = "In general, avoid using the RGB8 format; the game itself has trouble loading this format in certain circumstances (i.e. the filter value is set to 5).
+If the width or height of the image that you import is not a multiple of 8, your image will be resized on import.
+"
+
+[node name="GridContainer" type="GridContainer" parent="ConfirmationDialog"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+margin_left = 8.0
+margin_top = 56.0
+margin_right = -8.0
+margin_bottom = -8.0
+custom_constants/vseparation = 16
+custom_constants/hseparation = 16
+columns = 3
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="Label" type="Label" parent="ConfirmationDialog/GridContainer"]
+margin_top = 5.0
+margin_right = 45.0
+margin_bottom = 19.0
+text = "Image"
+
+[node name="File" type="LineEdit" parent="ConfirmationDialog/GridContainer"]
+margin_left = 61.0
+margin_right = 933.0
+margin_bottom = 24.0
+size_flags_horizontal = 3
+
+[node name="FileButton" type="Button" parent="ConfirmationDialog/GridContainer"]
+margin_left = 949.0
+margin_right = 1000.0
+margin_bottom = 24.0
+text = "Select"
+
+[node name="Label2" type="Label" parent="ConfirmationDialog/GridContainer"]
+margin_top = 43.0
+margin_right = 45.0
+margin_bottom = 57.0
+text = "Format"
+
+[node name="Format" type="OptionButton" parent="ConfirmationDialog/GridContainer"]
+margin_left = 61.0
+margin_top = 40.0
+margin_right = 933.0
+margin_bottom = 60.0
+text = "RGB5A3 (16-bit, has alpha)"
+items = [ "C4 (16 color palette)", null, false, 1, null, "C8 (256 color palette)", null, false, 2, null, "RGB565 (16-bit, no alpha)", null, false, 8, null, "RGB5A3 (16-bit, has alpha)", null, false, 10, null, "RGBA8 (32-bit, has alpha)", null, false, 12, null, "RGB8 (24-bit, no alpha)", null, false, 13, null ]
+selected = 3
+
+[node name="Control" type="Control" parent="ConfirmationDialog/GridContainer"]
+margin_left = 949.0
+margin_top = 40.0
+margin_right = 1000.0
+margin_bottom = 60.0
+
+[node name="Label3" type="Label" parent="ConfirmationDialog/GridContainer"]
+margin_top = 79.0
+margin_right = 45.0
+margin_bottom = 93.0
+text = "Palette"
+
+[node name="Palette" type="OptionButton" parent="ConfirmationDialog/GridContainer"]
+margin_left = 61.0
+margin_top = 76.0
+margin_right = 933.0
+margin_bottom = 96.0
+text = "RGBA8 (32-bit, has alpha)"
+items = [ "RGB5A3 (16-bit, has alpha)", null, false, 1, null, "RGB565 (16-bit, no alpha)", null, false, 2, null, "RGBA8 (32-bit, has alpha)", null, false, 3, null ]
+selected = 2
+
+[node name="Control2" type="Control" parent="ConfirmationDialog/GridContainer"]
+margin_left = 949.0
+margin_top = 76.0
+margin_right = 1000.0
+margin_bottom = 96.0
+
+[node name="FileDialog" type="FileDialog" parent="."]
+margin_top = 24.0
+margin_right = 1016.0
+margin_bottom = 154.0
+popup_exclusive = true
+window_title = "Open an image file"
+resizable = true
+mode = 0
+access = 2
+filters = PoolStringArray( "*.png; PNG Images", "*.jpg,*.jpeg; JPEG Images", "*.gif; GIF Images", "*.bmp; BMP Images", "*.ico; ICO Images", "*.tif, *.tiff; TIFF Images", "*.webp; WebP Images", "*.tga; TGA Images" )
+current_dir = "/home/jellonator/Workspace/Rust/ChumWorld"
+current_path = "/home/jellonator/Workspace/Rust/ChumWorld/"
+[connection signal="pressed" from="HBox/Button" to="." method="_on_Button_pressed"]
+[connection signal="confirmed" from="ConfirmationDialog" to="." method="_on_ConfirmationDialog_confirmed"]
+[connection signal="pressed" from="ConfirmationDialog/GridContainer/FileButton" to="." method="_on_FileButton_pressed"]
+[connection signal="item_selected" from="ConfirmationDialog/GridContainer/Format" to="." method="_on_Format_item_selected"]
+[connection signal="file_selected" from="FileDialog" to="." method="_on_FileDialog_file_selected"]

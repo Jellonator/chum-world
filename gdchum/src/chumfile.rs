@@ -3,7 +3,7 @@ use crate::ChumArchive;
 use gdnative::*;
 use libchum::{self, export::ChumExport, reader};
 use std::fs::File;
-use std::io::Write;
+use std::io::{Write, BufReader};
 
 #[derive(NativeClass)]
 #[inherit(Resource)]
@@ -174,6 +174,29 @@ impl ChumFile {
         // Actually set the data
         self.replace_data_with_vec(data);
         godot_print!("D:");
+    }
+
+    #[export]
+    pub fn import_bitmap(&mut self, _owner: Resource, path: GodotString, formattype: i64, palettetype: i64) {
+        use libchum::reader::bitmap;
+        // use image;
+        let pathstr = path.to_string();
+        let fh = File::open(&pathstr).unwrap();
+        let image_format = bitmap::image::ImageFormat::from_path(&pathstr).unwrap();
+        let mut buf_reader = BufReader::new(fh);
+        let (bitmap, width, height) = bitmap::import_bitmap(&mut buf_reader, image_format).unwrap();
+        let mut data = bitmap::BitmapFormat::new_empty(formattype as u8, palettetype as u8).unwrap();
+        bitmap::compress_bitmap(&bitmap, &mut data, width, height);
+        let bitmap =
+        match reader::bitmap::Bitmap::read_data(&mut self.get_data_as_vec(), self.format) {
+            Ok(x) => x,
+            Err(err) => {
+                panic!("BITMAP file invalid: {}", err);
+            }
+        }.with_bitmap(data, width, height);
+        let mut outdata = Vec::new();
+        bitmap.write_to(&mut outdata, self.format).unwrap();
+        self.replace_data_with_vec(outdata);
     }
 
     pub fn get_name_str(&self) -> &str {

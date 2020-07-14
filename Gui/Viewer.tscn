@@ -104,7 +104,6 @@ __meta__ = {
 }
 
 [node name="ArchiveFileSelector" parent="." instance=ExtResource( 6 )]
-visible = false
 
 [node name="ArchiveFileSaver" parent="." instance=ExtResource( 3 )]
 

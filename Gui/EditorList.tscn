@@ -1,4 +1,4 @@
-[gd_scene load_steps=10 format=2]
+[gd_scene load_steps=9 format=2]
 
 [ext_resource path="res://Gui/Viewers/HexEditor.tscn" type="PackedScene" id=1]
 [ext_resource path="res://Gui/Viewers/TextEditor.tscn" type="PackedScene" id=2]
@@ -6,8 +6,7 @@
 [ext_resource path="res://Gui/Viewers/Viewer3D.tscn" type="PackedScene" id=4]
 [ext_resource path="res://Gui/FileViewer.gd" type="Script" id=5]
 [ext_resource path="res://Gui/Viewers/ViewerEmpty.gd" type="Script" id=6]
-[ext_resource path="res://icon.png" type="Texture" id=7]
-[ext_resource path="res://Gui/Viewers/TextureViewer.gd" type="Script" id=8]
+[ext_resource path="res://Gui/Viewers/TextureViewer.tscn" type="PackedScene" id=7]
 
 [sub_resource type="StyleBoxEmpty" id=1]
 
@@ -67,18 +66,8 @@ margin_top = 8.0
 margin_right = -4.0
 margin_bottom = -4.0
 
-[node name="TextureViewer" type="TextureRect" parent="TabContainer/Viewer"]
+[node name="TextureViewer" parent="TabContainer/Viewer" instance=ExtResource( 7 )]
 visible = false
-anchor_right = 1.0
-anchor_bottom = 1.0
-margin_left = 4.0
-margin_top = 8.0
-margin_right = -4.0
-margin_bottom = -4.0
-texture = ExtResource( 7 )
-expand = true
-stretch_mode = 6
-script = ExtResource( 8 )
 
 [node name="Hex" parent="TabContainer" instance=ExtResource( 1 )]
 visible = false
@@ -87,4 +76,10 @@ margin_top = 24.0
 [node name="Text" parent="TabContainer" instance=ExtResource( 2 )]
 visible = false
 margin_top = 24.0
+
+[node name="ConfirmationDialog" type="ConfirmationDialog" parent="."]
+margin_top = 530.0
+margin_right = 1024.0
+margin_bottom = 600.0
+popup_exclusive = true
 [connection signal="tab_changed" from="TabContainer" to="." method="_on_TabContainer_tab_changed"]

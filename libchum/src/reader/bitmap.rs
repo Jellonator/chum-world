@@ -3,11 +3,13 @@
 
 use crate::export::ChumExport;
 use crate::format::TotemFormat;
-use image;
+pub use image;
 use std::error::Error;
-use std::io::{self, Read, Write};
+use std::io::{self, Read, Write, BufRead, Seek};
 use std::slice;
 use crate::structure::*;
+use imagequant;
+use crate::util;
 
 // Image formats
 const FORMAT_C4: u8 = 1;
@@ -58,11 +60,18 @@ impl Color {
         }
     }
 
+    pub fn to_RGB565(&self) -> u16 {
+        let red = (self.r >> 3) as u16;
+        let green = (self.g >> 2) as u16;
+        let blue = (self.b >> 3) as u16;
+        return (red << 11) | (green << 5) | blue;
+    }
+
     /// Create a Color from an A3RGB5 value.
     /// This format in particular is special; the first bit determines
     /// the format of the rest of the Color.
-    /// If the first bit is 0, then the format is RGB555 (15 bits),
-    /// otherwise if the first bit is 1, then the format is A3RGB444 (15 bits).
+    /// If the first bit is 1, then the format is RGB555 (15 bits),
+    /// otherwise if the first bit is 0, then the format is A3RGB444 (15 bits).
     pub fn from_A3RGB5(value: u16) -> Color {
         if value & 0b10000000_00000000 != 0 {
             let red = ((value & 0b011111_00000_00000) >> 7) as u8;
@@ -85,6 +94,21 @@ impl Color {
                 b: blue | (blue >> 4),
                 a: alpha | (alpha >> 3) | (alpha >> 6),
             }
+        }
+    }
+
+    pub fn to_A3RGB5(&self) -> u16 {
+        if self.a < 255 {
+            let alpha = (self.a >> 5) as u16;
+            let red = (self.r >> 4) as u16;
+            let green = (self.g >> 4) as u16;
+            let blue = (self.b >> 4) as u16;
+            0x0000 | (alpha << 12) | (red << 8) | (green << 4) | blue
+        } else {
+            let red = (self.r >> 3) as u16;
+            let green = (self.g >> 3) as u16;
+            let blue = (self.b >> 3) as u16;
+            0x8000 | (red << 10) | (green << 5) | blue
         }
     }
 
@@ -116,6 +140,10 @@ impl Color {
         };
     }
 
+    pub fn to_RGBA8888(&self) -> u32 {
+        ((self.r as u32) << 24) | ((self.g as u32) << 16) | ((self.b as u32) << 8) | (self.a as u32)
+    }
+
     /// Create a Color from an RGB888 value.
     pub fn from_RGB888(value: u32) -> Color {
         let red = ((value & 0b00000000_11111111_00000000_00000000) >> 16) as u8;
@@ -141,6 +169,17 @@ pub enum AlphaLevel {
     Blend,
 }
 
+impl AlphaLevel {
+    pub fn as_u8(&self) -> u8 {
+        use AlphaLevel::*;
+        match self {
+            Opaque => 0,
+            Bit => 1,
+            Blend => 2,
+        }
+    }
+}
+
 /// Palette Format
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum PaletteFormat {
@@ -150,6 +189,24 @@ pub enum PaletteFormat {
 }
 
 impl PaletteFormat {
+    pub fn from_format(format: u8) -> Option<PaletteFormat> {
+        match format {
+            PALETTE_A3RGB5 => Some(PaletteFormat::RGB5A3),
+            PALETTE_RGB565 => Some(PaletteFormat::RGB565),
+            PALETTE_RGBA8888 => Some(PaletteFormat::RGBA8888),
+            _ => None
+        }
+    }
+
+    pub fn get_format(&self) -> u8 {
+        use PaletteFormat::*;
+        match self {
+            RGB5A3 => 1,
+            RGB565 => 2,
+            RGBA8888 => 3
+        }
+    }
+
     pub fn get_color(&self, value: u32) -> Color {
         match *self {
             PaletteFormat::RGB5A3 => Color::from_A3RGB5(value as u16),
@@ -172,14 +229,45 @@ pub struct PaletteC8 {
 }
 
 impl PaletteC4 {
-    fn get_color(&self, index: u8) -> Color {
+    pub fn new_empty(format: u8) -> Option<PaletteC4> {
+        Some(PaletteC4 {
+            data: [0; 16],
+            format: PaletteFormat::from_format(format)?
+        })
+    }
+
+    pub fn write_to<W: Write>(&self, writer: &mut W, fmt: TotemFormat) -> io::Result<()> {
+        use PaletteFormat::*;
+        match self.format {
+            RGB5A3 | RGB565 => {
+                for i in 0..16 {
+                    fmt.write_u16(writer, self.data[i] as u16)?;
+                }
+                for _ in 0..16 {
+                    fmt.write_u16(writer, 0xFFFF)?;
+                }
+            }
+            RGBA8888 => {
+                for i in 0..16 {
+                    fmt.write_u32(writer, self.data[i])?;
+                }
+            }
+        }
+        Ok(())
+    }
+
+    pub fn get_format(&self) -> u8 {
+        self.format.get_format()
+    }
+
+    pub fn get_color(&self, index: u8) -> Color {
         match self.data.get(index as usize) {
             Some(val) => self.format.get_color(*val),
             None => panic!()
         }
     }
 
-    fn read_palette<R: Read>(ptype: u8, file: &mut R, fmt: TotemFormat) -> io::Result<PaletteC4> {
+    pub fn read_palette<R: Read>(ptype: u8, file: &mut R, fmt: TotemFormat) -> io::Result<PaletteC4> {
         match ptype {
             1 => {
                 let mut palettedata = [0u16; 16];
@@ -202,7 +290,7 @@ impl PaletteC4 {
             3 => {
                 let mut palettedata = [0u32; 16];
                 fmt.read_u32_into(file, &mut palettedata)?;
-                Ok(PaletteC4{format: PaletteFormat::RGB565, data: palettedata})
+                Ok(PaletteC4{format: PaletteFormat::RGBA8888, data: palettedata})
             }
             _ => panic!(),
         }
@@ -210,14 +298,45 @@ impl PaletteC4 {
 }
 
 impl PaletteC8 {
-    fn get_color(&self, index: u8) -> Color {
+    pub fn new_empty(format: u8) -> Option<PaletteC8> {
+        Some(PaletteC8 {
+            data: [0; 256],
+            format: PaletteFormat::from_format(format)?
+        })
+    }
+
+    pub fn write_to<W: Write>(&self, writer: &mut W, fmt: TotemFormat) -> io::Result<()> {
+        use PaletteFormat::*;
+        match self.format {
+            RGB5A3 | RGB565 => {
+                for i in 0..256 {
+                    fmt.write_u16(writer, self.data[i] as u16)?;
+                }
+                for _ in 0..256 {
+                    fmt.write_u16(writer, 0xFFFF)?;
+                }
+            }
+            RGBA8888 => {
+                for i in 0..256 {
+                    fmt.write_u32(writer, self.data[i])?;
+                }
+            }
+        }
+        Ok(())
+    }
+
+    pub fn get_format(&self) -> u8 {
+        self.format.get_format()
+    }
+
+    pub fn get_color(&self, index: u8) -> Color {
         match self.data.get(index as usize) {
             Some(val) => self.format.get_color(*val),
             None => panic!()
         }
     }
 
-    fn read_palette<R: Read>(ptype: u8, file: &mut R, fmt: TotemFormat) -> io::Result<PaletteC8> {
+    pub fn read_palette<R: Read>(ptype: u8, file: &mut R, fmt: TotemFormat) -> io::Result<PaletteC8> {
         match ptype {
             PALETTE_A3RGB5 => {
                 let mut palettedata = [0u16; 256];
@@ -240,7 +359,7 @@ impl PaletteC8 {
             PALETTE_RGBA8888 => {
                 let mut palettedata = [0u32; 256];
                 fmt.read_u32_into(file, &mut palettedata)?;
-                Ok(PaletteC8{format: PaletteFormat::RGB565, data: palettedata})
+                Ok(PaletteC8{format: PaletteFormat::RGBA8888, data: palettedata})
             }
             _ => panic!(),
         }
@@ -259,7 +378,41 @@ pub enum BitmapFormat {
 }
 
 impl BitmapFormat {
-    fn len(&self) -> usize {
+    pub fn new_empty(format: u8, paletteformat: u8) -> Option<BitmapFormat> {
+        use BitmapFormat::*;
+        match format {
+            FORMAT_C4 => Some(C4(Vec::new(), PaletteC4::new_empty(paletteformat)?)),
+            FORMAT_C8 => Some(C8(Vec::new(), PaletteC8::new_empty(paletteformat)?)),
+            FORMAT_RGB565 => Some(RGB565(Vec::new())),
+            FORMAT_A3RGB565 => Some(RGB5A3(Vec::new())),
+            FORMAT_ARGB8888 => Some(RGBA8888(Vec::new())),
+            FORMAT_RGB888 => Some(RGB888(Vec::new())),
+            _ => None
+        }
+    }
+
+    pub fn get_format(&self) -> u8 {
+        use BitmapFormat::*;
+        match self {
+            C4(_, _) => FORMAT_C4,
+            C8(_, _) => FORMAT_C8,
+            RGB565(_) => FORMAT_RGB565,
+            RGB5A3(_) => FORMAT_A3RGB565,
+            RGBA8888(_) => FORMAT_ARGB8888,
+            RGB888(_) => FORMAT_RGB888
+        }
+    }
+
+    pub fn get_palette_format(&self) -> u8 {
+        use BitmapFormat::*;
+        match self {
+            C4(_, ref p) => p.get_format(),
+            C8(_, ref p) => p.get_format(),
+            _ => 3
+        }
+    }
+
+    pub fn len(&self) -> usize {
         use BitmapFormat::*;
         match self {
             C4(ref v, _) => v.len(),
@@ -271,7 +424,7 @@ impl BitmapFormat {
         }
     }
 
-    fn get_color(&self, index: usize) -> Option<Color> {
+    pub fn get_color(&self, index: usize) -> Option<Color> {
         use BitmapFormat::*;
         match self {
             C4(ref v, ref p) => v.get(index).map(|x| p.get_color(*x)),
@@ -288,7 +441,7 @@ impl BitmapFormat {
         }
     }
 
-    fn get_colors_as_vec(&self) -> Vec<Color> {
+    pub fn get_colors_as_vec(&self) -> Vec<Color> {
         let mut ret = Vec::with_capacity(self.len());
         for i in 0..self.len() {
             ret.push(self.get_color(i).unwrap());
@@ -347,9 +500,27 @@ fn get_chunk_index(
     return iy * imagewidth + ix;
 }
 
+/// Convert a linear index into a block index
+fn blockify_index(
+    index: usize,
+    blockwidth: usize,
+    blockheight: usize,
+    imagewidth: usize,
+    _imageheight: usize,
+) -> usize {
+    let blocks_per_row = imagewidth / blockwidth;
+    let block_size = blockwidth * blockheight;
+    let row = index / imagewidth;
+    let col = index % imagewidth;
+    let block_row = row / blockheight;
+    let block_col = col / blockwidth;
+    let block = block_row * blocks_per_row + block_col;
+    return block * block_size + (col % blockwidth) + (row % blockheight) * blockwidth;
+}
+
 /// Arrange the pixel data into a Vector following bitmap chunk rules.
 fn arrange_blocks<T>(
-    data: Vec<T>,
+    data: &Vec<T>,
     blockwidth: usize,
     blockheight: usize,
     imagewidth: usize,
@@ -368,11 +539,44 @@ where
         panic!();
     }
     if imagewidth == blockwidth {
-        return data;
+        return data.clone();
     }
     let mut newdata = vec![T::default(); imagewidth * imageheight];
     for (i, col) in data.iter().enumerate() {
         newdata[get_chunk_index(i, blockwidth, blockheight, imagewidth, imageheight)] = col.clone();
+    }
+    newdata
+}
+
+/// Take data from a linear arrangement into a blocked arangement
+fn blockify<T>(
+    data: &Vec<T>,
+    blockwidth: usize,
+    blockheight: usize,
+    imagewidth: usize,
+    imageheight: usize,
+) -> Vec<T>
+where
+    T: Default + Clone,
+{
+    if data.len() != imagewidth * imageheight {
+        panic!();
+    }
+    if blockheight == 0 || blockwidth == 0 {
+        panic!();
+    }
+    if imagewidth % blockwidth != 0 || imageheight % blockheight != 0 {
+        panic!();
+    }
+    if imagewidth == blockwidth {
+        return data.clone();
+    }
+    let mut newdata = vec![T::default(); imagewidth * imageheight];
+    // for (i, col) in data.iter().enumerate() {
+    //     newdata[blockify_index(i, blockwidth, blockheight, imagewidth, imageheight)] = col.clone();
+    // }
+    for i in 0..(imagewidth * imageheight) {
+        newdata[i] = data[get_chunk_index(i, blockwidth, blockheight, imagewidth, imageheight)].clone();
     }
     newdata
 }
@@ -456,31 +660,31 @@ impl Bitmap {
                 let mut indices = vec![0; (width * height) as usize];
                 fmt.read_u4_into(file, &mut indices)?;
                 let palette = PaletteC4::read_palette(palette_format, file, fmt)?;
-                let data = arrange_blocks(indices, 8, 8, width as usize, height as usize);
+                let data = arrange_blocks(&indices, 8, 8, width as usize, height as usize);
                 BitmapFormat::C4(data, palette)
             }
             FORMAT_C8 => {
                 let mut indices = vec![0; (width * height) as usize];
                 fmt.read_u8_into(file, &mut indices)?;
                 let palette = PaletteC8::read_palette(palette_format, file, fmt)?;
-                let data = arrange_blocks(indices, 8, 4, width as usize, height as usize);
+                let data = arrange_blocks(&indices, 8, 4, width as usize, height as usize);
                 BitmapFormat::C8(data, palette)
             }
             FORMAT_RGB565 => {
                 let mut data = vec![0; (width * height) as usize];
                 fmt.read_u16_into(file, &mut data)?;
-                let data = arrange_blocks(data, 4, 4, width as usize, height as usize);
+                let data = arrange_blocks(&data, 4, 4, width as usize, height as usize);
                 BitmapFormat::RGB565(data)
             }
             FORMAT_A3RGB565 => {
                 let mut data = vec![0; (width * height) as usize];
                 fmt.read_u16_into(file, &mut data)?;
-                let data = arrange_blocks(data, 4, 4, width as usize, height as usize);
+                let data = arrange_blocks(&data, 4, 4, width as usize, height as usize);
                 BitmapFormat::RGB5A3(data)
             }
             FORMAT_ARGB8888 => {
                 let data = read_u32_interleaved(file, fmt, (width * height) as usize)?;
-                let coldata = arrange_blocks(data, 4, 4, width as usize, height as usize);
+                let coldata = arrange_blocks(&data, 4, 4, width as usize, height as usize);
                 BitmapFormat::RGBA8888(coldata)
             }
             FORMAT_RGB888 => {
@@ -516,6 +720,73 @@ impl Bitmap {
     pub fn read_data(data: &[u8], fmt: TotemFormat) -> io::Result<Bitmap> {
         Bitmap::read_from(&mut data.as_ref(), fmt)
     }
+
+    pub fn write_to<W: Write>(&self, writer: &mut W, fmt: TotemFormat) -> io::Result<()> {
+        fmt.write_u32(writer, self.width)?;
+        fmt.write_u32(writer, self.height)?;
+        fmt.write_u32(writer, 0)?;
+        fmt.write_u8(writer, self.data.get_format())?;
+        fmt.write_u8(writer, self.flags)?;
+        fmt.write_u8(writer, self.data.get_palette_format())?;
+        fmt.write_u8(writer, self.alpha.as_u8())?;
+        fmt.write_u8(writer, 0)?;
+        fmt.write_u8(writer, self.unknown)?;
+        match self.data {
+            BitmapFormat::C4(ref v, ref p) => {
+                let data = blockify(v, 8, 8, self.width as usize, self.height as usize);
+                for chunk in data.chunks_exact(2) {
+                    let value = (chunk[0] << 4) | chunk[1];
+                    fmt.write_u8(writer, value)?;
+                }
+                p.write_to(writer, fmt)?;
+            },
+            BitmapFormat::C8(ref v, ref p) => {
+                let data = blockify(v, 8, 4, self.width as usize, self.height as usize);
+                for value in data.iter() {
+                    fmt.write_u8(writer, *value)?;
+                }
+                p.write_to(writer, fmt)?;
+            },
+            BitmapFormat::RGB565(ref v) | BitmapFormat::RGB5A3(ref v) => {
+                let data = blockify(v, 4, 4, self.width as usize, self.height as usize);
+                for value in data.iter() {
+                    fmt.write_u16(writer, *value)?;
+                }
+            },
+            BitmapFormat::RGBA8888(ref v) => {
+                let data = blockify(v, 4, 4, self.width as usize, self.height as usize);
+                for value in data.chunks(16) {
+                    let mut buf = [0u8; 64];
+                    for (i, color) in value.iter().enumerate() {
+                        buf[i * 2] = color.a;
+                        buf[i * 2 + 1] = color.r;
+                        buf[i * 2 + 32] = color.g;
+                        buf[i * 2 + 33] = color.b;
+                    }
+                    fmt.write_bytes(writer, &buf)?;
+                }
+            },
+            BitmapFormat::RGB888(ref v) => {
+                for value in v.iter() {
+                    fmt.write_u8(writer, value.2)?;
+                    fmt.write_u8(writer, value.1)?;
+                    fmt.write_u8(writer, value.0)?;
+                }
+            },
+        }
+        fmt.write_u32(writer, 0)?;
+        Ok(())
+    }
+
+    /// Create a new bitmap with the given image data
+    pub fn with_bitmap(&self, data: BitmapFormat, width: u32, height: u32) -> Bitmap {
+        Bitmap {
+            data,
+            width,
+            height,
+            ..*self
+        }
+    }
 }
 
 impl ChumExport for Bitmap {
@@ -536,4 +807,116 @@ impl ChumExport for Bitmap {
         }
         Ok(())
     }
+}
+
+fn palettize(data: &[Color], n: i32, width: u32, height: u32) -> (Vec<u8>, Vec<Color>) {
+    let mut liq = imagequant::new();
+    liq.set_max_colors(n);
+    liq.set_quality(0, 100);
+    let mut liq_image = liq.new_image(data, width as usize, height as usize, 0.0).unwrap();
+
+    let mut res = match liq.quantize(&liq_image) {
+        Ok(res) => res,
+        Err(err) => panic!("Failed quantization: {:?}", err)
+    };
+
+    res.set_dithering_level(1.0);
+
+    let (palette, pixels) = res.remapped(&mut liq_image).unwrap();
+    if palette.len() as i32 > n {
+        panic!("Resulting palette has too many colors (this should not happen)");
+    }
+
+    (pixels, palette.into_iter().map(|x| Color {
+        r: x.r,
+        g: x.g,
+        b: x.b,
+        a: x.a,
+    }).collect())
+}
+
+fn read_into_palette_c4(colors: Vec<Color>, palette: &mut PaletteC4) {
+    for i in 0..colors.len().min(16) {
+        let col = &colors[i];
+        palette.data[i] = match palette.format {
+            PaletteFormat::RGB565 => col.to_RGB565() as u32,
+            PaletteFormat::RGB5A3 => col.to_A3RGB5() as u32,
+            PaletteFormat::RGBA8888 => col.to_RGBA8888()
+        };
+    }
+}
+
+fn read_into_palette_c8(colors: Vec<Color>, palette: &mut PaletteC8) {
+    for i in 0..colors.len().min(256) {
+        let col = &colors[i];
+        palette.data[i] = match palette.format {
+            PaletteFormat::RGB565 => col.to_RGB565() as u32,
+            PaletteFormat::RGB5A3 => col.to_A3RGB5() as u32,
+            PaletteFormat::RGBA8888 => col.to_RGBA8888()
+        };
+    }
+}
+
+pub fn compress_bitmap(data: &[Color], basis: &mut BitmapFormat, width: u32, height: u32) {
+    match basis {
+        BitmapFormat::RGBA8888(ref mut v) => {
+            v.clear();
+            v.extend(data.iter());
+        },
+        BitmapFormat::RGB888(ref mut v) => {
+            v.clear();
+            v.extend(data.iter().map(|x| (x.r, x.g, x.b)));
+        },
+        BitmapFormat::RGB565(ref mut v) => {
+            v.clear();
+            v.extend(data.iter().map(|x| x.to_RGB565()));
+        },
+        BitmapFormat::RGB5A3(ref mut v) => {
+            v.clear();
+            v.extend(data.iter().map(|x| x.to_A3RGB5()));
+        },
+        BitmapFormat::C4(ref mut v, ref mut palette) => {
+            let (newdata, newpalette) = palettize(data, 16, width, height);
+            v.clear();
+            v.extend(newdata.into_iter());
+            read_into_palette_c4(newpalette, palette);
+        },
+        BitmapFormat::C8(ref mut v, ref mut palette) => {
+            let (newdata, newpalette) = palettize(data, 256, width, height);
+            v.clear();
+            v.extend(newdata.into_iter());
+            read_into_palette_c8(newpalette, palette);
+        }
+    }
+}
+
+pub fn import_bitmap<R>(reader: &mut R, format: image::ImageFormat) -> Result<(Vec<Color>, u32, u32), Box<dyn Error>>
+where R: Read + BufRead + Seek
+{
+    use image::GenericImageView;
+    let mut imgreader = image::io::Reader::new(reader);
+    imgreader.set_format(format);
+    let image = imgreader.decode()?;
+    let image = if image.width() % 8 != 0 || image.height() % 8 != 0 {
+        let width = util::round_up(image.width() as usize, 8) as u32;
+        let height = util::round_up(image.height() as usize, 8) as u32;
+        image.resize_exact(width, height, image::imageops::FilterType::CatmullRom)
+    } else {
+        image
+    };
+    let image = image.to_rgba();
+    let (width, height) = image.dimensions();
+    let mut buf = Vec::with_capacity(width as usize * height as usize);
+    for iy in 0..height {
+        for ix in 0..width {
+            let pixel = image.get_pixel(ix, iy);
+            buf.push(Color {
+                r: pixel[0],
+                g: pixel[1],
+                b: pixel[2],
+                a: pixel[3]
+            });
+        }
+    }
+    Ok((buf, width, height))
 }

@@ -1,10 +1,12 @@
 use crate::bytedata::ByteData;
+use crate::util;
 use crate::ChumArchive;
 use gdnative::*;
-use libchum::{self, export::ChumExport, reader};
+use libchum::{self, export::ChumExport, reader, structure::ChumStruct};
 use std::fs::File;
-use std::io::{Write, BufReader};
+use std::io::{BufReader, Write};
 
+/// A File resource derived from a ChumArchive.
 #[derive(NativeClass)]
 #[inherit(Resource)]
 #[register_with(Self::_register)]
@@ -27,51 +29,169 @@ const EXPORT_ID_TEXTURE: i64 = 3;
 
 #[methods]
 impl ChumFile {
+    fn _init(_owner: Resource) -> Self {
+        ChumFile {
+            nameid: GodotString::new(),
+            typeid: GodotString::new(),
+            subtypeid: GodotString::new(),
+            namestr: String::new(),
+            typestr: String::new(),
+            subtypestr: String::new(),
+            format: libchum::format::TotemFormat::NGC,
+            parent: None,
+        }
+    }
+
     fn _register(builder: &init::ClassBuilder<Self>) {
         builder
             .add_property("data")
-            .with_mut_getter(Self::get_data)
+            .with_getter(Self::get_data)
             .done();
         builder
             .add_property("name")
-            .with_mut_getter(Self::get_name)
+            .with_getter(Self::get_name)
             .done();
         builder
             .add_property("type")
-            .with_mut_getter(Self::get_type)
+            .with_getter(Self::get_type)
             .done();
         builder
             .add_property("subtype")
-            .with_mut_getter(Self::get_subtype)
+            .with_getter(Self::get_subtype)
             .done();
     }
 
     #[export]
-    pub fn get_hash_id(&mut self, _owner: Resource) -> i32 {
-        libchum::hash_name(&self.namestr)
-    }
-
-    #[export]
-    pub fn get_data(&mut self, _owner: Resource) -> Resource {
+    pub fn get_data(&self, _owner: Resource) -> Resource {
         self.get_data_as_bytedata().into_base()
     }
 
     #[export]
-    pub fn get_name(&mut self, _owner: Resource) -> GodotString {
+    pub fn get_name(&self, _owner: Resource) -> GodotString {
         self.nameid.new_ref()
     }
 
     #[export]
-    pub fn get_type(&mut self, _owner: Resource) -> GodotString {
+    pub fn get_type(&self, _owner: Resource) -> GodotString {
         self.typeid.new_ref()
     }
 
     #[export]
-    pub fn get_subtype(&mut self, _owner: Resource) -> GodotString {
+    pub fn get_subtype(&self, _owner: Resource) -> GodotString {
         self.subtypeid.new_ref()
     }
 
-    fn export_to_bitmap(&mut self, path: &str) {
+    /// Get the hash ID for this file
+    #[export]
+    pub fn get_hash_id(&self, _owner: Resource) -> i32 {
+        self.get_hash_id_ownerless()
+    }
+
+    /// Get the hadh ID for this file without an owner
+    pub fn get_hash_id_ownerless(&self) -> i32 {
+        libchum::hash_name(&self.namestr)
+    }
+
+    /// Get this file's name
+    pub fn get_name_str(&self) -> &str {
+        &self.namestr
+    }
+
+    /// Get this file's type
+    pub fn get_type_str(&self) -> &str {
+        &self.typestr
+    }
+
+    /// Get this file's subtype
+    pub fn get_subtype_str(&self) -> &str {
+        &self.subtypestr
+    }
+
+    /// Get an Instance of this file's containing ChumArchive
+    pub fn get_archive_instance(&self) -> Instance<ChumArchive> {
+        Instance::try_from_base(self.parent.as_ref().unwrap().new_ref()).unwrap()
+    }
+
+    /// Read a file from the given ChumArchive
+    pub fn read_from_chumfile(
+        &mut self,
+        file: &libchum::ChumFile,
+        fmt: libchum::format::TotemFormat,
+        parent: Resource,
+    ) {
+        self.nameid = GodotString::from_str(file.get_name_id());
+        self.typeid = GodotString::from_str(file.get_type_id());
+        self.subtypeid = GodotString::from_str(file.get_subtype_id());
+        self.namestr = file.get_name_id().into();
+        self.typestr = file.get_type_id().into();
+        self.subtypestr = file.get_subtype_id().into();
+        self.format = fmt;
+        self.parent = Some(parent);
+    }
+
+    /// Get this file's format
+    pub fn get_format(&self) -> libchum::format::TotemFormat {
+        self.format
+    }
+
+    /// Read this file's data as a ByteData instance
+    pub fn get_data_as_bytedata(&self) -> Instance<ByteData> {
+        self.get_archive_instance()
+            .map(|archive, _| {
+                let file = archive
+                    .archive
+                    .as_ref()
+                    .unwrap()
+                    .get_file_from_name(&self.namestr)
+                    .unwrap();
+                let f = Instance::<ByteData>::new();
+                f.map_mut(|script, res| {
+                    script.set_data(file.get_data().to_vec());
+                    res
+                })
+                .unwrap();
+                f
+            })
+            .unwrap()
+    }
+
+    /// Get this file's data as a Vec<u8>
+    pub fn get_data_as_vec(&self) -> Vec<u8> {
+        self.get_archive_instance()
+            .map(|archive, _| {
+                let file = archive
+                    .archive
+                    .as_ref()
+                    .unwrap()
+                    .get_file_from_name(&self.namestr)
+                    .unwrap();
+                file.get_data().to_owned()
+            })
+            .unwrap()
+    }
+
+    /// Replace this file's data with the given Vec<u8>
+    pub fn replace_data_with_vec(&mut self, data: Vec<u8>) {
+        self.get_archive_instance()
+            .map_mut(|archive, _| {
+                archive
+                    .archive
+                    .as_mut()
+                    .unwrap()
+                    .get_file_from_name_mut(&self.namestr)
+                    .unwrap()
+                    .replace_data(data);
+                godot_print!("WROTE TO ARCHIVE");
+            })
+            .unwrap();
+    }
+
+    ///////////////////////////////////////////////////////////////////////////
+    // EXPORT DATA                                                           //
+    ///////////////////////////////////////////////////////////////////////////
+
+    /// Export a BITMAP file as a .png
+    fn export_bitmap_to_png(&mut self, path: &str) {
         let mut buffer = File::create(path).unwrap();
         let bitmap =
             match reader::bitmap::Bitmap::read_data(&mut self.get_data_as_vec(), self.format) {
@@ -83,11 +203,13 @@ impl ChumFile {
         bitmap.export(&mut buffer).unwrap();
     }
 
+    /// Export this file's raw data
     fn export_to_binary(&mut self, path: &str) {
         let mut buffer = File::create(path).unwrap();
         buffer.write_all(&mut self.get_data_as_vec()).unwrap();
     }
 
+    /// Export a MESH file as a .obj
     fn export_mesh_to_obj(&mut self, path: &str) {
         let mut buffer = File::create(path).unwrap();
         let tmesh = match reader::tmesh::TMesh::read_data(&mut self.get_data_as_vec(), self.format)
@@ -100,6 +222,7 @@ impl ChumFile {
         tmesh.export(&mut buffer).unwrap();
     }
 
+    /// Export a SURFACE file as a .obj
     fn export_surface_to_obj(&mut self, path: &str) {
         let mut buffer = File::create(path).unwrap();
         let surf = match reader::surface::SurfaceObject::read_data(
@@ -118,18 +241,20 @@ impl ChumFile {
         .unwrap();
     }
 
-    fn export_to_txt(&mut self, path: &str) {
+    /// Export a TXT file as a .obj
+    fn export_txt_to_txt(&mut self, path: &str) {
         let mut buffer = File::create(path).unwrap();
         buffer.write_all(&self.get_data_as_vec()[4..]).unwrap();
     }
 
+    /// Export file data with the given export type to the given path
     #[export]
     pub fn export_to(&mut self, _owner: Resource, export_type: i64, path: GodotString) {
         let pathstr: String = format!("{}", path);
         match export_type {
             EXPORT_ID_BIN => self.export_to_binary(&pathstr),
-            EXPORT_ID_TEXT => self.export_to_txt(&pathstr),
-            EXPORT_ID_TEXTURE => self.export_to_bitmap(&pathstr),
+            EXPORT_ID_TEXT => self.export_txt_to_txt(&pathstr),
+            EXPORT_ID_TEXTURE => self.export_bitmap_to_png(&pathstr),
             EXPORT_ID_MODEL => match &self.typestr.as_str() {
                 &"MESH" => self.export_mesh_to_obj(&pathstr),
                 &"SURFACE" => self.export_surface_to_obj(&pathstr),
@@ -143,8 +268,9 @@ impl ChumFile {
         };
     }
 
+    /// Replace a TXT file with the given string
     #[export]
-    pub fn replace_with_string(&mut self, _owner: Resource, stringdata: GodotString) {
+    pub fn replace_txt_with_string(&mut self, _owner: Resource, stringdata: GodotString) {
         let mut data = vec![0; 4];
         let realstr = format!("{}", stringdata);
         godot_print!("A:");
@@ -176,128 +302,62 @@ impl ChumFile {
         godot_print!("D:");
     }
 
+    ///////////////////////////////////////////////////////////////////////////
+    // IMPORT DATA                                                           //
+    ///////////////////////////////////////////////////////////////////////////
+
+    /// Import BITMAP data from a file with the given format
     #[export]
-    pub fn import_bitmap(&mut self, _owner: Resource, path: GodotString, formattype: i64, palettetype: i64) {
+    pub fn import_bitmap(
+        &mut self,
+        _owner: Resource,
+        path: GodotString,
+        formattype: i64,
+        palettetype: i64,
+    ) {
         use libchum::reader::bitmap;
-        // use image;
         let pathstr = path.to_string();
         let fh = File::open(&pathstr).unwrap();
         let image_format = bitmap::image::ImageFormat::from_path(&pathstr).unwrap();
         let mut buf_reader = BufReader::new(fh);
         let (bitmap, width, height) = bitmap::import_bitmap(&mut buf_reader, image_format).unwrap();
-        let mut data = bitmap::BitmapFormat::new_empty(formattype as u8, palettetype as u8).unwrap();
+        let mut data =
+            bitmap::BitmapFormat::new_empty(formattype as u8, palettetype as u8).unwrap();
         bitmap::compress_bitmap(&bitmap, &mut data, width, height);
         let bitmap =
-        match reader::bitmap::Bitmap::read_data(&mut self.get_data_as_vec(), self.format) {
-            Ok(x) => x,
-            Err(err) => {
-                panic!("BITMAP file invalid: {}", err);
+            match reader::bitmap::Bitmap::read_data(&mut self.get_data_as_vec(), self.format) {
+                Ok(x) => x,
+                Err(err) => {
+                    panic!("BITMAP file invalid: {}", err);
+                }
             }
-        }.with_bitmap(data, width, height);
+            .with_bitmap(data, width, height);
         let mut outdata = Vec::new();
         bitmap.write_to(&mut outdata, self.format).unwrap();
         self.replace_data_with_vec(outdata);
     }
 
-    pub fn get_name_str(&self) -> &str {
-        &self.namestr
-    }
+    ///////////////////////////////////////////////////////////////////////////
+    // STRUCTURE DATA                                                        //
+    ///////////////////////////////////////////////////////////////////////////
 
-    pub fn get_type_str(&self) -> &str {
-        &self.typestr
-    }
-
-    pub fn get_subtype_str(&self) -> &str {
-        &self.subtypestr
-    }
-
-    pub fn get_name_hash(&self) -> i32 {
-        libchum::hash_name(&self.namestr)
-    }
-
-    pub fn get_archive_instance(&self) -> Instance<ChumArchive> {
-        Instance::try_from_base(self.parent.as_ref().unwrap().new_ref()).unwrap()
-    }
-
-    pub fn read_from_chumfile(
-        &mut self,
-        file: &libchum::ChumFile,
-        fmt: libchum::format::TotemFormat,
-        parent: Resource,
-    ) {
-        self.nameid = GodotString::from_str(file.get_name_id());
-        self.typeid = GodotString::from_str(file.get_type_id());
-        self.subtypeid = GodotString::from_str(file.get_subtype_id());
-        self.namestr = file.get_name_id().into();
-        self.typestr = file.get_type_id().into();
-        self.subtypestr = file.get_subtype_id().into();
-        self.format = fmt;
-        self.parent = Some(parent);
-    }
-
-    fn _init(_owner: Resource) -> Self {
-        ChumFile {
-            nameid: GodotString::new(),
-            typeid: GodotString::new(),
-            subtypeid: GodotString::new(),
-            namestr: String::new(),
-            typestr: String::new(),
-            subtypestr: String::new(),
-            format: libchum::format::TotemFormat::NGC,
-            parent: None,
+    #[export]
+    pub fn read_structure(&self, _owner: Resource) -> Variant {
+        match self.get_type_str() {
+            "BITMAP" => {
+                let bitmap = match reader::bitmap::Bitmap::read_data(
+                    &mut self.get_data_as_vec(),
+                    self.format,
+                ) {
+                    Ok(x) => x,
+                    Err(err) => {
+                        panic!("BITMAP file invalid: {}", err);
+                    }
+                };
+                let data = bitmap.structure();
+                Variant::from_dictionary(&util::struct_to_dict(&data))
+            }
+            _ => Variant::new(),
         }
-    }
-
-    pub fn get_format(&self) -> libchum::format::TotemFormat {
-        self.format
-    }
-
-    pub fn get_data_as_bytedata(&self) -> Instance<ByteData> {
-        self.get_archive_instance()
-            .map(|archive, _| {
-                let file = archive
-                    .archive
-                    .as_ref()
-                    .unwrap()
-                    .get_file_from_name(&self.namestr)
-                    .unwrap();
-                let f = Instance::<ByteData>::new();
-                f.map_mut(|script, res| {
-                    script.set_data(file.get_data().to_vec());
-                    res
-                })
-                .unwrap();
-                f
-            })
-            .unwrap()
-    }
-
-    pub fn get_data_as_vec(&self) -> Vec<u8> {
-        self.get_archive_instance()
-            .map(|archive, _| {
-                let file = archive
-                    .archive
-                    .as_ref()
-                    .unwrap()
-                    .get_file_from_name(&self.namestr)
-                    .unwrap();
-                file.get_data().to_owned()
-            })
-            .unwrap()
-    }
-
-    pub fn replace_data_with_vec(&mut self, data: Vec<u8>) {
-        self.get_archive_instance()
-            .map_mut(|archive, _| {
-                archive
-                    .archive
-                    .as_mut()
-                    .unwrap()
-                    .get_file_from_name_mut(&self.namestr)
-                    .unwrap()
-                    .replace_data(data);
-                godot_print!("WROTE TO ARCHIVE");
-            })
-            .unwrap();
     }
 }

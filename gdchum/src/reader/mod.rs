@@ -158,7 +158,7 @@ impl ChumReader {
     pub fn read_tmesh_nodeless(&mut self, data: Instance<ChumFile>) -> Dictionary {
         data.script()
             .map(|x| {
-                let hash = x.get_name_hash();
+                let hash = x.get_hash_id_ownerless();
                 if let Some(data) = self.cache.get(&hash) {
                     data.new_ref()
                 } else {
@@ -177,7 +177,7 @@ impl ChumReader {
     pub fn read_surface_nodeless(&mut self, data: Instance<ChumFile>) -> Dictionary {
         data.script()
             .map(|x| {
-                let hash = x.get_name_hash();
+                let hash = x.get_hash_id_ownerless();
                 if let Some(data) = self.cache.get(&hash) {
                     data.new_ref()
                 } else {
@@ -196,7 +196,7 @@ impl ChumReader {
     pub fn read_bitmap_nodeless(&mut self, data: Instance<ChumFile>) -> Dictionary {
         data.script()
             .map(|x| {
-                let hash = x.get_name_hash();
+                let hash = x.get_hash_id_ownerless();
                 if let Some(data) = self.cache.get(&hash) {
                     data.new_ref()
                 } else {
@@ -215,7 +215,7 @@ impl ChumReader {
     pub fn read_material_nodeless(&mut self, data: Instance<ChumFile>) -> Dictionary {
         data.script()
             .map(|x| {
-                let hash = x.get_name_hash();
+                let hash = x.get_hash_id_ownerless();
                 if let Some(data) = self.cache.get(&hash) {
                     data.new_ref()
                 } else {
@@ -242,7 +242,7 @@ impl ChumReader {
     pub fn read_materialanim_nodeless(&mut self, data: Instance<ChumFile>) -> Dictionary {
         data.script()
             .map(|x| {
-                let hash = x.get_name_hash();
+                let hash = x.get_hash_id_ownerless();
                 if let Some(data) = self.cache.get(&hash) {
                     data.new_ref()
                 } else {

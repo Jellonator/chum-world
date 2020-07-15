@@ -19,7 +19,7 @@ func set_file(file):
 
 func _on_TextEdit_text_changed():
 	ChumReader.invalidate(filehandle.get_hash_id())
-	filehandle.replace_with_string($TextEdit.text)
+	filehandle.replace_txt_with_string($TextEdit.text)
 #	var t = $TextEdit.text
 #	var i = 0
 #	var s = ""

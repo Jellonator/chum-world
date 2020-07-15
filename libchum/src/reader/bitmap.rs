@@ -3,13 +3,13 @@
 
 use crate::export::ChumExport;
 use crate::format::TotemFormat;
-pub use image;
-use std::error::Error;
-use std::io::{self, Read, Write, BufRead, Seek};
-use std::slice;
 use crate::structure::*;
-use imagequant;
 use crate::util;
+pub use image;
+use imagequant;
+use std::error::Error;
+use std::io::{self, BufRead, Read, Seek, Write};
+use std::slice;
 
 // Image formats
 const FORMAT_C4: u8 = 1;
@@ -178,14 +178,24 @@ impl AlphaLevel {
             Blend => 2,
         }
     }
+
+    pub fn from_u8(value: u8) -> Option<AlphaLevel> {
+        use AlphaLevel::*;
+        match value {
+            0 => Some(Opaque),
+            1 => Some(Bit),
+            2 => Some(Blend),
+            _ => None,
+        }
+    }
 }
 
 /// Palette Format
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum PaletteFormat {
-    RGB5A3, // 1
-    RGB565, // 2
-    RGBA8888 // 3
+    RGB5A3,   // 1
+    RGB565,   // 2
+    RGBA8888, // 3
 }
 
 impl PaletteFormat {
@@ -194,7 +204,7 @@ impl PaletteFormat {
             PALETTE_A3RGB5 => Some(PaletteFormat::RGB5A3),
             PALETTE_RGB565 => Some(PaletteFormat::RGB565),
             PALETTE_RGBA8888 => Some(PaletteFormat::RGBA8888),
-            _ => None
+            _ => None,
         }
     }
 
@@ -203,7 +213,7 @@ impl PaletteFormat {
         match self {
             RGB5A3 => 1,
             RGB565 => 2,
-            RGBA8888 => 3
+            RGBA8888 => 3,
         }
     }
 
@@ -211,7 +221,7 @@ impl PaletteFormat {
         match *self {
             PaletteFormat::RGB5A3 => Color::from_A3RGB5(value as u16),
             PaletteFormat::RGB565 => Color::from_RGB565(value as u16),
-            PaletteFormat::RGBA8888 => Color::from_RGBA8888(value)
+            PaletteFormat::RGBA8888 => Color::from_RGBA8888(value),
         }
     }
 }
@@ -219,20 +229,20 @@ impl PaletteFormat {
 #[derive(Clone)]
 pub struct PaletteC4 {
     format: PaletteFormat,
-    data: [u32; 16]
+    data: [u32; 16],
 }
 
 #[derive(Clone)]
 pub struct PaletteC8 {
     format: PaletteFormat,
-    data: [u32; 256]
+    data: [u32; 256],
 }
 
 impl PaletteC4 {
     pub fn new_empty(format: u8) -> Option<PaletteC4> {
         Some(PaletteC4 {
             data: [0; 16],
-            format: PaletteFormat::from_format(format)?
+            format: PaletteFormat::from_format(format)?,
         })
     }
 
@@ -263,11 +273,15 @@ impl PaletteC4 {
     pub fn get_color(&self, index: u8) -> Color {
         match self.data.get(index as usize) {
             Some(val) => self.format.get_color(*val),
-            None => panic!()
+            None => panic!(),
         }
     }
 
-    pub fn read_palette<R: Read>(ptype: u8, file: &mut R, fmt: TotemFormat) -> io::Result<PaletteC4> {
+    pub fn read_palette<R: Read>(
+        ptype: u8,
+        file: &mut R,
+        fmt: TotemFormat,
+    ) -> io::Result<PaletteC4> {
         match ptype {
             1 => {
                 let mut palettedata = [0u16; 16];
@@ -276,7 +290,10 @@ impl PaletteC4 {
                 for i in 0..palettedata.len() {
                     retdata[i] = palettedata[i] as u32;
                 }
-                Ok(PaletteC4{format: PaletteFormat::RGB5A3, data: retdata})
+                Ok(PaletteC4 {
+                    format: PaletteFormat::RGB5A3,
+                    data: retdata,
+                })
             }
             2 => {
                 let mut palettedata = [0u16; 16];
@@ -285,12 +302,18 @@ impl PaletteC4 {
                 for i in 0..palettedata.len() {
                     retdata[i] = palettedata[i] as u32;
                 }
-                Ok(PaletteC4{format: PaletteFormat::RGB565, data: retdata})
+                Ok(PaletteC4 {
+                    format: PaletteFormat::RGB565,
+                    data: retdata,
+                })
             }
             3 => {
                 let mut palettedata = [0u32; 16];
                 fmt.read_u32_into(file, &mut palettedata)?;
-                Ok(PaletteC4{format: PaletteFormat::RGBA8888, data: palettedata})
+                Ok(PaletteC4 {
+                    format: PaletteFormat::RGBA8888,
+                    data: palettedata,
+                })
             }
             _ => panic!(),
         }
@@ -301,7 +324,7 @@ impl PaletteC8 {
     pub fn new_empty(format: u8) -> Option<PaletteC8> {
         Some(PaletteC8 {
             data: [0; 256],
-            format: PaletteFormat::from_format(format)?
+            format: PaletteFormat::from_format(format)?,
         })
     }
 
@@ -332,11 +355,15 @@ impl PaletteC8 {
     pub fn get_color(&self, index: u8) -> Color {
         match self.data.get(index as usize) {
             Some(val) => self.format.get_color(*val),
-            None => panic!()
+            None => panic!(),
         }
     }
 
-    pub fn read_palette<R: Read>(ptype: u8, file: &mut R, fmt: TotemFormat) -> io::Result<PaletteC8> {
+    pub fn read_palette<R: Read>(
+        ptype: u8,
+        file: &mut R,
+        fmt: TotemFormat,
+    ) -> io::Result<PaletteC8> {
         match ptype {
             PALETTE_A3RGB5 => {
                 let mut palettedata = [0u16; 256];
@@ -345,7 +372,10 @@ impl PaletteC8 {
                 for i in 0..palettedata.len() {
                     retdata[i] = palettedata[i] as u32;
                 }
-                Ok(PaletteC8{format: PaletteFormat::RGB5A3, data: retdata})
+                Ok(PaletteC8 {
+                    format: PaletteFormat::RGB5A3,
+                    data: retdata,
+                })
             }
             PALETTE_RGB565 => {
                 let mut palettedata = [0u16; 256];
@@ -354,12 +384,18 @@ impl PaletteC8 {
                 for i in 0..palettedata.len() {
                     retdata[i] = palettedata[i] as u32;
                 }
-                Ok(PaletteC8{format: PaletteFormat::RGB565, data: retdata})
+                Ok(PaletteC8 {
+                    format: PaletteFormat::RGB565,
+                    data: retdata,
+                })
             }
             PALETTE_RGBA8888 => {
                 let mut palettedata = [0u32; 256];
                 fmt.read_u32_into(file, &mut palettedata)?;
-                Ok(PaletteC8{format: PaletteFormat::RGBA8888, data: palettedata})
+                Ok(PaletteC8 {
+                    format: PaletteFormat::RGBA8888,
+                    data: palettedata,
+                })
             }
             _ => panic!(),
         }
@@ -369,11 +405,11 @@ impl PaletteC8 {
 /// Image Format
 #[derive(Clone)]
 pub enum BitmapFormat {
-    C4(Vec<u8>, PaletteC4), // 1
-    C8(Vec<u8>, PaletteC8), // 2
-    RGB565(Vec<u16>), // 8
-    RGB5A3(Vec<u16>), // 10
-    RGBA8888(Vec<Color>), // 12
+    C4(Vec<u8>, PaletteC4),    // 1
+    C8(Vec<u8>, PaletteC8),    // 2
+    RGB565(Vec<u16>),          // 8
+    RGB5A3(Vec<u16>),          // 10
+    RGBA8888(Vec<Color>),      // 12
     RGB888(Vec<(u8, u8, u8)>), // 13
 }
 
@@ -387,7 +423,7 @@ impl BitmapFormat {
             FORMAT_A3RGB565 => Some(RGB5A3(Vec::new())),
             FORMAT_ARGB8888 => Some(RGBA8888(Vec::new())),
             FORMAT_RGB888 => Some(RGB888(Vec::new())),
-            _ => None
+            _ => None,
         }
     }
 
@@ -399,7 +435,7 @@ impl BitmapFormat {
             RGB565(_) => FORMAT_RGB565,
             RGB5A3(_) => FORMAT_A3RGB565,
             RGBA8888(_) => FORMAT_ARGB8888,
-            RGB888(_) => FORMAT_RGB888
+            RGB888(_) => FORMAT_RGB888,
         }
     }
 
@@ -408,7 +444,7 @@ impl BitmapFormat {
         match self {
             C4(_, ref p) => p.get_format(),
             C8(_, ref p) => p.get_format(),
-            _ => 3
+            _ => 3,
         }
     }
 
@@ -420,7 +456,7 @@ impl BitmapFormat {
             RGB565(ref v) => v.len(),
             RGB5A3(ref v) => v.len(),
             RGBA8888(ref v) => v.len(),
-            RGB888(ref v) => v.len()
+            RGB888(ref v) => v.len(),
         }
     }
 
@@ -436,8 +472,8 @@ impl BitmapFormat {
                 r: x.0,
                 g: x.1,
                 b: x.2,
-                a: 255
-            })
+                a: 255,
+            }),
         }
     }
 
@@ -458,25 +494,49 @@ pub struct Bitmap {
     width: u32,
     height: u32,
     flags: u8,
-    unknown: u8
+    unknown: u8,
 }
 
 impl ChumStruct for Bitmap {
     fn structure(&self) -> ChumStructVariant {
         use ChumStructVariant::*;
+        use IntType::*;
         Struct(vec![
-            ("flags".to_owned(), Box::new(U8(self.flags))),
-            ("unknown".to_owned(), Box::new(U8(self.unknown))),
+            (
+                "flags".to_owned(),
+                Integer(
+                    self.flags as i64,
+                    Flags(vec!["a".to_owned(), "b".to_owned(), "c".to_owned()]),
+                ),
+            ),
+            (
+                "alpha".to_owned(),
+                Integer(
+                    self.alpha.as_u8() as i64,
+                    Enum(vec![
+                        "Opaque".to_owned(),
+                        "Bit".to_owned(),
+                        "Blend".to_owned(),
+                    ]),
+                ),
+            ),
+            (
+                "unknown".to_owned(),
+                Integer(self.unknown as i64, Custom(1, 5)),
+            ),
         ])
     }
     fn destructure(data: ChumStructVariant) -> Result<Self, Box<dyn std::error::Error>> {
+        let alpha =
+            AlphaLevel::from_u8(data.get_struct_item("alpha").unwrap().get_i64().unwrap() as u8)
+                .unwrap();
         Ok(Bitmap {
             data: BitmapFormat::RGBA8888(Vec::new()),
-            alpha: AlphaLevel::Opaque,
+            alpha,
             width: 0,
             height: 0,
             flags: data.get(chum_path!(flags)).unwrap().get_i64().unwrap() as u8,
-            unknown: data.get(chum_path!(unknown)).unwrap().get_i64().unwrap() as u8
+            unknown: data.get(chum_path!(unknown)).unwrap().get_i64().unwrap() as u8,
         })
     }
 }
@@ -498,24 +558,6 @@ fn get_chunk_index(
     let ix = blockcol * blockwidth + (block_i % blockwidth);
     let iy = blockrow * blockheight + (block_i / blockwidth);
     return iy * imagewidth + ix;
-}
-
-/// Convert a linear index into a block index
-fn blockify_index(
-    index: usize,
-    blockwidth: usize,
-    blockheight: usize,
-    imagewidth: usize,
-    _imageheight: usize,
-) -> usize {
-    let blocks_per_row = imagewidth / blockwidth;
-    let block_size = blockwidth * blockheight;
-    let row = index / imagewidth;
-    let col = index % imagewidth;
-    let block_row = row / blockheight;
-    let block_col = col / blockwidth;
-    let block = block_row * blocks_per_row + block_col;
-    return block * block_size + (col % blockwidth) + (row % blockheight) * blockwidth;
 }
 
 /// Arrange the pixel data into a Vector following bitmap chunk rules.
@@ -576,7 +618,8 @@ where
     //     newdata[blockify_index(i, blockwidth, blockheight, imagewidth, imageheight)] = col.clone();
     // }
     for i in 0..(imagewidth * imageheight) {
-        newdata[i] = data[get_chunk_index(i, blockwidth, blockheight, imagewidth, imageheight)].clone();
+        newdata[i] =
+            data[get_chunk_index(i, blockwidth, blockheight, imagewidth, imageheight)].clone();
     }
     newdata
 }
@@ -688,7 +731,7 @@ impl Bitmap {
                 BitmapFormat::RGBA8888(coldata)
             }
             FORMAT_RGB888 => {
-                let mut data = vec![(0,0,0); (width * height) as usize];
+                let mut data = vec![(0, 0, 0); (width * height) as usize];
                 for i in 0..data.len() {
                     let b = fmt.read_u8(file)?;
                     let g = fmt.read_u8(file)?;
@@ -712,7 +755,7 @@ impl Bitmap {
             width,
             height,
             flags,
-            unknown: filter
+            unknown: filter,
         })
     }
 
@@ -739,20 +782,20 @@ impl Bitmap {
                     fmt.write_u8(writer, value)?;
                 }
                 p.write_to(writer, fmt)?;
-            },
+            }
             BitmapFormat::C8(ref v, ref p) => {
                 let data = blockify(v, 8, 4, self.width as usize, self.height as usize);
                 for value in data.iter() {
                     fmt.write_u8(writer, *value)?;
                 }
                 p.write_to(writer, fmt)?;
-            },
+            }
             BitmapFormat::RGB565(ref v) | BitmapFormat::RGB5A3(ref v) => {
                 let data = blockify(v, 4, 4, self.width as usize, self.height as usize);
                 for value in data.iter() {
                     fmt.write_u16(writer, *value)?;
                 }
-            },
+            }
             BitmapFormat::RGBA8888(ref v) => {
                 let data = blockify(v, 4, 4, self.width as usize, self.height as usize);
                 for value in data.chunks(16) {
@@ -765,14 +808,14 @@ impl Bitmap {
                     }
                     fmt.write_bytes(writer, &buf)?;
                 }
-            },
+            }
             BitmapFormat::RGB888(ref v) => {
                 for value in v.iter() {
                     fmt.write_u8(writer, value.2)?;
                     fmt.write_u8(writer, value.1)?;
                     fmt.write_u8(writer, value.0)?;
                 }
-            },
+            }
         }
         fmt.write_u32(writer, 0)?;
         Ok(())
@@ -813,11 +856,13 @@ fn palettize(data: &[Color], n: i32, width: u32, height: u32) -> (Vec<u8>, Vec<C
     let mut liq = imagequant::new();
     liq.set_max_colors(n);
     liq.set_quality(0, 100);
-    let mut liq_image = liq.new_image(data, width as usize, height as usize, 0.0).unwrap();
+    let mut liq_image = liq
+        .new_image(data, width as usize, height as usize, 0.0)
+        .unwrap();
 
     let mut res = match liq.quantize(&liq_image) {
         Ok(res) => res,
-        Err(err) => panic!("Failed quantization: {:?}", err)
+        Err(err) => panic!("Failed quantization: {:?}", err),
     };
 
     res.set_dithering_level(1.0);
@@ -827,12 +872,18 @@ fn palettize(data: &[Color], n: i32, width: u32, height: u32) -> (Vec<u8>, Vec<C
         panic!("Resulting palette has too many colors (this should not happen)");
     }
 
-    (pixels, palette.into_iter().map(|x| Color {
-        r: x.r,
-        g: x.g,
-        b: x.b,
-        a: x.a,
-    }).collect())
+    (
+        pixels,
+        palette
+            .into_iter()
+            .map(|x| Color {
+                r: x.r,
+                g: x.g,
+                b: x.b,
+                a: x.a,
+            })
+            .collect(),
+    )
 }
 
 fn read_into_palette_c4(colors: Vec<Color>, palette: &mut PaletteC4) {
@@ -841,7 +892,7 @@ fn read_into_palette_c4(colors: Vec<Color>, palette: &mut PaletteC4) {
         palette.data[i] = match palette.format {
             PaletteFormat::RGB565 => col.to_RGB565() as u32,
             PaletteFormat::RGB5A3 => col.to_A3RGB5() as u32,
-            PaletteFormat::RGBA8888 => col.to_RGBA8888()
+            PaletteFormat::RGBA8888 => col.to_RGBA8888(),
         };
     }
 }
@@ -852,7 +903,7 @@ fn read_into_palette_c8(colors: Vec<Color>, palette: &mut PaletteC8) {
         palette.data[i] = match palette.format {
             PaletteFormat::RGB565 => col.to_RGB565() as u32,
             PaletteFormat::RGB5A3 => col.to_A3RGB5() as u32,
-            PaletteFormat::RGBA8888 => col.to_RGBA8888()
+            PaletteFormat::RGBA8888 => col.to_RGBA8888(),
         };
     }
 }
@@ -862,25 +913,25 @@ pub fn compress_bitmap(data: &[Color], basis: &mut BitmapFormat, width: u32, hei
         BitmapFormat::RGBA8888(ref mut v) => {
             v.clear();
             v.extend(data.iter());
-        },
+        }
         BitmapFormat::RGB888(ref mut v) => {
             v.clear();
             v.extend(data.iter().map(|x| (x.r, x.g, x.b)));
-        },
+        }
         BitmapFormat::RGB565(ref mut v) => {
             v.clear();
             v.extend(data.iter().map(|x| x.to_RGB565()));
-        },
+        }
         BitmapFormat::RGB5A3(ref mut v) => {
             v.clear();
             v.extend(data.iter().map(|x| x.to_A3RGB5()));
-        },
+        }
         BitmapFormat::C4(ref mut v, ref mut palette) => {
             let (newdata, newpalette) = palettize(data, 16, width, height);
             v.clear();
             v.extend(newdata.into_iter());
             read_into_palette_c4(newpalette, palette);
-        },
+        }
         BitmapFormat::C8(ref mut v, ref mut palette) => {
             let (newdata, newpalette) = palettize(data, 256, width, height);
             v.clear();
@@ -890,8 +941,12 @@ pub fn compress_bitmap(data: &[Color], basis: &mut BitmapFormat, width: u32, hei
     }
 }
 
-pub fn import_bitmap<R>(reader: &mut R, format: image::ImageFormat) -> Result<(Vec<Color>, u32, u32), Box<dyn Error>>
-where R: Read + BufRead + Seek
+pub fn import_bitmap<R>(
+    reader: &mut R,
+    format: image::ImageFormat,
+) -> Result<(Vec<Color>, u32, u32), Box<dyn Error>>
+where
+    R: Read + BufRead + Seek,
 {
     use image::GenericImageView;
     let mut imgreader = image::io::Reader::new(reader);
@@ -914,7 +969,7 @@ where R: Read + BufRead + Seek
                 r: pixel[0],
                 g: pixel[1],
                 b: pixel[2],
-                a: pixel[3]
+                a: pixel[3],
             });
         }
     }

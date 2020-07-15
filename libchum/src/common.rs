@@ -26,6 +26,10 @@ impl Hash for Vector3 {
 }
 
 impl Vector3 {
+    pub fn with(x: f32, y: f32, z: f32) -> Vector3 {
+        Vector3 { x, y, z }
+    }
+
     /// Create a new, empty Vector3
     pub fn new() -> Vector3 {
         Vector3 {
@@ -128,6 +132,10 @@ impl Hash for Vector2 {
 }
 
 impl Vector2 {
+    pub fn with(x: f32, y: f32) -> Vector2 {
+        Vector2 { x, y }
+    }
+
     /// Create a new Vector2
     pub fn new() -> Vector2 {
         Vector2 { x: 0.0, y: 0.0 }

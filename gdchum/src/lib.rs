@@ -5,6 +5,7 @@ use std::fs::File;
 pub mod bytedata;
 pub mod chumfile;
 pub mod reader;
+pub mod util;
 
 #[derive(NativeClass)]
 #[inherit(Resource)]

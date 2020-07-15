@@ -18,6 +18,7 @@ func set_file(file):
 			var tex = ImageTexture.new()
 			tex.create_from_image(img, 0)
 			node_view.texture = tex
+			print(file.read_structure())
 		else:
 			print("DOES NOT EXIST")
 			node_view.texture = null

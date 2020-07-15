@@ -111,6 +111,51 @@ pub fn dict_to_struct(dict: &Dictionary) -> ChumStructVariant {
 }
 
 /// Convert a ChumStructVariant to a format usable by Godot
+/// The following dictionary will one of the following formats:
+/// "enum" | "flags" | "integer" | "float" | "vec2" | "vec3" | "transform" | "array" | "struct"
+/// {
+///     "type": "enum",
+///     "value": int,
+///     "names": PoolStringArray
+/// }
+/// {
+///     "type": "flags",
+///     "value": int,
+///     "names": PoolStringArray
+/// }
+/// {
+///     "type": "integer",
+///     "value": int,
+///     "integer": "U8" | "I8" | "U16" | "I16" | "U32" | "I32",
+///     "min": int,
+///     "max": int
+/// }
+/// {
+///     "type": "float",
+///     "value": float,
+/// }
+/// {
+///     "type": "vec2",
+///     "value": Vector2,
+/// }
+/// {
+///     "type": "vec3",
+///     "value": Vector3,
+/// }
+/// {
+///     "type": "transform",
+///     "value": Transform,
+/// }
+/// {
+///     "type": "array",
+///     "value": Array<Dictionary>,
+///     "default": Dictionary
+/// }
+/// {
+///     "type": "struct",
+///     "value": Dictionary<String, Dictionary>,
+///     "order": PoolStringArray
+/// }
 pub fn struct_to_dict(value: &ChumStructVariant) -> Dictionary {
     match value {
         ChumStructVariant::Integer(value, IntType::Enum(ref names)) => {

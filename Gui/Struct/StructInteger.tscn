@@ -1,0 +1,15 @@
+[gd_scene load_steps=2 format=2]
+
+[ext_resource path="res://Gui/Struct/StructInteger.gd" type="Script" id=1]
+
+[node name="StructInteger" type="SpinBox"]
+anchor_right = 1.0
+margin_bottom = 24.0
+size_flags_horizontal = 3
+rounded = true
+editable = false
+script = ExtResource( 1 )
+__meta__ = {
+"_edit_use_anchors_": false
+}
+[connection signal="value_changed" from="." to="." method="_on_StructInteger_value_changed"]

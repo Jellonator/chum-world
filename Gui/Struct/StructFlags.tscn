@@ -1,0 +1,26 @@
+[gd_scene load_steps=2 format=2]
+
+[ext_resource path="res://Gui/Struct/StructFlags.gd" type="Script" id=1]
+
+[node name="StructFlags" type="VBoxContainer"]
+anchor_right = 1.0
+margin_bottom = 48.0
+size_flags_horizontal = 3
+custom_constants/separation = 0
+script = ExtResource( 1 )
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="CheckBox" type="CheckBox" parent="."]
+margin_right = 1024.0
+margin_bottom = 24.0
+disabled = true
+text = "Test"
+
+[node name="CheckBox2" type="CheckBox" parent="."]
+margin_top = 24.0
+margin_right = 1024.0
+margin_bottom = 48.0
+disabled = true
+text = "Test"

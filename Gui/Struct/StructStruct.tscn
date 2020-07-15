@@ -1,0 +1,12 @@
+[gd_scene load_steps=2 format=2]
+
+[ext_resource path="res://Gui/Struct/StructStruct.gd" type="Script" id=1]
+
+[node name="StructStruct" type="GridContainer"]
+margin_right = 1024.0
+size_flags_horizontal = 3
+columns = 2
+script = ExtResource( 1 )
+__meta__ = {
+"_edit_use_anchors_": false
+}

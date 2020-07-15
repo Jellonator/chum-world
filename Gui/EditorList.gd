@@ -3,6 +3,8 @@ extends VBoxContainer
 var cfile = null
 
 onready var button_export := $HBoxContainer/ExportButton
+onready var node_tabs := $Split/TabContainer
+onready var node_struct := $Split/Margin/Panel/Scroll/VBox
 
 const EXPORT_ID_BIN := 0
 const EXPORT_ID_TEXT := 1
@@ -34,15 +36,27 @@ func set_exportbutton(file):
 		popup.set_item_disabled(i, not typename in VALID_EXPORTS[popup.get_item_id(i)])
 
 func set_tab(id: int, file):
-	$TabContainer.get_child(id).set_file(file)
-	for i in $TabContainer.get_child_count():
+	node_tabs.get_child(id).set_file(file)
+	for i in node_tabs.get_child_count():
 		if i != id:
-			$TabContainer.get_child(i).set_file(null)
+			node_tabs.get_child(i).set_file(null)
 
 func set_file(file):
 	cfile = file
-	set_tab($TabContainer.current_tab, file)
+	set_tab(node_tabs.current_tab, file)
 	set_exportbutton(file)
+	for child in node_struct.get_children():
+		child.queue_free()
+	if file != null:
+		var struct = file.read_structure()
+		print(struct)
+		if struct != null:
+			var instance = Structure.instance(struct)
+			print(instance)
+			node_struct.add_child(instance)
+
+func refresh_viewer():
+	node_tabs.get_child(node_tabs.current_tab).set_file(cfile)
 
 func _on_TabContainer_tab_changed(tab):
 	set_tab(tab, cfile)

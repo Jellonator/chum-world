@@ -22,6 +22,7 @@ config/icon="res://icon.png"
 [autoload]
 
 ChumReader="*res://gdchum/ChumReader.gdns"
+Structure="*res://Gui/Struct/Structure.gd"
 
 [input]
 

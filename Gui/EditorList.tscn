@@ -29,21 +29,28 @@ text = "Export File As..."
 flat = false
 items = [ "Raw Binary (.bin)", null, 0, false, false, 0, 0, null, "", false, "Text (.txt)", null, 0, false, false, 1, 0, null, "", false, "Model (.obj)", null, 0, false, false, 2, 0, null, "", false, "Texture (.png)", null, 0, false, false, 3, 0, null, "", false ]
 
-[node name="TabContainer" type="TabContainer" parent="."]
+[node name="Split" type="HSplitContainer" parent="."]
 margin_top = 24.0
 margin_right = 1024.0
 margin_bottom = 600.0
 size_flags_vertical = 3
+
+[node name="TabContainer" type="TabContainer" parent="Split"]
+margin_right = 676.0
+margin_bottom = 576.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+size_flags_stretch_ratio = 2.0
 custom_styles/panel = SubResource( 1 )
 
-[node name="Viewer" type="TabContainer" parent="TabContainer"]
+[node name="Viewer" type="TabContainer" parent="Split/TabContainer"]
 anchor_right = 1.0
 anchor_bottom = 1.0
 margin_top = 24.0
 tabs_visible = false
 script = ExtResource( 5 )
 
-[node name="Default" type="CenterContainer" parent="TabContainer/Viewer"]
+[node name="Default" type="CenterContainer" parent="Split/TabContainer/Viewer"]
 anchor_right = 1.0
 anchor_bottom = 1.0
 margin_left = 4.0
@@ -52,34 +59,69 @@ margin_right = -4.0
 margin_bottom = -4.0
 script = ExtResource( 6 )
 
-[node name="Label" type="Label" parent="TabContainer/Viewer/Default"]
-margin_left = 458.0
+[node name="Label" type="Label" parent="Split/TabContainer/Viewer/Default"]
+margin_left = 284.0
 margin_top = 263.0
-margin_right = 558.0
+margin_right = 384.0
 margin_bottom = 277.0
 text = "Nothing to view"
 
-[node name="Viewer3D" parent="TabContainer/Viewer" instance=ExtResource( 4 )]
+[node name="Viewer3D" parent="Split/TabContainer/Viewer" instance=ExtResource( 4 )]
 visible = false
 margin_left = 4.0
 margin_top = 8.0
 margin_right = -4.0
 margin_bottom = -4.0
 
-[node name="TextureViewer" parent="TabContainer/Viewer" instance=ExtResource( 7 )]
+[node name="TextureViewer" parent="Split/TabContainer/Viewer" instance=ExtResource( 7 )]
 visible = false
 
-[node name="Hex" parent="TabContainer" instance=ExtResource( 1 )]
+[node name="Hex" parent="Split/TabContainer" instance=ExtResource( 1 )]
 visible = false
 margin_top = 24.0
 
-[node name="Text" parent="TabContainer" instance=ExtResource( 2 )]
+[node name="Text" parent="Split/TabContainer" instance=ExtResource( 2 )]
 visible = false
 margin_top = 24.0
+
+[node name="Margin" type="MarginContainer" parent="Split"]
+margin_left = 688.0
+margin_right = 1024.0
+margin_bottom = 576.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+custom_constants/margin_right = 0
+custom_constants/margin_top = 24
+custom_constants/margin_left = 0
+
+[node name="Panel" type="PanelContainer" parent="Split/Margin"]
+margin_top = 24.0
+margin_right = 336.0
+margin_bottom = 576.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="Scroll" type="ScrollContainer" parent="Split/Margin/Panel"]
+margin_left = 7.0
+margin_top = 7.0
+margin_right = 329.0
+margin_bottom = 545.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+scroll_horizontal_enabled = false
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="VBox" type="VBoxContainer" parent="Split/Margin/Panel/Scroll"]
+margin_right = 322.0
+margin_bottom = 538.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
 
 [node name="ConfirmationDialog" type="ConfirmationDialog" parent="."]
 margin_top = 530.0
 margin_right = 1024.0
 margin_bottom = 600.0
 popup_exclusive = true
-[connection signal="tab_changed" from="TabContainer" to="." method="_on_TabContainer_tab_changed"]
+[connection signal="tab_changed" from="Split/TabContainer" to="." method="_on_TabContainer_tab_changed"]

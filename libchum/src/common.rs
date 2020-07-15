@@ -1,5 +1,7 @@
+use crate::format::TotemFormat;
 use core::fmt::Display;
 use std::hash::{Hash, Hasher};
+use std::io::{self, Read, Write};
 use std::mem;
 use std::ops::{Add, Mul, Sub};
 
@@ -26,6 +28,21 @@ impl Hash for Vector3 {
 }
 
 impl Vector3 {
+    pub fn read_from<R: Read>(reader: &mut R, fmt: TotemFormat) -> io::Result<Vector3> {
+        Ok(Vector3 {
+            x: fmt.read_f32(reader)?,
+            y: fmt.read_f32(reader)?,
+            z: fmt.read_f32(reader)?,
+        })
+    }
+
+    pub fn write_to<W: Write>(&self, writer: &mut W, fmt: TotemFormat) -> io::Result<()> {
+        fmt.write_f32(writer, self.x)?;
+        fmt.write_f32(writer, self.y)?;
+        fmt.write_f32(writer, self.z)?;
+        Ok(())
+    }
+
     pub fn with(x: f32, y: f32, z: f32) -> Vector3 {
         Vector3 { x, y, z }
     }
@@ -132,6 +149,19 @@ impl Hash for Vector2 {
 }
 
 impl Vector2 {
+    pub fn read_from<R: Read>(reader: &mut R, fmt: TotemFormat) -> io::Result<Vector2> {
+        Ok(Vector2 {
+            x: fmt.read_f32(reader)?,
+            y: fmt.read_f32(reader)?,
+        })
+    }
+
+    pub fn write_to<W: Write>(&self, writer: &mut W, fmt: TotemFormat) -> io::Result<()> {
+        fmt.write_f32(writer, self.x)?;
+        fmt.write_f32(writer, self.y)?;
+        Ok(())
+    }
+
     pub fn with(x: f32, y: f32) -> Vector2 {
         Vector2 { x, y }
     }
@@ -260,6 +290,21 @@ pub struct Mat3x3 {
     pub mat: [f32; 9],
 }
 
+impl Mat3x3 {
+    pub fn read_from<R: Read>(reader: &mut R, fmt: TotemFormat) -> io::Result<Mat3x3> {
+        let mut buf = [0.0f32; 9];
+        fmt.read_f32_into(reader, &mut buf)?;
+        Ok(Mat3x3 { mat: buf })
+    }
+
+    pub fn write_to<W: Write>(&self, writer: &mut W, fmt: TotemFormat) -> io::Result<()> {
+        for value in self.mat.iter() {
+            fmt.write_f32(writer, *value)?;
+        }
+        Ok(())
+    }
+}
+
 // A 4x4 Matrix
 #[derive(Clone, Debug)]
 #[repr(C)]
@@ -267,9 +312,38 @@ pub struct Mat4x4 {
     pub mat: [f32; 16],
 }
 
+impl Mat4x4 {
+    pub fn read_from<R: Read>(reader: &mut R, fmt: TotemFormat) -> io::Result<Mat4x4> {
+        let mut buf = [0.0f32; 16];
+        fmt.read_f32_into(reader, &mut buf)?;
+        Ok(Mat4x4 { mat: buf })
+    }
+
+    pub fn write_to<W: Write>(&self, writer: &mut W, fmt: TotemFormat) -> io::Result<()> {
+        for value in self.mat.iter() {
+            fmt.write_f32(writer, *value)?;
+        }
+        Ok(())
+    }
+}
+
 #[derive(Clone, Debug)]
 #[repr(C)]
-pub struct Color
-{
-    pub values: [f32; 4]
+pub struct Color {
+    pub values: [f32; 4],
+}
+
+impl Color {
+    pub fn read_from<R: Read>(reader: &mut R, fmt: TotemFormat) -> io::Result<Color> {
+        let mut buf = [0.0f32; 4];
+        fmt.read_f32_into(reader, &mut buf)?;
+        Ok(Color { values: buf })
+    }
+
+    pub fn write_to<W: Write>(&self, writer: &mut W, fmt: TotemFormat) -> io::Result<()> {
+        for value in self.values.iter() {
+            fmt.write_f32(writer, *value)?;
+        }
+        Ok(())
+    }
 }

@@ -35,13 +35,23 @@ impl IntType {
 }
 
 #[derive(Clone)]
+pub struct ArrayData {
+    pub data: Vec<ChumStructVariant>,
+    pub default_value: Box<ChumStructVariant>,
+    pub can_resize: bool,
+}
+
+#[derive(Clone)]
 pub enum ChumStructVariant {
     Integer(i64, IntType),
     Float(f32),
-    Transform(common::Mat4x4),
+    Transform3D(common::Mat4x4),
+    Transform2D(common::Mat3x3),
     Vec2(common::Vector2),
     Vec3(common::Vector3),
-    Array(Vec<ChumStructVariant>, Box<ChumStructVariant>),
+    Color(common::Color),
+    Reference(i32, Option<String>),
+    Array(ArrayData),
     Struct(Vec<(String, ChumStructVariant)>),
 }
 
@@ -78,7 +88,7 @@ impl ChumStructVariant {
         use ChumPathElement::*;
         use ChumStructVariant::*;
         match (self, path.first()) {
-            (Array(ref v, _), Some(Index(i))) => v.get(*i),
+            (Array(ref data), Some(Index(i))) => data.data.get(*i),
             (Struct(ref data), Some(Member(ref name))) => {
                 for (id, value) in data {
                     if id == name {
@@ -107,10 +117,17 @@ impl ChumStructVariant {
         }
     }
 
-    pub fn get_transform(&self) -> Option<&common::Mat4x4> {
+    pub fn get_transform3d(&self) -> Option<&common::Mat4x4> {
         use ChumStructVariant::*;
         match *self {
-            Transform(ref x) => Some(x),
+            Transform3D(ref x) => Some(x),
+            _ => None,
+        }
+    }
+    pub fn get_transform2d(&self) -> Option<&common::Mat3x3> {
+        use ChumStructVariant::*;
+        match *self {
+            Transform2D(ref x) => Some(x),
             _ => None,
         }
     }
@@ -146,24 +163,52 @@ impl ChumStructVariant {
             _ => None,
         }
     }
+    pub fn get_color(&self) -> Option<&common::Color> {
+        use ChumStructVariant::*;
+        match *self {
+            Color(ref x) => Some(x),
+            _ => None,
+        }
+    }
+    pub fn get_reference_id(&self) -> Option<i32> {
+        use ChumStructVariant::*;
+        match *self {
+            Reference(x, _) => Some(x),
+            _ => None,
+        }
+    }
+    pub fn get_reference_type(&self) -> Option<&str> {
+        use ChumStructVariant::*;
+        match *self {
+            Reference(_, ref y) => y.as_ref().map(|s| s.as_str()),
+            _ => None,
+        }
+    }
     pub fn get_array(&self) -> Option<&[ChumStructVariant]> {
         use ChumStructVariant::*;
         match self {
-            Array(ref x, _) => Some(x),
+            Array(ref x) => Some(&x.data),
             _ => None,
         }
     }
     pub fn get_array_item(&self, index: usize) -> Option<&ChumStructVariant> {
         use ChumStructVariant::*;
         match self {
-            Array(ref x, _) => x.get(index),
+            Array(ref x) => x.data.get(index),
             _ => None,
         }
     }
     pub fn get_array_default(&self) -> Option<&ChumStructVariant> {
         use ChumStructVariant::*;
         match self {
-            Array(_, ref x) => Some(x),
+            Array(ref x) => Some(&x.default_value),
+            _ => None,
+        }
+    }
+    pub fn can_resize_array(&self) -> Option<bool> {
+        use ChumStructVariant::*;
+        match self {
+            Array(ref x) => Some(x.can_resize),
             _ => None,
         }
     }

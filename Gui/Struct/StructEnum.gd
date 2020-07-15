@@ -1,5 +1,6 @@
 extends OptionButton
 
+signal modified(data)
 var data: Dictionary
 
 func set_data(data: Dictionary):
@@ -14,3 +15,4 @@ func set_data(data: Dictionary):
 
 func _on_StructEnum_item_selected(id):
 	data["value"] = id
+	emit_signal("modified", self.data)

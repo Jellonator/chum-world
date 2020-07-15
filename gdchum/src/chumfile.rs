@@ -360,4 +360,29 @@ impl ChumFile {
             _ => Variant::new(),
         }
     }
+
+    #[export]
+    pub fn import_structure(&mut self, _owner: Resource, data: Dictionary) {
+        let structure = util::dict_to_struct(&data);
+        match self.get_type_str() {
+            "BITMAP" => {
+                let bitmap = match reader::bitmap::Bitmap::read_data(
+                    &mut self.get_data_as_vec(),
+                    self.format,
+                ) {
+                    Ok(x) => x,
+                    Err(err) => {
+                        panic!("BITMAP file invalid: {}", err);
+                    }
+                };
+                let bitmapdata = reader::bitmap::Bitmap::destructure(structure)
+                    .unwrap()
+                    .with_bitmap(bitmap.get_data().clone(), bitmap.get_width(), bitmap.get_height());
+                let mut outdata = Vec::new();
+                bitmapdata.write_to(&mut outdata, self.format).unwrap();
+                self.replace_data_with_vec(outdata);
+            }
+            _ => panic!("Could not import data")
+        }
+    }
 }

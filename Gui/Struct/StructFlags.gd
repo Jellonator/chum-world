@@ -1,5 +1,6 @@
 extends VBoxContainer
 
+signal modified(data)
 var data: Dictionary
 
 func set_data(data: Dictionary):
@@ -24,3 +25,4 @@ func _on_checkbox_toggle(enabled: bool, index: int):
 		data["value"] = value | index
 	else:
 		data["value"] = value & ~index
+	emit_signal("modified", self.data)

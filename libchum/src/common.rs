@@ -210,7 +210,7 @@ impl Mul for Vector2 {
 }
 
 /// A point
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 #[repr(C)]
 pub struct Point {
     pub vertex: Vector3,
@@ -219,14 +219,14 @@ pub struct Point {
 }
 
 /// A triangle (three points)
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 #[repr(C)]
 pub struct Tri {
     pub points: [Point; 3],
 }
 
 /// A quad (four points)
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 #[repr(C)]
 pub struct Quad {
     pub points: [Point; 4],
@@ -254,15 +254,22 @@ impl Quad {
 }
 
 /// A 3x3 Matrix
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 #[repr(C)]
 pub struct Mat3x3 {
     pub mat: [f32; 9],
 }
 
 // A 4x4 Matrix
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 #[repr(C)]
 pub struct Mat4x4 {
     pub mat: [f32; 16],
+}
+
+#[derive(Clone, Debug)]
+#[repr(C)]
+pub struct Color
+{
+    pub values: [f32; 4]
 }

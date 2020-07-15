@@ -26,7 +26,7 @@ pub fn dict_to_struct(dict: &Dictionary) -> ChumStructVariant {
         }
         "integer" => {
             let value = dict.get_ref(&"value".into()).try_to_i64().unwrap();
-            let int_type = dict.get_ref(&"value".into()).try_to_string().unwrap();
+            let int_type = dict.get_ref(&"integer".into()).try_to_string().unwrap();
             let t = match int_type.as_str() {
                 "I8" => IntType::I8,
                 "U8" => IntType::U8,
@@ -35,8 +35,8 @@ pub fn dict_to_struct(dict: &Dictionary) -> ChumStructVariant {
                 "I32" => IntType::I32,
                 "U32" => IntType::U32,
                 "custom" => {
-                    let vmin = dict.get_ref(&"vmin".into()).try_to_i64().unwrap();
-                    let vmax = dict.get_ref(&"vmax".into()).try_to_i64().unwrap();
+                    let vmin = dict.get_ref(&"min".into()).try_to_i64().unwrap();
+                    let vmax = dict.get_ref(&"max".into()).try_to_i64().unwrap();
                     IntType::Custom(vmin, vmax)
                 }
                 _ => panic!("Invalid integer type"),

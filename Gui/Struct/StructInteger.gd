@@ -1,5 +1,6 @@
 extends SpinBox
 
+signal modified(data)
 var data: Dictionary
 
 func set_data(data: Dictionary):
@@ -11,3 +12,4 @@ func set_data(data: Dictionary):
 
 func _on_StructInteger_value_changed(value: float):
 	data["value"] = int(value)
+	emit_signal("modified", self.data)

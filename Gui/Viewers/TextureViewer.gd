@@ -1,6 +1,6 @@
 extends Control
 
-onready var node_view := $TextureViewer
+onready var node_view := $Control/TextureViewer
 var curfile = null
 
 func set_file(file):

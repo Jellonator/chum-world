@@ -22,3 +22,11 @@ func set_file(file):
 		else:
 			print("DOES NOT EXIST")
 			$TextureRect.hide()
+
+func _on_TextureRect_item_rect_changed():
+	var size = $TextureRect.rect_size
+	if size.x < size.y:
+		size.y = size.x
+	elif size.y < size.x:
+		size.x = size.y
+	$Viewport.size = size

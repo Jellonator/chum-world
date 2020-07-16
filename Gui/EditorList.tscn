@@ -37,7 +37,7 @@ margin_bottom = 600.0
 size_flags_vertical = 3
 
 [node name="TabContainer" type="TabContainer" parent="Split"]
-margin_right = 676.0
+margin_right = 1024.0
 margin_bottom = 576.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
@@ -61,9 +61,9 @@ margin_bottom = -4.0
 script = ExtResource( 6 )
 
 [node name="Label" type="Label" parent="Split/TabContainer/Viewer/Default"]
-margin_left = 284.0
+margin_left = 458.0
 margin_top = 263.0
-margin_right = 384.0
+margin_right = 558.0
 margin_bottom = 277.0
 text = "Nothing to view"
 
@@ -93,6 +93,7 @@ visible = false
 margin_top = 24.0
 
 [node name="Margin" type="MarginContainer" parent="Split"]
+visible = false
 margin_left = 688.0
 margin_right = 1024.0
 margin_bottom = 576.0

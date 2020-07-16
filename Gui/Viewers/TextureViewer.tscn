@@ -1,7 +1,8 @@
-[gd_scene load_steps=3 format=2]
+[gd_scene load_steps=4 format=2]
 
 [ext_resource path="res://Gui/Viewers/TextureViewer.gd" type="Script" id=1]
 [ext_resource path="res://icon.png" type="Texture" id=2]
+[ext_resource path="res://Gui/transparency20.png" type="Texture" id=3]
 
 [node name="TextureViewer" type="VBoxContainer"]
 anchor_right = 1.0
@@ -24,15 +25,36 @@ margin_right = 108.0
 margin_bottom = 20.0
 text = "Import Texture"
 
-[node name="TextureViewer" type="TextureRect" parent="."]
+[node name="Control" type="Control" parent="."]
 margin_top = 24.0
 margin_right = 1016.0
 margin_bottom = 588.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
+
+[node name="Transparency" type="TextureRect" parent="Control"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+texture = ExtResource( 3 )
+expand = true
+stretch_mode = 6
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="TextureViewer" type="TextureRect" parent="Control"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
 texture = ExtResource( 2 )
 expand = true
 stretch_mode = 6
+__meta__ = {
+"_edit_use_anchors_": false
+}
 
 [node name="ConfirmationDialog" type="ConfirmationDialog" parent="."]
 margin_top = 428.0
@@ -125,7 +147,7 @@ margin_top = 24.0
 margin_right = 1016.0
 margin_bottom = 154.0
 popup_exclusive = true
-window_title = "Open an image file"
+window_title = "Open a File"
 resizable = true
 mode = 0
 access = 2

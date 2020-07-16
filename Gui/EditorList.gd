@@ -5,6 +5,7 @@ var cfile = null
 onready var button_export := $HBoxContainer/ExportButton
 onready var node_tabs := $Split/TabContainer
 onready var node_struct := $Split/Margin/Panel/Scroll/VBox
+onready var node_margin := $Split/Margin
 
 const EXPORT_ID_BIN := 0
 const EXPORT_ID_TEXT := 1
@@ -54,6 +55,9 @@ func set_file(file):
 			node_struct.add_child(instance)
 			instance.set_data(struct)
 			instance.connect("modified", self, "_on_struct_modified")
+			node_margin.show()
+		else:
+			node_margin.hide()
 
 func _on_struct_modified(data):
 	print("REFRESH", data)

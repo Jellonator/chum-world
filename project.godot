@@ -24,6 +24,11 @@ config/icon="res://icon.png"
 ChumReader="*res://gdchum/ChumReader.gdns"
 Structure="*res://Gui/Struct/Structure.gd"
 
+[display]
+
+window/size/width=1280
+window/size/height=720
+
 [input]
 
 ui_accept={

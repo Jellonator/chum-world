@@ -3,6 +3,7 @@ extends TabContainer
 const TAB_DEFAULT := 0
 const TAB_VIEWER3D := 1
 const TAB_TEXTURE := 2
+const TAB_MATERIAL := 3
 
 func set_tab(id: int, file):
 	get_child(id).set_file(file)
@@ -20,5 +21,7 @@ func set_file(file):
 				set_tab(TAB_VIEWER3D, file)
 			"BITMAP":
 				set_tab(TAB_TEXTURE, file)
+			"MATERIAL", "MATERIALANIM":
+				set_tab(TAB_MATERIAL, file)
 			_:
 				set_tab(TAB_DEFAULT, file)

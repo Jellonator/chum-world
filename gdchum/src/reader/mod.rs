@@ -237,7 +237,7 @@ impl ChumReader {
 
     #[export]
     pub fn read_materialanim(&mut self, _owner: Node, data: Instance<ChumFile>) -> Dictionary {
-        self.read_material_nodeless(data)
+        self.read_materialanim_nodeless(data)
     }
     pub fn read_materialanim_nodeless(&mut self, data: Instance<ChumFile>) -> Dictionary {
         data.script()

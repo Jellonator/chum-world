@@ -1,0 +1,38 @@
+[gd_scene load_steps=4 format=2]
+
+[ext_resource path="res://Gui/Viewers/ViewerMaterial.gd" type="Script" id=1]
+
+[sub_resource type="QuadMesh" id=1]
+
+[sub_resource type="ViewportTexture" id=2]
+viewport_path = NodePath("Viewport")
+
+[node name="ViewerMaterial" type="Control"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource( 1 )
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="Viewport" type="Viewport" parent="."]
+size = Vector2( 512, 512 )
+own_world = true
+transparent_bg = true
+
+[node name="Camera" type="Camera" parent="Viewport"]
+projection = 1
+
+[node name="MeshInstance" type="MeshInstance" parent="Viewport"]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -1.82345 )
+mesh = SubResource( 1 )
+material/0 = null
+
+[node name="SpotLight" type="SpotLight" parent="Viewport"]
+transform = Transform( 0.947585, -0.0702746, 0.311681, 0, 0.975512, 0.219948, -0.319505, -0.20842, 0.92438, 0.516914, 0.801192, 0.291359 )
+
+[node name="TextureRect" type="TextureRect" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+texture = SubResource( 2 )
+stretch_mode = 6

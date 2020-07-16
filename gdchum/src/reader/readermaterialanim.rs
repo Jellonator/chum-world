@@ -12,7 +12,7 @@ pub fn read_materialanim(
     let matanimdata = match materialanim::MaterialAnimation::read_data(data, fmt) {
         Ok(x) => x,
         Err(_) => {
-            godot_print!("TMESH file invalid");
+            godot_print!("MATERIALANIM file invalid");
             return None;
         }
     };
@@ -50,7 +50,7 @@ pub fn read_materialanim_from_res(data: &ChumFile, reader: &mut ChumReader) -> D
             // dict.set(&"texture_reflection".into(), &mesh.1.to_variant());
         }
         None => {
-            godot_print!("read_tmesh returned None");
+            godot_print!("read_materialanim returned None");
             dict.set(&"exists".into(), &false.into());
         }
     }

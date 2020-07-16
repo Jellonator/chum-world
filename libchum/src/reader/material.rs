@@ -148,7 +148,7 @@ impl ChumStruct for Material {
             .get_reference_id()
             .unwrap();
         let texture_reflection = data
-            .get_struct_item("texture_reflection")
+            .get_struct_item("reflection")
             .unwrap()
             .get_reference_id()
             .unwrap();

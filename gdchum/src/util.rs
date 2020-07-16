@@ -1,6 +1,6 @@
 use gdnative::*;
 use libchum::common;
-use libchum::structure::{ChumStructVariant, IntType};
+use libchum::structure::{ChumStructVariant, IntType, ArrayData};
 
 /// Convert a Godot Dictionary to a ChumStructVariant
 pub fn dict_to_struct(dict: &Dictionary) -> ChumStructVariant {
@@ -55,7 +55,7 @@ pub fn dict_to_struct(dict: &Dictionary) -> ChumStructVariant {
             let value = dict.get_ref(&"value".into()).try_to_vector3().unwrap();
             ChumStructVariant::Vec3(common::Vector3::with(value.x, value.y, value.z))
         }
-        "transform" => {
+        "transform3d" => {
             let value = dict.get_ref(&"value".into()).try_to_transform().unwrap();
             let mat = common::Mat4x4 {
                 mat: [
@@ -77,11 +77,46 @@ pub fn dict_to_struct(dict: &Dictionary) -> ChumStructVariant {
                     1.0,
                 ],
             };
-            ChumStructVariant::Transform(mat)
+            ChumStructVariant::Transform3D(mat)
+        }
+        "transform2d" => {
+            let value = dict.get_ref(&"value".into()).try_to_transform2d().unwrap();
+            let array = value.to_row_major_array();
+            let mat = common::Mat3x3 {
+                mat: [
+                    array[0],
+                    array[1],
+                    0.0,
+                    array[2],
+                    array[3],
+                    0.0,
+                    array[4],
+                    array[5],
+                    1.0
+                ]
+            };
+            ChumStructVariant::Transform2D(mat)
+        }
+        "color" => {
+            let value = dict.get_ref(&"value".into()).try_to_color().unwrap();
+            ChumStructVariant::Color(common::Color {
+                values: [value.r, value.g, value.b, value.a]
+            })
+        }
+        "reference" => {
+            let value = dict.get_ref(&"value".into()).try_to_i64().unwrap() as i32;
+            let typename = dict.get_ref(&"reference".into());
+            let reference = match typename.get_type() {
+                VariantType::Nil => None,
+                VariantType::GodotString => Some(typename.try_to_string().unwrap()),
+                _ => panic!()
+            };
+            ChumStructVariant::Reference(value, reference)
         }
         "array" => {
             let array = dict.get(&"value".into()).try_to_array().unwrap();
             let default_dict = dict.get(&"default".into()).try_to_dictionary().unwrap();
+            let can_resize = dict.get(&"can_resize".into()).try_to_bool().unwrap();
             let default_value = dict_to_struct(&default_dict);
             let mut values = Vec::new();
             for i in 0..array.len() {
@@ -89,7 +124,11 @@ pub fn dict_to_struct(dict: &Dictionary) -> ChumStructVariant {
                     &array.get_ref(i).try_to_dictionary().unwrap(),
                 ));
             }
-            ChumStructVariant::Array(values, Box::new(default_value))
+            ChumStructVariant::Array(ArrayData {
+                data: values,
+                default_value: Box::new(default_value),
+                can_resize
+            })
         }
         "struct" => {
             let values_dict = dict.get(&"value".into()).try_to_dictionary().unwrap();
@@ -112,7 +151,8 @@ pub fn dict_to_struct(dict: &Dictionary) -> ChumStructVariant {
 
 /// Convert a ChumStructVariant to a format usable by Godot
 /// The following dictionary will one of the following formats:
-/// "enum" | "flags" | "integer" | "float" | "vec2" | "vec3" | "transform" | "array" | "struct"
+/// | "enum" | "flags" | "integer" | "float" | "vec2" | "vec3" | "color" |
+/// | "reference" | "transform3d" | "transform2d" | "array" | "struct" |
 /// {
 ///     "type": "enum",
 ///     "value": int,
@@ -143,13 +183,27 @@ pub fn dict_to_struct(dict: &Dictionary) -> ChumStructVariant {
 ///     "value": Vector3,
 /// }
 /// {
-///     "type": "transform",
+///     "type": "transform3d",
 ///     "value": Transform,
+/// }
+/// {
+///     "type": "transform2d",
+///     "value": Transform2D,
+/// }
+/// {
+///     "type": "color",
+///     "value": Color,
+/// }
+/// {
+///     "type": "reference",
+///     "value": i32,
+///     "reference": String/null
 /// }
 /// {
 ///     "type": "array",
 ///     "value": Array<Dictionary>,
-///     "default": Dictionary
+///     "default": Dictionary,
+///     "can_resize": bool
 /// }
 /// {
 ///     "type": "struct",
@@ -224,7 +278,7 @@ pub fn struct_to_dict(value: &ChumStructVariant) -> Dictionary {
             );
             dict
         }
-        ChumStructVariant::Transform(value) => {
+        ChumStructVariant::Transform3D(value) => {
             let mut dict = Dictionary::new();
             let mat = &value.mat;
             let transform = Transform {
@@ -237,21 +291,53 @@ pub fn struct_to_dict(value: &ChumStructVariant) -> Dictionary {
                 },
                 origin: Vector3::new(mat[12], mat[13], mat[14]),
             };
-            dict.set(&"type".into(), &"transform".into());
+            dict.set(&"type".into(), &"transform3d".into());
             dict.set(&"value".into(), &Variant::from_transform(&transform));
             dict
         }
-        ChumStructVariant::Array(ref vec, ref default) => {
+        ChumStructVariant::Transform2D(value) => {
             let mut dict = Dictionary::new();
-            let default_value = struct_to_dict(default);
+            let mat = &value.mat;
+            let transform = Transform2D::row_major(
+                mat[0],
+                mat[1],
+                mat[3],
+                mat[4],
+                mat[6],
+                mat[7]
+            );
+            dict.set(&"type".into(), &"transform2d".into());
+            dict.set(&"value".into(), &Variant::from_transform2d(&transform));
+            dict
+        }
+        ChumStructVariant::Color(color) => {
+            let mut dict = Dictionary::new();
+            dict.set(&"type".into(), &"color".into());
+            dict.set(&"value".into(), &Variant::from_color(&Color::rgba(color.values[0], color.values[1], color.values[2], color.values[3])));
+            dict
+        }
+        ChumStructVariant::Reference(value, ref typename) => {
+            let mut dict = Dictionary::new();
+            dict.set(&"type".into(), &"reference".into());
+            dict.set(&"value".into(), &Variant::from_i64(*value as i64));
+            dict.set(&"reference".into(), &match typename {
+                Some(ref val) => Variant::from_str(val),
+                None => Variant::new(),
+            });
+            dict
+        }
+        ChumStructVariant::Array(ref data) => {
+            let mut dict = Dictionary::new();
+            let default_value = struct_to_dict(data.default_value.as_ref());
             let mut array: VariantArray = VariantArray::new();
-            for value in vec {
+            for value in data.data.iter() {
                 let valuedict = struct_to_dict(value);
                 array.push(&Variant::from_dictionary(&valuedict));
             }
             dict.set(&"type".into(), &"array".into());
             dict.set(&"value".into(), &Variant::from_array(&array));
             dict.set(&"default".into(), &Variant::from_dictionary(&default_value));
+            dict.set(&"can_resize".into(), &Variant::from_bool(data.can_resize));
             dict
         }
         ChumStructVariant::Struct(ref vec) => {

@@ -1,7 +1,11 @@
-[gd_scene load_steps=6 format=2]
+[gd_scene load_steps=8 format=2]
 
 [ext_resource path="res://Gui/Viewers/Viewer3D.gd" type="Script" id=1]
 [ext_resource path="res://Gui/Gizmos/Camera.tscn" type="PackedScene" id=2]
+[ext_resource path="res://default_env.tres" type="Environment" id=3]
+
+[sub_resource type="World" id=4]
+environment = ExtResource( 3 )
 
 [sub_resource type="CubeMesh" id=1]
 
@@ -22,6 +26,8 @@ __meta__ = {
 
 [node name="Viewport" type="Viewport" parent="."]
 size = Vector2( 16, 16 )
+own_world = true
+world = SubResource( 4 )
 
 [node name="Spatial" type="Spatial" parent="Viewport"]
 

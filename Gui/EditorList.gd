@@ -52,12 +52,15 @@ func set_file(file):
 		if struct != null:
 			var instance = Structure.instance(struct)
 			node_struct.add_child(instance)
+			instance.set_data(struct)
 			instance.connect("modified", self, "_on_struct_modified")
 
 func _on_struct_modified(data):
+	print("REFRESH", data)
 	cfile.import_structure(data)
+#	ChumReader.invalidate(cfile.get_hash_id())
+	ChumReader.clear_cache()
 	refresh_viewer()
-	ChumReader.invalidate(cfile.get_hash_id())
 
 func refresh_viewer():
 	node_tabs.get_child(node_tabs.current_tab).set_file(cfile)

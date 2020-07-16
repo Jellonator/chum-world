@@ -357,6 +357,19 @@ impl ChumFile {
                 let data = bitmap.structure();
                 Variant::from_dictionary(&util::struct_to_dict(&data))
             }
+            "MATERIAL" => {
+                let material = match reader::material::Material::read_data(
+                    &self.get_data_as_vec(),
+                    self.format
+                ) {
+                    Ok(x) => x,
+                    Err(err) => {
+                        panic!("MATERIAL file invalid: {}", err);
+                    }
+                };
+                let data = material.structure();
+                Variant::from_dictionary(&util::struct_to_dict(&data))
+            }
             _ => Variant::new(),
         }
     }
@@ -380,6 +393,13 @@ impl ChumFile {
                     .with_bitmap(bitmap.get_data().clone(), bitmap.get_width(), bitmap.get_height());
                 let mut outdata = Vec::new();
                 bitmapdata.write_to(&mut outdata, self.format).unwrap();
+                self.replace_data_with_vec(outdata);
+            }
+            "MATERIAL" => {
+                let materialdata = reader::material::Material::destructure(structure)
+                    .unwrap();
+                let mut outdata = Vec::new();
+                materialdata.write_to(&mut outdata, self.format).unwrap();
                 self.replace_data_with_vec(outdata);
             }
             _ => panic!("Could not import data")

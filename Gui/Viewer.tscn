@@ -6,7 +6,9 @@
 [ext_resource path="res://Gui/ArchiveFileSelector.tscn" type="PackedScene" id=6]
 [ext_resource path="res://Gui/FileTree.gd" type="Script" id=7]
 
-[node name="Viewer" type="Control"]
+[node name="Viewer" type="Control" groups=[
+"viewer",
+]]
 anchor_right = 1.0
 anchor_bottom = 1.0
 script = ExtResource( 1 )

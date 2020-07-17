@@ -9,6 +9,7 @@ edition = "2018"
 [dependencies]
 gdnative = "0.8.1"
 libchum = { path = "../libchum" }
+phf = { version = "0.8.0", features = ["macros"] }
 
 [lib]
 crate-type = ["cdylib"]

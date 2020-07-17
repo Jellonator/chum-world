@@ -6,6 +6,7 @@ pub mod bytedata;
 pub mod chumfile;
 pub mod reader;
 pub mod util;
+pub mod names;
 
 #[derive(NativeClass)]
 #[inherit(Resource)]
@@ -131,10 +132,18 @@ impl ChumArchive {
             if let Some(name) = archive.get_name_from_id(id) {
                 GodotString::from_str(&name)
             } else {
-                GodotString::from_str(&id.to_string())
+                if let Some(name) = names::NAMES.get(&id) {
+                    GodotString::from_str(&name)
+                } else {
+                    GodotString::from_str(&id.to_string())
+                }
             }
         } else {
-            GodotString::from_str(&id.to_string())
+            if let Some(name) = names::NAMES.get(&id) {
+                GodotString::from_str(&name)
+            } else {
+                GodotString::from_str(&id.to_string())
+            }
         }
     }
 }

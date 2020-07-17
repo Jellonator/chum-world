@@ -62,6 +62,7 @@ func set_groups(group_values: Dictionary):
 		var idx = node_items.get_item_count()
 		node_items.add_item(name)
 		node_items.set_item_metadata(idx, group)
+	node_items.sort_items_by_text()
 
 func set_file(file):
 	node_camera.reset_transform()

@@ -6,3 +6,4 @@ pub mod material;
 pub mod materialanim;
 pub mod surface;
 pub mod tmesh;
+pub mod skin;

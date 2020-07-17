@@ -3,12 +3,25 @@ use crate::reader::ChumReader;
 use gdnative::*;
 use libchum::reader::tmesh;
 
+#[derive(Clone, Debug)]
+pub struct TMeshResultSurface {
+    pub vertex_ids: Vec<u16>,
+    pub texcoord_ids: Vec<u16>,
+    pub normal_ids: Vec<u16>,
+}
+
+#[derive(Clone)]
+pub struct TMeshResult {
+    pub mesh: Reference,
+    pub surfaces: Vec<TMeshResultSurface>
+}
+
 pub fn read_tmesh(
     data: &Vec<u8>,
     fmt: libchum::format::TotemFormat,
     reader: &mut ChumReader,
     file: &ChumFile,
-) -> Option<Reference> {
+) -> Option<TMeshResult> {
     let tmesh = match tmesh::TMesh::read_data(data, fmt) {
         Ok(x) => x,
         Err(_) => {
@@ -18,20 +31,20 @@ pub fn read_tmesh(
     };
     let mut mesh = ArrayMesh::new();
     let generated_tris = tmesh.gen_triangles();
-    let num = generated_tris.len();
+    // let num = generated_tris.len();
     let mesh_materials = tmesh.get_materials();
     let mut materials = Vec::new();
-    godot_print!("There are {} colors", num);
-    for (i, mat) in tmesh.get_materials().iter().enumerate() {
-        godot_print!("Material {:>2} is 0x{:08X}", i, mat);
-    }
-    for (i, trivec) in generated_tris.into_iter().enumerate() {
+    let mut surfaces = Vec::new();
+    for trivec in generated_tris.into_iter() {
         let mut verts = Vector3Array::new();
         let mut texcoords = Vector2Array::new();
         let mut normals = Vector3Array::new();
         let mut meshdata = VariantArray::new();
-        // let mut colordata = ColorArray::new();
-        godot_print!("Strip {:>2} has material {:>4}", i, trivec.material_index);
+        let mut surface = TMeshResultSurface {
+            vertex_ids: Vec::new(),
+            texcoord_ids: Vec::new(),
+            normal_ids: Vec::new(),
+        };
         for tri in trivec.tris {
             for point in &tri.points {
                 verts.push(&Vector3::new(
@@ -45,8 +58,12 @@ pub fn read_tmesh(
                     point.normal.y,
                     point.normal.z,
                 ));
+                surface.vertex_ids.push(point.vertex_id);
+                surface.texcoord_ids.push(point.texcoord_id);
+                surface.normal_ids.push(point.normal_id);
             }
         }
+        surfaces.push(surface);
         let mat = mesh_materials[trivec.material_index as usize % mesh_materials.len()];
         materials.push(mat);
         meshdata.resize(ArrayMesh::ARRAY_MAX as i32);
@@ -81,7 +98,10 @@ pub fn read_tmesh(
             }
         })
         .unwrap();
-    Some(mesh.to_reference())
+    Some(TMeshResult {
+        mesh: mesh.to_reference(),
+        surfaces
+    })
 }
 
 pub fn read_tmesh_from_res(data: &ChumFile, reader: &mut ChumReader) -> Dictionary {
@@ -90,7 +110,28 @@ pub fn read_tmesh_from_res(data: &ChumFile, reader: &mut ChumReader) -> Dictiona
     match read_tmesh(&data.get_data_as_vec(), fmt, reader, data) {
         Some(mesh) => {
             dict.set(&"exists".into(), &true.into());
-            dict.set(&"mesh".into(), &mesh.to_variant());
+            dict.set(&"mesh".into(), &mesh.mesh.to_variant());
+            let mut surfaces = VariantArray::new();
+            for surface in mesh.surfaces.iter() {
+                let mut vertices = VariantArray::new();
+                let mut texcoords = VariantArray::new();
+                let mut normals = VariantArray::new();
+                for index in surface.vertex_ids.iter() {
+                    vertices.push(&Variant::from_i64(*index as i64));
+                }
+                for index in surface.texcoord_ids.iter() {
+                    texcoords.push(&Variant::from_i64(*index as i64));
+                }
+                for index in surface.normal_ids.iter() {
+                    normals.push(&Variant::from_i64(*index as i64));
+                }
+                let mut surfacedict = Dictionary::new();
+                surfacedict.set(&"vertices".into(), &Variant::from_array(&vertices));
+                surfacedict.set(&"texcoords".into(), &Variant::from_array(&texcoords));
+                surfacedict.set(&"normals".into(), &Variant::from_array(&normals));
+                surfaces.push(&Variant::from_dictionary(&surfacedict));
+            }
+            dict.set(&"surfaces".into(), &Variant::from_array(&surfaces));
         }
         None => {
             godot_print!("read_tmesh returned None");

@@ -2,6 +2,72 @@ use gdnative::*;
 use libchum::common;
 use libchum::structure::{ChumStructVariant, IntType, ArrayData};
 
+pub fn mat4x4_to_transform(tx: &common::Mat4x4) -> Transform {
+    let mat = &tx.mat;
+    Transform {
+        basis: Basis {
+            elements: [
+                Vector3::new(mat[0], mat[1], mat[2]),
+                Vector3::new(mat[4], mat[5], mat[6]),
+                Vector3::new(mat[8], mat[9], mat[10]),
+            ],
+        },
+        origin: Vector3::new(mat[12], mat[13], mat[14]),
+    }
+}
+
+pub fn mat3x3_to_transform2d(tx: &common::Mat3x3) -> Transform2D {
+    let mat = &tx.mat;
+    Transform2D::row_major(
+        mat[0],
+        mat[1],
+        mat[3],
+        mat[4],
+        mat[6],
+        mat[7]
+    )
+}
+
+pub fn transform_to_mat4x4(value: &Transform) -> common::Mat4x4 {
+    common::Mat4x4 {
+        mat: [
+            value.basis.elements[0].x,
+            value.basis.elements[0].y,
+            value.basis.elements[0].z,
+            0.0,
+            value.basis.elements[1].x,
+            value.basis.elements[1].y,
+            value.basis.elements[1].z,
+            0.0,
+            value.basis.elements[2].x,
+            value.basis.elements[2].y,
+            value.basis.elements[2].z,
+            0.0,
+            value.origin.x,
+            value.origin.y,
+            value.origin.z,
+            1.0,
+        ],
+    }
+}
+
+pub fn transform2d_to_mat3x3(value: &Transform2D) -> common::Mat3x3 {
+    let array = value.to_row_major_array();
+    common::Mat3x3 {
+        mat: [
+            array[0],
+            array[1],
+            0.0,
+            array[2],
+            array[3],
+            0.0,
+            array[4],
+            array[5],
+            1.0
+        ]
+    }
+}
+
 /// Convert a Godot Dictionary to a ChumStructVariant
 pub fn dict_to_struct(dict: &Dictionary) -> ChumStructVariant {
     let value_type = dict.get_ref(&"type".into()).try_to_string().unwrap();
@@ -57,44 +123,12 @@ pub fn dict_to_struct(dict: &Dictionary) -> ChumStructVariant {
         }
         "transform3d" => {
             let value = dict.get_ref(&"value".into()).try_to_transform().unwrap();
-            let mat = common::Mat4x4 {
-                mat: [
-                    value.basis.elements[0].x,
-                    value.basis.elements[0].y,
-                    value.basis.elements[0].z,
-                    0.0,
-                    value.basis.elements[1].x,
-                    value.basis.elements[1].y,
-                    value.basis.elements[1].z,
-                    0.0,
-                    value.basis.elements[2].x,
-                    value.basis.elements[2].y,
-                    value.basis.elements[2].z,
-                    0.0,
-                    value.origin.x,
-                    value.origin.y,
-                    value.origin.z,
-                    1.0,
-                ],
-            };
+            let mat = transform_to_mat4x4(&value);
             ChumStructVariant::Transform3D(mat)
         }
         "transform2d" => {
             let value = dict.get_ref(&"value".into()).try_to_transform2d().unwrap();
-            let array = value.to_row_major_array();
-            let mat = common::Mat3x3 {
-                mat: [
-                    array[0],
-                    array[1],
-                    0.0,
-                    array[2],
-                    array[3],
-                    0.0,
-                    array[4],
-                    array[5],
-                    1.0
-                ]
-            };
+            let mat = transform2d_to_mat3x3(&value);
             ChumStructVariant::Transform2D(mat)
         }
         "color" => {
@@ -280,32 +314,14 @@ pub fn struct_to_dict(value: &ChumStructVariant) -> Dictionary {
         }
         ChumStructVariant::Transform3D(value) => {
             let mut dict = Dictionary::new();
-            let mat = &value.mat;
-            let transform = Transform {
-                basis: Basis {
-                    elements: [
-                        Vector3::new(mat[0], mat[1], mat[2]),
-                        Vector3::new(mat[4], mat[5], mat[6]),
-                        Vector3::new(mat[8], mat[9], mat[10]),
-                    ],
-                },
-                origin: Vector3::new(mat[12], mat[13], mat[14]),
-            };
+            let transform = mat4x4_to_transform(value);
             dict.set(&"type".into(), &"transform3d".into());
             dict.set(&"value".into(), &Variant::from_transform(&transform));
             dict
         }
         ChumStructVariant::Transform2D(value) => {
             let mut dict = Dictionary::new();
-            let mat = &value.mat;
-            let transform = Transform2D::row_major(
-                mat[0],
-                mat[1],
-                mat[3],
-                mat[4],
-                mat[6],
-                mat[7]
-            );
+            let transform = mat3x3_to_transform2d(value);
             dict.set(&"type".into(), &"transform2d".into());
             dict.set(&"value".into(), &Variant::from_transform2d(&transform));
             dict

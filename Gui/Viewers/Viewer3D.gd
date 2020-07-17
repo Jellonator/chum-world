@@ -58,11 +58,9 @@ func _input(event):
 			if event is InputEventMouseMotion:
 				node_camera.move_mouse(event.relative)
 		if event.is_action_pressed("view_speed_increase"):
-			print(randi())
 			speed = clamp(speed * SPEED_MULT, MIN_SPEED, MAX_SPEED)
 			$SpeedLabel.text = "Speed: " + str(speed)
 		if event.is_action_pressed("view_speed_decrease"):
-			print(randi())
 			speed = clamp(speed / SPEED_MULT, MIN_SPEED, MAX_SPEED)
 			$SpeedLabel.text = "Speed: " + str(speed)
 

@@ -347,3 +347,45 @@ impl Color {
         Ok(())
     }
 }
+
+#[derive(Clone, Debug)]
+#[repr(C)]
+pub struct TransformationHeader {
+    pub floats: [f32; 4],
+    pub transform: Mat4x4,
+    pub junk: [u8; 16],
+    pub item_type: u16,
+    pub item_subtype: u16
+}
+
+impl TransformationHeader {
+    pub fn read_from<R: Read>(reader: &mut R, fmt: TotemFormat) -> io::Result<TransformationHeader> {
+        let mut floats = [0.0f32; 4];
+        fmt.read_f32_into(reader, &mut floats)?;
+        let transform = Mat4x4::read_from(reader, fmt)?;
+        let mut junk = [0u8; 16];
+        fmt.read_u8_into(reader, &mut junk)?;
+        let item_type = fmt.read_u16(reader)?;
+        let item_subtype = fmt.read_u16(reader)?;
+        Ok(TransformationHeader {
+            floats,
+            transform,
+            junk,
+            item_type,
+            item_subtype
+        })
+    }
+
+    pub fn write_to<W: Write>(&self, writer: &mut W, fmt: TotemFormat) -> io::Result<()> {
+        for value in self.floats.iter() {
+            fmt.write_f32(writer, *value)?;
+        }
+        self.transform.write_to(writer, fmt)?;
+        for value in self.junk.iter() {
+            fmt.write_u8(writer, *value)?;
+        }
+        fmt.write_u16(writer, self.item_type)?;
+        fmt.write_u16(writer, self.item_subtype)?;
+        Ok(())
+    }
+}

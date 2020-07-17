@@ -62,6 +62,11 @@ impl ChumFile {
     }
 
     #[export]
+    pub fn get_archive(&self, _owner: Resource) -> Option<Resource> {
+        self.parent.clone()
+    }
+
+    #[export]
     pub fn get_data(&self, _owner: Resource) -> Resource {
         self.get_data_as_bytedata().into_base()
     }

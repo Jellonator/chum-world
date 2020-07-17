@@ -9,6 +9,7 @@ pub mod readermaterialanim;
 pub mod readersurface;
 pub mod readertext;
 pub mod readertmesh;
+pub mod readerskin;
 
 pub struct MaterialAnimEntry {
     resource: Resource,
@@ -252,6 +253,25 @@ impl ChumReader {
                 }
             })
             .unwrap()
+    }
+
+    #[export]
+    pub fn read_skin(&mut self, _owner: Node, data: Instance<ChumFile>) -> Dictionary {
+        self.read_skin_nodeless(data)
+    }
+    pub fn read_skin_nodeless(&mut self, data: Instance<ChumFile>) -> Dictionary {
+        data.script()
+        .map(|x| {
+            let hash = x.get_hash_id_ownerless();
+            if let Some(data) = self.cache.get(&hash) {
+                data.new_ref()
+            } else {
+                let value = readerskin::read_skin_from_res(x);
+                self.cache.insert(hash, value.new_ref());
+                value
+            }
+        })
+        .unwrap()
     }
 
     #[export]

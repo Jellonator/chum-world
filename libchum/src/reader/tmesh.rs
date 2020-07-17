@@ -4,6 +4,23 @@ use crate::format::TotemFormat;
 use std::error::Error;
 use std::io::{self, Read, Write};
 
+#[derive(Clone, Debug)]
+#[repr(C)]
+pub struct MeshPoint {
+    pub vertex: Vector3,
+    pub texcoord: Vector2,
+    pub normal: Vector3,
+    pub vertex_id: u16,
+    pub texcoord_id: u16,
+    pub normal_id: u16,
+}
+
+#[derive(Clone, Debug)]
+#[repr(C)]
+pub struct MeshTri {
+    pub points: [MeshPoint; 3]
+}
+
 /// A triangle strip
 pub struct Strip {
     pub vertex_ids: Vec<u16>,
@@ -105,7 +122,7 @@ fn strip_gen_triangle_indices(strip: &Strip, strip_ext: &StripExt) -> Vec<[(u16,
 /// A triangle surface, contains a material and a list of triangles
 pub struct TriangleSurface {
     pub material_index: u32,
-    pub tris: Vec<Tri>,
+    pub tris: Vec<MeshTri>,
 }
 
 /// Generate triangles from a strip
@@ -115,25 +132,34 @@ fn strip_gen_triangles(
     vertices: &[Vector3],
     texcoords: &[Vector2],
     normals: &[Vector3],
-) -> Vec<Tri> {
+) -> Vec<MeshTri> {
     strip_gen_triangle_indices(strip, strip_ext)
         .iter()
-        .map(|ls| Tri {
+        .map(|ls| MeshTri {
             points: [
-                Point {
+                MeshPoint {
                     vertex: vertices[ls[0].0 as usize],
                     texcoord: texcoords[ls[0].1 as usize],
                     normal: normals[ls[0].2 as usize],
+                    vertex_id: ls[0].0,
+                    texcoord_id: ls[0].1,
+                    normal_id: ls[0].2
                 },
-                Point {
+                MeshPoint {
                     vertex: vertices[ls[1].0 as usize],
                     texcoord: texcoords[ls[1].1 as usize],
                     normal: normals[ls[1].2 as usize],
+                    vertex_id: ls[1].0,
+                    texcoord_id: ls[1].1,
+                    normal_id: ls[1].2
                 },
-                Point {
+                MeshPoint {
                     vertex: vertices[ls[2].0 as usize],
                     texcoord: texcoords[ls[2].1 as usize],
                     normal: normals[ls[2].2 as usize],
+                    vertex_id: ls[2].0,
+                    texcoord_id: ls[2].1,
+                    normal_id: ls[2].2
                 },
             ],
         })
@@ -157,7 +183,7 @@ impl TMesh {
 
     /// Generate triangle surfaces from a TMesh
     pub fn gen_triangles(&self) -> Vec<TriangleSurface> {
-        let mut values: Vec<(u32, Vec<Tri>)> = self
+        let mut values: Vec<(u32, Vec<MeshTri>)> = self
             .strips
             .iter()
             .zip(&self.strips_ext)

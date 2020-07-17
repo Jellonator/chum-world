@@ -1,0 +1,72 @@
+[gd_scene load_steps=6 format=2]
+
+[ext_resource path="res://Gui/Viewers/ViewerSkin.gd" type="Script" id=1]
+[ext_resource path="res://default_env.tres" type="Environment" id=2]
+[ext_resource path="res://Gui/Gizmos/Camera.tscn" type="PackedScene" id=3]
+
+[sub_resource type="World" id=2]
+environment = ExtResource( 2 )
+
+[sub_resource type="ViewportTexture" id=1]
+viewport_path = NodePath("Viewport")
+
+[node name="ViewerSkin" type="Control"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource( 1 )
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="Viewport" type="Viewport" parent="."]
+size = Vector2( 16, 16 )
+own_world = true
+world = SubResource( 2 )
+
+[node name="CameraViewer" parent="Viewport" instance=ExtResource( 3 )]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 4 )
+
+[node name="Meshes" type="Spatial" parent="Viewport"]
+
+[node name="DirectionalLight" type="DirectionalLight" parent="Viewport"]
+transform = Transform( 0.918814, 0.384141, -0.09065, -0.385729, 0.922612, -3.437e-09, 0.0836348, 0.0349663, 0.995883, 1.2276, 4.1449, 0 )
+light_energy = 0.5
+light_indirect_energy = 0.5
+
+[node name="HSplitContainer" type="HSplitContainer" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="TextureRect" type="TextureRect" parent="HSplitContainer"]
+margin_right = 954.0
+margin_bottom = 720.0
+focus_mode = 1
+size_flags_horizontal = 3
+size_flags_stretch_ratio = 3.0
+texture = SubResource( 1 )
+expand = true
+stretch_mode = 6
+flip_v = true
+
+[node name="SpeedLabel" type="Label" parent="HSplitContainer/TextureRect"]
+anchor_right = 1.0
+margin_bottom = 14.0
+text = "Speed: 2.0"
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="ItemList" type="ItemList" parent="HSplitContainer"]
+margin_left = 966.0
+margin_right = 1280.0
+margin_bottom = 720.0
+rect_min_size = Vector2( 80, 0 )
+size_flags_horizontal = 3
+__meta__ = {
+"_edit_use_anchors_": false
+}
+[connection signal="item_rect_changed" from="HSplitContainer/TextureRect" to="." method="_on_TextureRect_item_rect_changed"]
+[connection signal="item_selected" from="HSplitContainer/ItemList" to="." method="_on_ItemList_item_selected"]

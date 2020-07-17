@@ -4,6 +4,7 @@ const TAB_DEFAULT := 0
 const TAB_VIEWER3D := 1
 const TAB_TEXTURE := 2
 const TAB_MATERIAL := 3
+const TAB_SKIN := 4
 
 func set_tab(id: int, file):
 	get_child(id).set_file(file)
@@ -23,5 +24,7 @@ func set_file(file):
 				set_tab(TAB_TEXTURE, file)
 			"MATERIAL", "MATERIALANIM":
 				set_tab(TAB_MATERIAL, file)
+			"SKIN":
+				set_tab(TAB_SKIN, file)
 			_:
 				set_tab(TAB_DEFAULT, file)

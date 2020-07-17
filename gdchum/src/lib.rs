@@ -120,6 +120,23 @@ impl ChumArchive {
     fn do_thing(&self, _owner: Resource) {
         godot_print!("Hello, World!");
     }
+
+    #[export]
+    pub fn maybe_get_name_from_hash(
+        &self,
+        _owner: Resource,
+        id: i32
+    ) -> GodotString {
+        if let Some(archive) = &self.archive {
+            if let Some(name) = archive.get_name_from_id(id) {
+                GodotString::from_str(&name)
+            } else {
+                GodotString::from_str(&id.to_string())
+            }
+        } else {
+            GodotString::from_str(&id.to_string())
+        }
+    }
 }
 
 fn init(handle: gdnative::init::InitHandle) {

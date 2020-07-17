@@ -7,6 +7,7 @@ pub mod format;
 pub mod ngc;
 pub mod reader;
 pub mod util;
+pub mod animsymbol;
 
 use crc::crc32;
 use std::collections::{HashMap, HashSet};
@@ -377,6 +378,10 @@ impl ChumArchive {
     /// Get the format for this archive
     pub fn get_format(&self) -> format::TotemFormat {
         self.format
+    }
+
+    pub fn get_name_from_id(&self, id: i32) -> Option<&str> {
+        self.names.get(&id).map(|x| x.as_str())
     }
 }
 

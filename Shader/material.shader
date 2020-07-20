@@ -25,7 +25,7 @@ void fragment() {
 	}
 	vec4 col2;
 	if (has_reflection) {
-		col2 = textureProj(arg_reflection, reflect(VIEW, normalize(NORMAL)));
+		col2 = texture(arg_reflection, reflect(VIEW, normalize(NORMAL)).xy);
 	} else {
 		col2 = vec4(0, 0, 0, 0);
 	}

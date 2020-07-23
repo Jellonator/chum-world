@@ -1,0 +1,61 @@
+[gd_scene load_steps=7 format=2]
+
+[ext_resource path="res://default_env.tres" type="Environment" id=1]
+[ext_resource path="res://Gui/Worldview/view3d.gd" type="Script" id=2]
+[ext_resource path="res://Gui/Gizmos/Grid3D.tscn" type="PackedScene" id=3]
+[ext_resource path="res://Gui/Gizmos/Camera.tscn" type="PackedScene" id=4]
+
+[sub_resource type="World" id=1]
+environment = ExtResource( 1 )
+
+[sub_resource type="ViewportTexture" id=2]
+viewport_path = NodePath("Viewport")
+
+[node name="3D View" type="Control"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource( 2 )
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="Viewport" type="Viewport" parent="."]
+size = Vector2( 100, 100 )
+own_world = true
+world = SubResource( 1 )
+
+[node name="Surfaces" type="Spatial" parent="Viewport"]
+
+[node name="Grid3D" parent="Viewport" instance=ExtResource( 3 )]
+
+[node name="DirectionalLight" type="DirectionalLight" parent="Viewport"]
+
+[node name="CameraViewer" parent="Viewport" instance=ExtResource( 4 )]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -13.8483 )
+
+[node name="PanelContainer" type="PanelContainer" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="TextureRect" type="TextureRect" parent="PanelContainer"]
+margin_left = 7.0
+margin_top = 7.0
+margin_right = 1273.0
+margin_bottom = 713.0
+focus_mode = 1
+texture = SubResource( 2 )
+expand = true
+stretch_mode = 1
+flip_v = true
+
+[node name="SpeedLabel" type="Label" parent="PanelContainer/TextureRect"]
+margin_right = 40.0
+margin_bottom = 14.0
+text = "Speed: 2.0"
+__meta__ = {
+"_edit_use_anchors_": false
+}
+[connection signal="item_rect_changed" from="PanelContainer/TextureRect" to="." method="_on_TextureRect_item_rect_changed"]

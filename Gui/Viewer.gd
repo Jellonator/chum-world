@@ -10,6 +10,7 @@ var archive: ChumArchive
 onready var node_menu_file := $VBox/Menu/File
 onready var node_tree := $VBox/Tabs/Files/VBox/Tree
 onready var node_editor := $VBox/Tabs/Files/EditorList
+onready var node_view3d := $"VBox/Tabs/3D View"
 
 func _ready():
 #	node_editor.set_file(null)
@@ -50,6 +51,7 @@ func load_archive(ngc: String, dgc: String, ftype: String):
 		popup.set_item_disabled(popup.get_item_id(MENU_FILE_SAVE_AS), false)
 	ChumReader.clear_cache()
 	node_tree.set_archive(archive)
+	node_view3d.set_archive(archive)
 
 func _on_ArchiveFileSelector_files_selected(ngc: String, dgc: String, ftype: String):
 	load_archive(ngc, dgc, ftype)

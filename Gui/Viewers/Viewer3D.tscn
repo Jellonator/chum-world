@@ -1,8 +1,9 @@
-[gd_scene load_steps=8 format=2]
+[gd_scene load_steps=9 format=2]
 
 [ext_resource path="res://Gui/Viewers/Viewer3D.gd" type="Script" id=1]
 [ext_resource path="res://Gui/Gizmos/Camera.tscn" type="PackedScene" id=2]
 [ext_resource path="res://default_env.tres" type="Environment" id=3]
+[ext_resource path="res://Gui/Gizmos/Grid3D.tscn" type="PackedScene" id=4]
 
 [sub_resource type="World" id=1]
 environment = ExtResource( 3 )
@@ -42,6 +43,8 @@ transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 4 )
 transform = Transform( 0.866025, -0.377063, -0.328365, 0.165521, -0.403501, 0.899883, -0.471808, -0.833673, -0.287031, 0, 15.1487, 5.34027 )
 light_energy = 0.5
 light_indirect_energy = 0.5
+
+[node name="Grid3D" parent="Viewport/Spatial" instance=ExtResource( 4 )]
 
 [node name="TextureRect" type="TextureRect" parent="."]
 anchor_right = 1.0

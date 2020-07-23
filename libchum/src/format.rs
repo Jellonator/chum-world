@@ -149,10 +149,22 @@ impl TotemFormat {
             TotemFormat::PS2 => reader.read_u32_into::<LittleEndian>(dst),
         }
     }
+    pub fn read_i32_into<R: Read>(&self, reader: &mut R, dst: &mut [i32]) -> io::Result<()> {
+        match self {
+            TotemFormat::NGC => reader.read_i32_into::<BigEndian>(dst),
+            TotemFormat::PS2 => reader.read_i32_into::<LittleEndian>(dst),
+        }
+    }
     pub fn read_u16_into<R: Read>(&self, reader: &mut R, dst: &mut [u16]) -> io::Result<()> {
         match self {
             TotemFormat::NGC => reader.read_u16_into::<BigEndian>(dst),
             TotemFormat::PS2 => reader.read_u16_into::<LittleEndian>(dst),
+        }
+    }
+    pub fn read_i16_into<R: Read>(&self, reader: &mut R, dst: &mut [i16]) -> io::Result<()> {
+        match self {
+            TotemFormat::NGC => reader.read_i16_into::<BigEndian>(dst),
+            TotemFormat::PS2 => reader.read_i16_into::<LittleEndian>(dst),
         }
     }
     pub fn read_f32_into<R: Read>(&self, reader: &mut R, dst: &mut [f32]) -> io::Result<()> {
@@ -163,5 +175,8 @@ impl TotemFormat {
     }
     pub fn read_u8_into<R: Read>(&self, reader: &mut R, dst: &mut [u8]) -> io::Result<()> {
         reader.read_exact(dst)
+    }
+    pub fn read_i8_into<R: Read>(&self, reader: &mut R, dst: &mut [i8]) -> io::Result<()> {
+        reader.read_i8_into(dst)
     }
 }

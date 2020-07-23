@@ -1,8 +1,9 @@
-[gd_scene load_steps=6 format=2]
+[gd_scene load_steps=7 format=2]
 
 [ext_resource path="res://Gui/Viewer.gd" type="Script" id=1]
 [ext_resource path="res://Gui/EditorList.tscn" type="PackedScene" id=2]
 [ext_resource path="res://Gui/ArchiveFileSaver.tscn" type="PackedScene" id=3]
+[ext_resource path="res://Gui/Worldview/3D View.tscn" type="PackedScene" id=4]
 [ext_resource path="res://Gui/ArchiveFileSelector.tscn" type="PackedScene" id=6]
 [ext_resource path="res://Gui/FileTree.gd" type="Script" id=7]
 
@@ -85,25 +86,12 @@ margin_left = 140.0
 margin_right = 1272.0
 margin_bottom = 660.0
 
-[node name="3D View" type="Control" parent="VBox/Tabs"]
+[node name="3D View" parent="VBox/Tabs" instance=ExtResource( 4 )]
 visible = false
-anchor_right = 1.0
-anchor_bottom = 1.0
 margin_left = 4.0
 margin_top = 32.0
 margin_right = -4.0
 margin_bottom = -4.0
-
-[node name="Label" type="Label" parent="VBox/Tabs/3D View"]
-anchor_right = 1.0
-anchor_bottom = 1.0
-text = "Not implemented yet.
-Still figuring out the world/node formats."
-align = 1
-valign = 1
-__meta__ = {
-"_edit_use_anchors_": false
-}
 
 [node name="ArchiveFileSelector" parent="." instance=ExtResource( 6 )]
 

@@ -1,7 +1,9 @@
 use crate::chumfile::ChumFile;
 use crate::reader::ChumReader;
+use crate::util;
 use gdnative::*;
 use libchum::reader::tmesh;
+use libchum::common;
 
 #[derive(Clone, Debug)]
 pub struct TMeshResultSurface {
@@ -13,7 +15,12 @@ pub struct TMeshResultSurface {
 #[derive(Clone)]
 pub struct TMeshResult {
     pub mesh: Reference,
-    pub surfaces: Vec<TMeshResultSurface>
+    pub surfaces: Vec<TMeshResultSurface>,
+    pub transform: common::Mat4x4,
+    pub unk1: Vec<tmesh::Footer1>,
+    pub unk2: Vec<tmesh::Footer2>,
+    pub unk3: Vec<tmesh::Footer3>,
+    pub strip_order: Vec<u32>
 }
 
 pub fn read_tmesh(
@@ -100,7 +107,12 @@ pub fn read_tmesh(
         .unwrap();
     Some(TMeshResult {
         mesh: mesh.to_reference(),
-        surfaces
+        surfaces,
+        transform: tmesh.transform.transform.clone(),
+        unk1: tmesh.unk1.clone(),
+        unk2: tmesh.unk2.clone(),
+        unk3: tmesh.unk3.clone(),
+        strip_order: tmesh.strip_order.clone(),
     })
 }
 
@@ -132,6 +144,26 @@ pub fn read_tmesh_from_res(data: &ChumFile, reader: &mut ChumReader) -> Dictiona
                 surfaces.push(&Variant::from_dictionary(&surfacedict));
             }
             dict.set(&"surfaces".into(), &Variant::from_array(&surfaces));
+            dict.set(&"transform".into(), &util::mat4x4_to_transform(&mesh.transform).to_variant());
+            dict.set(&"unk1".into(), &mesh.unk1.into_iter().map(|x| {
+                let mut dict = Dictionary::new();
+                dict.set(&"pos".into(), &util::vec3_to_godot(&x.pos).to_variant());
+                dict.set(&"radius".into(), &x.radius.to_variant());
+                dict.to_variant()
+            }).collect::<Vec<_>>().to_variant());
+            dict.set(&"unk2".into(), &mesh.unk2.into_iter().map(|x| {
+                let mut dict = Dictionary::new();
+                dict.set(&"transform".into(), &util::mat4x4_to_transform(&x.transform).to_variant());
+                dict.to_variant()
+            }).collect::<Vec<_>>().to_variant());
+            dict.set(&"unk3".into(), &mesh.unk3.into_iter().map(|x| {
+                let mut dict = Dictionary::new();
+                dict.set(&"unk1".into(), &(&x.unk1[..]).to_owned().to_variant());
+                dict.set(&"normal".into(), &util::vec3_to_godot(&x.normal).to_variant());
+                dict.set(&"junk".into(), &x.junk.to_variant());
+                dict.set(&"unk2".into(), &x.unk2.to_variant());
+                dict.to_variant()
+            }).collect::<Vec<_>>().to_variant());
         }
         None => {
             godot_print!("read_tmesh returned None");

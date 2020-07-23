@@ -1,14 +1,21 @@
 use crate::chumfile::ChumFile;
 use crate::reader::ChumReader;
+use crate::util;
 use gdnative::*;
 use libchum::reader::surface;
+use libchum::common;
+
+pub struct SurfaceResult {
+    pub surface: Reference,
+    pub transform: common::Mat4x4
+}
 
 pub fn read_surface(
     data: &Vec<u8>,
     fmt: libchum::format::TotemFormat,
     reader: &mut ChumReader,
     file: &ChumFile,
-) -> Option<Reference> {
+) -> Option<SurfaceResult> {
     let surfaceobj = match surface::SurfaceObject::read_data(data, fmt) {
         Ok(x) => x,
         Err(_) => {
@@ -75,7 +82,10 @@ pub fn read_surface(
             }
         })
         .unwrap();
-    Some(mesh.to_reference())
+    Some(SurfaceResult {
+        surface: mesh.to_reference(),
+        transform: surfaceobj.transform.transform.clone()
+    })
 }
 
 pub fn read_surface_from_res(data: &ChumFile, reader: &mut ChumReader) -> Dictionary {
@@ -84,7 +94,8 @@ pub fn read_surface_from_res(data: &ChumFile, reader: &mut ChumReader) -> Dictio
     match read_surface(&data.get_data_as_vec(), fmt, reader, data) {
         Some(mesh) => {
             dict.set(&"exists".into(), &true.into());
-            dict.set(&"mesh".into(), &mesh.to_variant());
+            dict.set(&"mesh".into(), &mesh.surface.to_variant());
+            dict.set(&"transform".into(), &util::mat4x4_to_transform(&mesh.transform).to_variant());
         }
         None => {
             godot_print!("read_tmesh returned None");

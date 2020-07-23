@@ -1,0 +1,10 @@
+[gd_scene load_steps=2 format=2]
+
+[ext_resource path="res://Test/RotTest.gd" type="Script" id=1]
+
+[node name="Spatial" type="Spatial"]
+transform = Transform( 1.24, 0.525, 0, -0.467, 1.11, 0.618, 0.24, -0.569, 1.2, -19.4, -41.4, -17.8 )
+script = ExtResource( 1 )
+
+[node name="Spatial" type="Spatial" parent="."]
+transform = Transform( 1.35, 0.003, -0.002, -0.003, 1.35, -0.003, 0.002, 0.003, 1.35, -6.79, 0.796, -21 )

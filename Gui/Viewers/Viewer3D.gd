@@ -30,8 +30,19 @@ func set_file(file):
 			print("INVALID DATA")
 			node_mesh.hide()
 		elif data["exists"]:
-			print("LOADED: ", data)
+			print("LOADED: ")
 			node_mesh.mesh = data["mesh"]
+			print("TX: ", data["transform"])
+			print("UNK1: ", data["unk1"].size())
+			for x in data["unk1"]:
+				print("\t", x)
+			print("UNK2: ", data["unk2"].size())
+			for x in data["unk2"]:
+				print("\t", x)
+			print("UNK3: ", data["unk3"].size())
+			for x in data["unk3"]:
+				print("\t", x)
+			node_mesh.transform = Transform()
 			node_mesh.show()
 		else:
 			print("DOES NOT EXIST")
@@ -44,6 +55,8 @@ func set_file(file):
 		elif data["exists"]:
 			print("LOADED: ", data)
 			node_mesh.mesh = data["mesh"]
+#			node_mesh.transform = Transform()
+			node_mesh.transform = data["transform"]
 			node_mesh.show()
 		else:
 			print("DOES NOT EXIST")

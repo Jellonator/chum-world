@@ -22,6 +22,7 @@ pub struct MeshTri {
 }
 
 /// A triangle strip
+#[derive(Clone, Debug)]
 pub struct Strip {
     pub vertex_ids: Vec<u16>,
     pub tri_order: u32,
@@ -29,29 +30,60 @@ pub struct Strip {
 }
 
 /// A combination of a normal index and a texture coordinate index
+#[derive(Clone, Debug)]
 pub struct ElementData {
     pub texcoord_id: u16,
     pub normal_id: u16,
 }
 
 /// A triangle strip's extra data
+#[derive(Clone, Debug)]
 pub struct StripExt {
     pub elements: Vec<ElementData>,
 }
 
+#[derive(Clone, Debug)]
+pub struct StripData {
+    pub strip: Strip,
+    pub group: Option<i32>, // None if subtype is 0
+    pub ext: Option<StripExt> // None on PS2
+}
+
 /// A full triangle mesh
+#[derive(Clone, Debug)]
 pub struct TMesh {
-    // unknown1: [u8; 96]
-    // unknown2: u16
-    // padding_mult: u16,
-    vertices: Vec<Vector3>,
-    texcoords: Vec<Vector2>,
-    normals: Vec<Vector3>,
-    strips: Vec<Strip>,
-    // unknown3: [u8; num_strips * padding_mult]
-    strips_ext: Vec<StripExt>,
+    pub transform: TransformationHeader,
+    pub vertices: Vec<Vector3>,
+    pub texcoords: Vec<Vector2>,
+    pub normals: Vec<Vector3>,
+    pub strips: Vec<StripData>,
+    // pub groups: Vec<i32>,
+    // pub strips_ext: Vec<StripExt>,
     // unknown4: [u8]
-    materials: Vec<i32>,
+    pub materials: Vec<i32>,
+    pub unk1: Vec<Footer1>,
+    pub unk2: Vec<Footer2>,
+    pub unk3: Vec<Footer3>,
+    pub strip_order: Vec<u32>
+}
+
+#[derive(Clone, Debug)]
+pub struct Footer1 {
+    pub pos: Vector3,
+    pub radius: f32
+}
+
+#[derive(Clone, Debug)]
+pub struct Footer2 {
+    pub transform: Mat4x4,
+}
+
+#[derive(Clone, Debug)]
+pub struct Footer3 {
+    pub unk1: [f32; 4],
+    pub normal: Vector3,
+    pub junk: u32,
+    pub unk2: f32,
 }
 
 /// Read in a triangle strip from a reader
@@ -176,8 +208,7 @@ impl TMesh {
     fn gen_triangle_indices(&self) -> Vec<Vec<[(u16, u16, u16); 3]>> {
         self.strips
             .iter()
-            .zip(&self.strips_ext)
-            .map(|(strip, strip_ext)| strip_gen_triangle_indices(strip, strip_ext))
+            .map(|strip| strip_gen_triangle_indices(&strip.strip, strip.ext.as_ref().unwrap()))
             .collect()
     }
 
@@ -186,13 +217,12 @@ impl TMesh {
         let mut values: Vec<(u32, Vec<MeshTri>)> = self
             .strips
             .iter()
-            .zip(&self.strips_ext)
-            .map(|(strip, strip_ext)| {
+            .map(|strip| {
                 (
-                    strip.material,
+                    strip.strip.material,
                     strip_gen_triangles(
-                        strip,
-                        strip_ext,
+                        &strip.strip,
+                        strip.ext.as_ref().unwrap(),
                         &self.vertices,
                         &self.texcoords,
                         &self.normals,
@@ -226,37 +256,24 @@ impl TMesh {
 
     /// Read a TMesh from a file
     pub fn read_from<R: Read>(file: &mut R, fmt: TotemFormat) -> io::Result<TMesh> {
-        io::copy(&mut file.take(96), &mut io::sink())?;
-        let _unknown2: u16 = fmt.read_u16(file)?;
-        let padding_mult: u16 = fmt.read_u16(file)?;
+        let transform = TransformationHeader::read_from(file, fmt)?;
         // Read coordinate data
         let num_vertices: u32 = fmt.read_u32(file)?;
         let vertices: Vec<Vector3> = (0..num_vertices)
             .map(|_| {
-                Ok(Vector3 {
-                    x: fmt.read_f32(file)?,
-                    y: fmt.read_f32(file)?,
-                    z: fmt.read_f32(file)?,
-                })
+                Vector3::read_from(file, fmt)
             })
             .collect::<io::Result<_>>()?;
         let num_texcoords: u32 = fmt.read_u32(file)?;
         let texcoords: Vec<Vector2> = (0..num_texcoords)
             .map(|_| {
-                Ok(Vector2 {
-                    x: fmt.read_f32(file)?,
-                    y: fmt.read_f32(file)?,
-                })
+                Vector2::read_from(file, fmt)
             })
             .collect::<io::Result<_>>()?;
         let num_normals: u32 = fmt.read_u32(file)?;
         let normals: Vec<Vector3> = (0..num_normals)
             .map(|_| {
-                Ok(Vector3 {
-                    x: fmt.read_f32(file)?,
-                    y: fmt.read_f32(file)?,
-                    z: fmt.read_f32(file)?,
-                })
+                Vector3::read_from(file, fmt)
             })
             .collect::<io::Result<_>>()?;
         // Read strip data
@@ -265,15 +282,27 @@ impl TMesh {
             .map(|_| read_strip(file, fmt))
             .collect::<io::Result<_>>()?;
         // Ignore a few bytes
-        io::copy(
-            &mut file.take((num_strips as u64) * (padding_mult as u64)),
-            &mut io::sink(),
-        )?;
+        let groups = match transform.item_subtype {
+            4 => {
+                let mut data = vec![0i32; strips.len()];
+                fmt.read_i32_into(file, &mut data)?;
+                Some(data)
+            },
+            0 => None,
+            _ => panic!()
+        };
         // Read stripext data
         let num_strips_ext: u32 = fmt.read_u32(file)?;
-        let strips_ext: Vec<StripExt> = (0..num_strips_ext)
-            .map(|_| read_strip_ext(file, fmt))
-            .collect::<io::Result<_>>()?;
+        let mut strips_ext = if num_strips_ext == 0 {
+            None
+        } else if num_strips_ext == num_strips {
+            let strips_ext: Vec<StripExt> = (0..num_strips_ext)
+                .map(|_| read_strip_ext(file, fmt))
+                .collect::<io::Result<_>>()?;
+            Some(strips_ext)
+        } else {
+            panic!()
+        };
         // read material data
         let num_materials: u32 = fmt.read_u32(file)?;
         let materials: Vec<i32> = (0..num_materials)
@@ -281,24 +310,70 @@ impl TMesh {
             .collect::<io::Result<_>>()?;
         // read unknown data
         let num_unk1: u32 = fmt.read_u32(file)?;
-        fmt.skip_n_bytes(file, num_unk1 as u64 * 16)?;
+        let footer1: Vec<Footer1> = (0..num_unk1)
+            .map(|_| {
+                Ok(Footer1 {
+                    pos: Vector3::read_from(file, fmt)?,
+                    radius: fmt.read_f32(file)?
+                })
+            })
+            .collect::<io::Result<_>>()?;
         let num_unk2: u32 = fmt.read_u32(file)?;
-        fmt.skip_n_bytes(file, num_unk2 as u64 * 80)?;
+        let footer2: Vec<Footer2> = (0..num_unk2)
+            .map(|_| {
+                let transform = Mat4x4::read_from(file, fmt)?;
+                fmt.skip_n_bytes(file, 16)?;
+                Ok(Footer2 {
+                    transform
+                })
+            })
+            .collect::<io::Result<_>>()?;
         let num_unk3: u32 = fmt.read_u32(file)?;
-        fmt.skip_n_bytes(file, num_unk3 as u64 * 36)?;
+        let footer3: Vec<Footer3> = (0..num_unk3)
+            .map(|_| {
+                let mut unk1 = [0.0f32; 4];
+                fmt.read_f32_into(file, &mut unk1)?;
+                Ok(Footer3 {
+                    unk1,
+                    normal: Vector3::read_from(file, fmt)?,
+                    junk: fmt.read_u32(file)?,
+                    unk2: fmt.read_f32(file)?,
+                })
+            })
+            .collect::<io::Result<_>>()?;
         let num_unk4: u32 = fmt.read_u32(file)?; // always 0?
-        let _num_strip_order: u32 = fmt.read_u32(file)?;
-        println!(
-            "UNKNOWN: ({} {} {} {})",
-            num_unk1, num_unk2, num_unk3, num_unk4
-        );
+        if num_unk4 != 0 {
+            panic!();
+        }
+        // pack strips together (they all should have the same length from earlier checks)
+        let num_strip_order: u32 = fmt.read_u32(file)?;
+        let mut strip_order = vec![0u32; num_strip_order as usize];
+        fmt.read_u32_into(file, &mut strip_order)?;
+        let strips = strips.into_iter().enumerate().map(|(i, value)| {
+            let ext = if let Some(ref mut stripext) = strips_ext {
+                let mut fake = StripExt{elements: Vec::new()};
+                std::mem::swap(&mut fake, &mut stripext[i]);
+                Some(fake)
+            } else {
+                None
+            };
+            StripData {
+                strip: value,
+                group: groups.as_ref().map(|groupdata| groupdata[i]),
+                ext,
+            }
+        }).collect();
         Ok(TMesh {
+            transform,
             vertices,
             texcoords,
             normals,
             strips,
-            strips_ext,
             materials,
+            unk1: footer1,
+            unk2: footer2,
+            unk3: footer3,
+            strip_order,
         })
     }
 
@@ -345,15 +420,15 @@ impl ChumExport for TMesh {
         for vn in &self.normals {
             writeln!(writer, "vn {} {} {}", vn.x, vn.y, vn.z)?;
         }
-        for (strip, strip_ext) in self.strips.iter().zip(self.strips_ext.iter()) {
-            let a = strip.tri_order;
-            let b = 3 - a;
+        for stripdata in self.strips.iter() {
+            let b = stripdata.strip.tri_order;
+            let a = 3 - b;
             let lists = [[0, a, b], [0, b, a]];
             // Rust doesn't prevent you from writing bad code
-            for ((vertex_ids, elements), cycle) in strip
+            for ((vertex_ids, elements), cycle) in stripdata.strip
                 .vertex_ids
                 .windows(3)
-                .zip(strip_ext.elements.windows(3).into_iter())
+                .zip(stripdata.ext.as_ref().unwrap().elements.windows(3).into_iter())
                 .zip(lists.iter().cycle())
             {
                 write!(writer, "f")?;

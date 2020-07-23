@@ -2,6 +2,14 @@ use gdnative::*;
 use libchum::common;
 use libchum::structure::{ChumStructVariant, IntType, ArrayData};
 
+pub fn vec3_to_godot(value: &common::Vector3) -> Vector3 {
+    Vector3::new(value.x, value.y, value.z)
+}
+
+pub fn vec2_to_godot(value: &common::Vector2) -> Vector2 {
+    Vector2::new(value.x, value.y)
+}
+
 pub fn mat4x4_to_transform(tx: &common::Mat4x4) -> Transform {
     let mat = &tx.mat;
     Transform {

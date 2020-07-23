@@ -51,7 +51,6 @@ func set_meshes(mesh_ids: Array):
 				"mesh": mesh,
 				"surfaces": mesh_data["surfaces"]
 			})
-			print("LOADED", mesh)
 
 func set_groups(group_values: Dictionary):
 	node_items.clear()
@@ -102,11 +101,9 @@ func _physics_process(delta: float):
 	node_camera.move_strafe(input_dir * delta * speed)
 
 func set_group(groupdata: Dictionary):
-	prints(groupdata.keys(), meshes.size())
 	for mesh_id in len(self.meshes):
 		if self.meshes[mesh_id] == null:
 			continue
-		prints(mesh_id, self.meshes[mesh_id]["mesh"])
 		var section_vertices = {}
 		if mesh_id in groupdata:
 			var section = groupdata[mesh_id]
@@ -124,19 +121,10 @@ func set_group(groupdata: Dictionary):
 					weight = section_vertices[index]
 				colors.push_back(Color(1.0-weight, 1.0-weight, 1.0, 1.0))
 			surface[Mesh.ARRAY_COLOR] = colors
-			print(colors.size(), surface[Mesh.ARRAY_VERTEX].size())
 			new_mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, surface)
 		mesh.mesh = new_mesh
 		for i in range(mesh.get_surface_material_count()):
 			mesh.set_surface_material(i, MAT_BLANK)
-#	for i in range(meshes.size()):
-#		if meshes[i] == null:
-#			continue
-#		var mesh = meshes[i]["mesh"]
-#		var surface = meshes[i]["surfaces"]
-#		print(mesh)
-#		print(surface)
-#		print(groupdata)
 
 func _on_ItemList_item_selected(index: int):
 	set_group(node_items.get_item_metadata(index))

@@ -54,7 +54,9 @@ func _sort_file(a, b):
 	else:
 		return a.subtype < b.subtype
 
+var prev_search := ""
 func do_search(text: String):
+	prev_search = text
 	prints("SEARCH", text, archive)
 	text = text.to_lower()
 	clear()
@@ -83,7 +85,7 @@ func set_archive(p_archive):
 	self.archive = p_archive
 	self.archive_files = archive.get_file_list()
 	archive_files.sort_custom(self, "_sort_file")
-	do_search("")
+	do_search(prev_search)
 
 func _on_Tree_item_selected():
 	emit_signal("file_selected", get_selected().get_meta("file"))

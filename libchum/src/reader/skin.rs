@@ -1,7 +1,7 @@
 use crate::common::*;
 // use crate::export::ChumExport;
-use crate::format::TotemFormat;
 use crate::animsymbol::AnimSymbol;
+use crate::format::TotemFormat;
 // use std::error::Error;
 use std::io::{self, Read};
 
@@ -11,49 +11,49 @@ pub struct Skin {
     pub meshes: Vec<i32>,
     pub vertex_groups: Vec<VertexGroup>,
     pub anims: Option<AnimSection>,
-    pub unknown: Vec<UnknownEntry>
+    pub unknown: Vec<UnknownEntry>,
 }
 
 #[derive(Clone, Debug)]
 pub struct VertexGroup {
     pub group_id: i32,
-    pub sections: Vec<VertexGroupSection>
+    pub sections: Vec<VertexGroupSection>,
 }
 
 #[derive(Clone, Debug)]
 pub struct VertexGroupSection {
     pub mesh_index: u16,
     pub vertices: Vec<VertexGroupVertex>,
-    pub normals: Vec<VertexGroupNormal>
+    pub normals: Vec<VertexGroupNormal>,
 }
 
 #[derive(Clone, Debug)]
 pub struct VertexGroupVertex {
     pub vertex_id: u32,
-    pub weight: f32
+    pub weight: f32,
 }
 
 #[derive(Clone, Debug)]
 pub struct VertexGroupNormal {
     pub normal_id: u32,
-    pub weight: f32
+    pub weight: f32,
 }
 
 #[derive(Clone, Debug)]
 pub struct AnimSection {
-    pub entries: Vec<AnimEntry>
+    pub entries: Vec<AnimEntry>,
 }
 
 #[derive(Clone, Debug)]
 pub struct AnimEntry {
     pub symbol: AnimSymbol,
-    pub anim_id: i32
+    pub anim_id: i32,
 }
 
 #[derive(Clone, Debug)]
 pub struct UnknownEntry {
     pub vertices: Vec<u32>,
-    pub normals: Vec<u32>
+    pub normals: Vec<u32>,
 }
 
 impl Skin {
@@ -78,7 +78,7 @@ impl Skin {
         Ok(VertexGroupSection {
             mesh_index,
             vertices,
-            normals
+            normals,
         })
     }
 
@@ -89,10 +89,7 @@ impl Skin {
         for _ in 0..num_sections {
             sections.push(Skin::read_section(file, fmt)?);
         }
-        Ok(VertexGroup {
-            group_id,
-            sections
-        })
+        Ok(VertexGroup { group_id, sections })
     }
 
     /// Read a TMesh from a file
@@ -116,11 +113,11 @@ impl Skin {
             for _ in 0..num_anim_entries {
                 anim_entries.push(AnimEntry {
                     symbol: AnimSymbol::from_u32(fmt.read_u32(file)?).unwrap(),
-                    anim_id: fmt.read_i32(file)?
+                    anim_id: fmt.read_i32(file)?,
                 });
             }
             Some(AnimSection {
-                entries: anim_entries
+                entries: anim_entries,
             })
         } else {
             None
@@ -138,10 +135,7 @@ impl Skin {
             for _ in 0..num_normals {
                 normals.push(fmt.read_u32(file)?);
             }
-            unknown_entries.push(UnknownEntry {
-                vertices,
-                normals
-            })
+            unknown_entries.push(UnknownEntry { vertices, normals })
         }
         Ok(Skin {
             transform,

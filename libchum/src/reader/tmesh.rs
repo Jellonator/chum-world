@@ -1,7 +1,6 @@
 use crate::common::*;
-use crate::export::ChumExport;
 use crate::format::TotemFormat;
-use std::error::Error;
+use crate::scene;
 use std::io::{self, Read, Write};
 
 #[derive(Clone, Debug)]
@@ -18,7 +17,7 @@ pub struct MeshPoint {
 #[derive(Clone, Debug)]
 #[repr(C)]
 pub struct MeshTri {
-    pub points: [MeshPoint; 3]
+    pub points: [MeshPoint; 3],
 }
 
 /// A triangle strip
@@ -45,8 +44,8 @@ pub struct StripExt {
 #[derive(Clone, Debug)]
 pub struct StripData {
     pub strip: Strip,
-    pub group: Option<i32>, // None if subtype is 0
-    pub ext: Option<StripExt> // None on PS2
+    pub group: Option<i32>,    // None if subtype is 0
+    pub ext: Option<StripExt>, // None on PS2
 }
 
 /// A full triangle mesh
@@ -57,20 +56,17 @@ pub struct TMesh {
     pub texcoords: Vec<Vector2>,
     pub normals: Vec<Vector3>,
     pub strips: Vec<StripData>,
-    // pub groups: Vec<i32>,
-    // pub strips_ext: Vec<StripExt>,
-    // unknown4: [u8]
     pub materials: Vec<i32>,
     pub unk1: Vec<Footer1>,
     pub unk2: Vec<Footer2>,
     pub unk3: Vec<Footer3>,
-    pub strip_order: Vec<u32>
+    pub strip_order: Vec<u32>,
 }
 
 #[derive(Clone, Debug)]
 pub struct Footer1 {
     pub pos: Vector3,
-    pub radius: f32
+    pub radius: f32,
 }
 
 #[derive(Clone, Debug)]
@@ -175,7 +171,7 @@ fn strip_gen_triangles(
                     normal: normals[ls[0].2 as usize],
                     vertex_id: ls[0].0,
                     texcoord_id: ls[0].1,
-                    normal_id: ls[0].2
+                    normal_id: ls[0].2,
                 },
                 MeshPoint {
                     vertex: vertices[ls[1].0 as usize],
@@ -183,7 +179,7 @@ fn strip_gen_triangles(
                     normal: normals[ls[1].2 as usize],
                     vertex_id: ls[1].0,
                     texcoord_id: ls[1].1,
-                    normal_id: ls[1].2
+                    normal_id: ls[1].2,
                 },
                 MeshPoint {
                     vertex: vertices[ls[2].0 as usize],
@@ -191,7 +187,7 @@ fn strip_gen_triangles(
                     normal: normals[ls[2].2 as usize],
                     vertex_id: ls[2].0,
                     texcoord_id: ls[2].1,
-                    normal_id: ls[2].2
+                    normal_id: ls[2].2,
                 },
             ],
         })
@@ -260,21 +256,15 @@ impl TMesh {
         // Read coordinate data
         let num_vertices: u32 = fmt.read_u32(file)?;
         let vertices: Vec<Vector3> = (0..num_vertices)
-            .map(|_| {
-                Vector3::read_from(file, fmt)
-            })
+            .map(|_| Vector3::read_from(file, fmt))
             .collect::<io::Result<_>>()?;
         let num_texcoords: u32 = fmt.read_u32(file)?;
         let texcoords: Vec<Vector2> = (0..num_texcoords)
-            .map(|_| {
-                Vector2::read_from(file, fmt)
-            })
+            .map(|_| Vector2::read_from(file, fmt))
             .collect::<io::Result<_>>()?;
         let num_normals: u32 = fmt.read_u32(file)?;
         let normals: Vec<Vector3> = (0..num_normals)
-            .map(|_| {
-                Vector3::read_from(file, fmt)
-            })
+            .map(|_| Vector3::read_from(file, fmt))
             .collect::<io::Result<_>>()?;
         // Read strip data
         let num_strips: u32 = fmt.read_u32(file)?;
@@ -287,9 +277,9 @@ impl TMesh {
                 let mut data = vec![0i32; strips.len()];
                 fmt.read_i32_into(file, &mut data)?;
                 Some(data)
-            },
+            }
             0 => None,
-            _ => panic!()
+            _ => panic!(),
         };
         // Read stripext data
         let num_strips_ext: u32 = fmt.read_u32(file)?;
@@ -314,7 +304,7 @@ impl TMesh {
             .map(|_| {
                 Ok(Footer1 {
                     pos: Vector3::read_from(file, fmt)?,
-                    radius: fmt.read_f32(file)?
+                    radius: fmt.read_f32(file)?,
                 })
             })
             .collect::<io::Result<_>>()?;
@@ -323,9 +313,7 @@ impl TMesh {
             .map(|_| {
                 let transform = Mat4x4::read_from(file, fmt)?;
                 fmt.skip_n_bytes(file, 16)?;
-                Ok(Footer2 {
-                    transform
-                })
+                Ok(Footer2 { transform })
             })
             .collect::<io::Result<_>>()?;
         let num_unk3: u32 = fmt.read_u32(file)?;
@@ -349,20 +337,26 @@ impl TMesh {
         let num_strip_order: u32 = fmt.read_u32(file)?;
         let mut strip_order = vec![0u32; num_strip_order as usize];
         fmt.read_u32_into(file, &mut strip_order)?;
-        let strips = strips.into_iter().enumerate().map(|(i, value)| {
-            let ext = if let Some(ref mut stripext) = strips_ext {
-                let mut fake = StripExt{elements: Vec::new()};
-                std::mem::swap(&mut fake, &mut stripext[i]);
-                Some(fake)
-            } else {
-                None
-            };
-            StripData {
-                strip: value,
-                group: groups.as_ref().map(|groupdata| groupdata[i]),
-                ext,
-            }
-        }).collect();
+        let strips = strips
+            .into_iter()
+            .enumerate()
+            .map(|(i, value)| {
+                let ext = if let Some(ref mut stripext) = strips_ext {
+                    let mut fake = StripExt {
+                        elements: Vec::new(),
+                    };
+                    std::mem::swap(&mut fake, &mut stripext[i]);
+                    Some(fake)
+                } else {
+                    None
+                };
+                StripData {
+                    strip: value,
+                    group: groups.as_ref().map(|groupdata| groupdata[i]),
+                    ext,
+                }
+            })
+            .collect();
         Ok(TMesh {
             transform,
             vertices,
@@ -404,43 +398,72 @@ impl TMesh {
         }
         Ok(())
     }
-}
 
-impl ChumExport for TMesh {
-    fn export<W>(&self, writer: &mut W) -> Result<(), Box<dyn Error>>
-    where
-        W: Write,
-    {
-        for v in &self.vertices {
-            writeln!(writer, "v {} {} {}", v.x, v.y, v.z)?;
+    pub fn create_scene_mesh(&self, name: String) -> scene::SceneTriMesh {
+        scene::SceneTriMesh {
+            name,
+            transform: Mat4x4::new_basis(),
+            tris: self
+                .gen_triangle_indices()
+                .into_iter()
+                .flat_map(|x| x)
+                .map(|indices| Tri {
+                    points: [
+                        Point {
+                            vertex: self.vertices[indices[0].0 as usize],
+                            texcoord: self.texcoords[indices[0].1 as usize],
+                            normal: self.normals[indices[0].2 as usize],
+                        },
+                        Point {
+                            vertex: self.vertices[indices[0].0 as usize],
+                            texcoord: self.texcoords[indices[0].1 as usize],
+                            normal: self.normals[indices[0].2 as usize],
+                        },
+                        Point {
+                            vertex: self.vertices[indices[0].0 as usize],
+                            texcoord: self.texcoords[indices[0].1 as usize],
+                            normal: self.normals[indices[0].2 as usize],
+                        },
+                    ],
+                })
+                .collect(),
         }
-        for vt in &self.texcoords {
-            writeln!(writer, "vt {} {}", vt.x, vt.y)?;
-        }
-        for vn in &self.normals {
-            writeln!(writer, "vn {} {} {}", vn.x, vn.y, vn.z)?;
-        }
-        for stripdata in self.strips.iter() {
-            let b = stripdata.strip.tri_order;
-            let a = 3 - b;
-            let lists = [[0, a, b], [0, b, a]];
-            // Rust doesn't prevent you from writing bad code
-            for ((vertex_ids, elements), cycle) in stripdata.strip
-                .vertex_ids
-                .windows(3)
-                .zip(stripdata.ext.as_ref().unwrap().elements.windows(3).into_iter())
-                .zip(lists.iter().cycle())
-            {
-                write!(writer, "f")?;
-                for i in cycle {
-                    let texcoord = elements[*i as usize].texcoord_id + 1;
-                    let normal = elements[*i as usize].normal_id + 1;
-                    let vertex = vertex_ids[*i as usize] + 1;
-                    write!(writer, " {}/{}/{}", vertex, texcoord, normal)?;
-                }
-                writeln!(writer, "")?;
-            }
-        }
-        Ok(())
     }
 }
+
+// fn export_obj<W>(&self, writer: &mut W) -> Result<(), Box<dyn Error>>
+// where
+//     W: Write,
+// {
+//     for v in &self.vertices {
+//         writeln!(writer, "v {} {} {}", v.x, v.y, v.z)?;
+//     }
+//     for vt in &self.texcoords {
+//         writeln!(writer, "vt {} {}", vt.x, vt.y)?;
+//     }
+//     for vn in &self.normals {
+//         writeln!(writer, "vn {} {} {}", vn.x, vn.y, vn.z)?;
+//     }
+//     for stripdata in self.strips.iter() {
+//         let b = stripdata.strip.tri_order;
+//         let a = 3 - b;
+//         let lists = [[0, a, b], [0, b, a]];
+//         // Rust doesn't prevent you from writing bad code
+//         for ((vertex_ids, elements), cycle) in stripdata.strip
+//             .vertex_ids
+//             .windows(3)
+//             .zip(stripdata.ext.as_ref().unwrap().elements.windows(3).into_iter())
+//             .zip(lists.iter().cycle())
+//         {
+//             write!(writer, "f")?;
+//             for i in cycle {
+//                 let texcoord = elements[*i as usize].texcoord_id + 1;
+//                 let normal = elements[*i as usize].normal_id + 1;
+//                 let vertex = vertex_ids[*i as usize] + 1;
+//                 write!(writer, " {}/{}/{}", vertex, texcoord, normal)?;
+//             }
+//             writeln!(writer, "")?;
+//         }
+//     }
+//     Ok(())
+// }

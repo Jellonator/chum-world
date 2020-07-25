@@ -1,7 +1,6 @@
 //! Used for BITMAP file conversion.
 //! See https://github.com/Jellonator/chum-world/wiki/BITMAP for more information.
 
-use crate::export::ChumExport;
 use crate::format::TotemFormat;
 use crate::structure::*;
 use crate::util;
@@ -830,10 +829,8 @@ impl Bitmap {
             ..*self
         }
     }
-}
 
-impl ChumExport for Bitmap {
-    fn export<W>(&self, writer: &mut W) -> Result<(), Box<dyn Error>>
+    pub fn export_png<W>(&self, writer: &mut W) -> Result<(), Box<dyn Error>>
     where
         W: Write,
     {

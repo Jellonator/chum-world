@@ -1,7 +1,6 @@
 //! See https://github.com/Jellonator/chum-world/wiki/SURFACE for more information
 
 use crate::common::*;
-use crate::export::ChumExport;
 use crate::format::TotemFormat;
 use crate::util::bezierpatch;
 use std::collections::HashMap;
@@ -411,10 +410,8 @@ impl<'a> SurfaceExport<'a> {
         }
         Ok(())
     }
-}
 
-impl<'a> ChumExport for SurfaceExport<'a> {
-    fn export<W>(&self, writer: &mut W) -> Result<(), Box<dyn Error>>
+    pub fn export_obj<W>(&self, writer: &mut W) -> Result<(), Box<dyn Error>>
     where
         W: Write,
     {

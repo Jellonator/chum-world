@@ -291,6 +291,12 @@ pub struct Mat3x3 {
 }
 
 impl Mat3x3 {
+    pub fn new_basis() -> Mat3x3 {
+        Mat3x3 {
+            mat: [1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0],
+        }
+    }
+
     pub fn read_from<R: Read>(reader: &mut R, fmt: TotemFormat) -> io::Result<Mat3x3> {
         let mut buf = [0.0f32; 9];
         fmt.read_f32_into(reader, &mut buf)?;
@@ -303,6 +309,13 @@ impl Mat3x3 {
         }
         Ok(())
     }
+
+    pub fn swap_order(&self) -> Mat3x3 {
+        let m = &self.mat;
+        Mat3x3 {
+            mat: [m[0], m[3], m[6], m[1], m[4], m[7], m[2], m[5], m[8]],
+        }
+    }
 }
 
 // A 4x4 Matrix
@@ -313,6 +326,14 @@ pub struct Mat4x4 {
 }
 
 impl Mat4x4 {
+    pub fn new_basis() -> Mat4x4 {
+        Mat4x4 {
+            mat: [
+                1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0,
+            ],
+        }
+    }
+
     pub fn read_from<R: Read>(reader: &mut R, fmt: TotemFormat) -> io::Result<Mat4x4> {
         let mut buf = [0.0f32; 16];
         fmt.read_f32_into(reader, &mut buf)?;
@@ -324,6 +345,16 @@ impl Mat4x4 {
             fmt.write_f32(writer, *value)?;
         }
         Ok(())
+    }
+
+    pub fn swap_order(&self) -> Mat4x4 {
+        let m = &self.mat;
+        Mat4x4 {
+            mat: [
+                m[0], m[4], m[8], m[12], m[1], m[5], m[9], m[13], m[2], m[6], m[10], m[14], m[3],
+                m[7], m[11], m[15],
+            ],
+        }
     }
 }
 
@@ -355,11 +386,14 @@ pub struct TransformationHeader {
     pub transform: Mat4x4,
     pub junk: [u8; 16],
     pub item_type: u16,
-    pub item_subtype: u16
+    pub item_subtype: u16,
 }
 
 impl TransformationHeader {
-    pub fn read_from<R: Read>(reader: &mut R, fmt: TotemFormat) -> io::Result<TransformationHeader> {
+    pub fn read_from<R: Read>(
+        reader: &mut R,
+        fmt: TotemFormat,
+    ) -> io::Result<TransformationHeader> {
         let mut floats = [0.0f32; 4];
         fmt.read_f32_into(reader, &mut floats)?;
         let transform = Mat4x4::read_from(reader, fmt)?;
@@ -372,7 +406,7 @@ impl TransformationHeader {
             transform,
             junk,
             item_type,
-            item_subtype
+            item_subtype,
         })
     }
 

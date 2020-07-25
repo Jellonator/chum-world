@@ -9,7 +9,6 @@ edition = "2018"
 [dependencies]
 byteorder = "1.3.4"
 crc = "1.8.1"
-gltf = "0.15.2"
-gltf-json = "0.15.2"
 image = "0.23.6"
 imagequant = "2.12.5"
+quick-xml = "0.18.1"

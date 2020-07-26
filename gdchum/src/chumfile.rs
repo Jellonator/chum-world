@@ -2,25 +2,28 @@ use crate::bytedata::ByteData;
 use crate::util;
 use crate::ChumArchive;
 use gdnative::*;
-use libchum::{self, reader, structure::ChumStruct, scene::{self, collada}};
+use libchum::{
+    self, reader,
+    scene::{self, collada},
+    structure::ChumStruct,
+};
 use std::fs::File;
 use std::io::{BufReader, Write};
 
 pub fn get_filename(name: &str) -> &str {
     match name.rfind('>') {
-        Some(pos) => &name[pos+1..],
-        None => name
+        Some(pos) => &name[pos + 1..],
+        None => name,
     }
 }
 
-pub fn get_basename(name: &str) -> &str{
+pub fn get_basename(name: &str) -> &str {
     let name = get_filename(name);
     match name.find('.') {
         Some(pos) => &name[..pos],
-        None => name
+        None => name,
     }
 }
-
 
 /// A File resource derived from a ChumArchive.
 #[derive(NativeClass)]
@@ -260,8 +263,7 @@ impl ChumFile {
 
     fn export_skin_to_collada(&mut self, path: &str) {
         let mut buffer = File::create(path).unwrap();
-        let skin = match reader::skin::Skin::read_data(&mut self.get_data_as_vec(), self.format)
-        {
+        let skin = match reader::skin::Skin::read_data(&mut self.get_data_as_vec(), self.format) {
             Ok(x) => x,
             Err(err) => {
                 panic!("MESH file invalid: {}", err);
@@ -270,20 +272,31 @@ impl ChumFile {
         let mut scene = scene::Scene::new_empty();
         let archiveinstance = self.get_archive_instance();
         archiveinstance
-            .map(|archive, res| {
-                for meshid in skin.meshes {
-                    if let Some(meshfile) = archive.get_file_from_hash(res.new_ref(), meshid) {
-                        meshfile.script()
-                        .map(|meshscript| {
-                            let mesh = match reader::tmesh::TMesh::read_data(&mut meshscript.get_data_as_vec(), self.format)
-                            {
-                                Ok(x) => x,
-                                Err(err) => {
-                                    panic!("MESH file invalid: {}", err);
-                                }
-                            };
-                            scene.add_trimesh(mesh.create_scene_mesh(get_basename(&meshscript.namestr).to_owned()));
-                        }).unwrap();
+        .map(|archive, res| {
+                let names: Vec<String> = skin.vertex_groups.iter().map(|group| {
+                    archive.maybe_get_name_from_hash_str(group.group_id)
+                }).collect();
+                for meshid in skin.meshes.iter() {
+                    if let Some(meshfile) = archive.get_file_from_hash(res.new_ref(), *meshid) {
+                        meshfile
+                            .script()
+                            .map(|meshscript| {
+                                let mesh = match reader::tmesh::TMesh::read_data(
+                                    &mut meshscript.get_data_as_vec(),
+                                    self.format,
+                                ) {
+                                    Ok(x) => x,
+                                    Err(err) => {
+                                        panic!("MESH file invalid: {}", err);
+                                    }
+                                };
+                                let mut trimesh = mesh.create_scene_mesh(
+                                    get_basename(&meshscript.namestr).to_owned(),
+                                );
+                                trimesh.skin = Some(skin.generate_scene_skin_for_mesh(names.as_slice(), *meshid, mesh.vertices.len()));
+                                scene.add_trimesh(trimesh);
+                            })
+                            .unwrap();
                     } else {
                         godot_warn!("Mesh {} does not exist!", meshid);
                     }
@@ -339,7 +352,7 @@ impl ChumFile {
                 other => {
                     panic!("Unexpected type for OBJ export {}", other);
                 }
-            }
+            },
             other => {
                 panic!("Unexpected export type {}", other);
             }
@@ -438,7 +451,7 @@ impl ChumFile {
             "MATERIAL" => {
                 let material = match reader::material::Material::read_data(
                     &self.get_data_as_vec(),
-                    self.format
+                    self.format,
                 ) {
                     Ok(x) => x,
                     Err(err) => {
@@ -468,19 +481,22 @@ impl ChumFile {
                 };
                 let bitmapdata = reader::bitmap::Bitmap::destructure(structure)
                     .unwrap()
-                    .with_bitmap(bitmap.get_data().clone(), bitmap.get_width(), bitmap.get_height());
+                    .with_bitmap(
+                        bitmap.get_data().clone(),
+                        bitmap.get_width(),
+                        bitmap.get_height(),
+                    );
                 let mut outdata = Vec::new();
                 bitmapdata.write_to(&mut outdata, self.format).unwrap();
                 self.replace_data_with_vec(outdata);
             }
             "MATERIAL" => {
-                let materialdata = reader::material::Material::destructure(structure)
-                    .unwrap();
+                let materialdata = reader::material::Material::destructure(structure).unwrap();
                 let mut outdata = Vec::new();
                 materialdata.write_to(&mut outdata, self.format).unwrap();
                 self.replace_data_with_vec(outdata);
             }
-            _ => panic!("Could not import data")
+            _ => panic!("Could not import data"),
         }
     }
 }

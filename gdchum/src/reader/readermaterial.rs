@@ -72,7 +72,12 @@ pub fn read_material(
         .unwrap();
     material.set_shader_param(
         "arg_color".into(),
-        Vector3::new(matdata.color.values[0], matdata.color.values[1], matdata.color.values[2]).to_variant(),
+        Vector3::new(
+            matdata.color.values[0],
+            matdata.color.values[1],
+            matdata.color.values[2],
+        )
+        .to_variant(),
     );
     material.set_shader_param("arg_alpha".into(), matdata.color.values[3].to_variant());
     let mat = &matdata.transform.mat;

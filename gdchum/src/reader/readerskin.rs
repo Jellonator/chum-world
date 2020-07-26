@@ -1,12 +1,9 @@
 use crate::chumfile::ChumFile;
+use crate::util;
 use gdnative::*;
 use libchum::reader::skin;
-use crate::util;
 
-pub fn read_skin(
-    data: &Vec<u8>,
-    fmt: libchum::format::TotemFormat
-) -> Option<Dictionary> {
+pub fn read_skin(data: &Vec<u8>, fmt: libchum::format::TotemFormat) -> Option<Dictionary> {
     let skin = match skin::Skin::read_data(data, fmt) {
         Ok(x) => x,
         Err(_) => {
@@ -15,7 +12,10 @@ pub fn read_skin(
         }
     };
     let mut data = Dictionary::new();
-    data.set(&"transform".into(), &util::mat4x4_to_transform(&skin.transform.transform).to_variant());
+    data.set(
+        &"transform".into(),
+        &util::mat4x4_to_transform(&skin.transform.transform).to_variant(),
+    );
     data.set(&"meshes".into(), &skin.meshes.to_variant());
     let mut groups = Dictionary::new();
     for group in skin.vertex_groups.iter() {
@@ -33,7 +33,11 @@ pub fn read_skin(
             sectiondata.set(&"vertices".into(), &vertices.to_variant());
             sectiondata.set(&"normals".into(), &normals.to_variant());
             if groupdict.contains(&section.mesh_index.to_variant()) {
-                godot_warn!("Group {} already contains mesh {}", group.group_id, section.mesh_index);
+                godot_warn!(
+                    "Group {} already contains mesh {}",
+                    group.group_id,
+                    section.mesh_index
+                );
             }
             groupdict.set(&section.mesh_index.to_variant(), &sectiondata.to_variant());
         }

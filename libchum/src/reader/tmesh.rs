@@ -406,15 +406,19 @@ impl TMesh {
             vertices: self.vertices.clone(),
             normals: self.normals.clone(),
             texcoords: self.texcoords.clone(),
-            elements: self.gen_triangle_indices()
+            elements: self
+                .gen_triangle_indices()
                 .into_iter()
                 .flat_map(|x| x)
-                .map(|x| [
-                    (x[0].0 as usize, x[0].1 as usize, x[0].2 as usize),
-                    (x[2].0 as usize, x[2].1 as usize, x[2].2 as usize),
-                    (x[1].0 as usize, x[1].1 as usize, x[1].2 as usize),
-                ])
-                .collect()
+                .map(|x| {
+                    [
+                        (x[0].0 as usize, x[0].1 as usize, x[0].2 as usize),
+                        (x[2].0 as usize, x[2].1 as usize, x[2].2 as usize),
+                        (x[1].0 as usize, x[1].1 as usize, x[1].2 as usize),
+                    ]
+                })
+                .collect(),
+            skin: None,
         }
     }
 }

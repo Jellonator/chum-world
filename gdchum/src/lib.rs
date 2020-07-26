@@ -4,9 +4,9 @@ use std::fs::File;
 
 pub mod bytedata;
 pub mod chumfile;
+pub mod names;
 pub mod reader;
 pub mod util;
-pub mod names;
 
 #[derive(NativeClass)]
 #[inherit(Resource)]
@@ -123,11 +123,7 @@ impl ChumArchive {
     }
 
     #[export]
-    pub fn maybe_get_name_from_hash(
-        &self,
-        _owner: Resource,
-        id: i32
-    ) -> GodotString {
+    pub fn maybe_get_name_from_hash(&self, _owner: Resource, id: i32) -> GodotString {
         if let Some(archive) = &self.archive {
             if let Some(name) = archive.get_name_from_id(id) {
                 GodotString::from_str(&name)
@@ -143,6 +139,28 @@ impl ChumArchive {
                 GodotString::from_str(&name)
             } else {
                 GodotString::from_str(&id.to_string())
+            }
+        }
+    }
+
+    pub fn maybe_get_name_from_hash_str(&self, id: i32) -> String {
+        if let Some(archive) = &self.archive {
+            if let Some(name) = archive.get_name_from_id(id) {
+                name.to_owned()
+            } else {
+                if let Some(name) = names::NAMES.get(&id) {
+                    name.to_string()
+                } else {
+                    // id.to_string()
+                    format!("0x{:08X}", id)
+                }
+            }
+        } else {
+            if let Some(name) = names::NAMES.get(&id) {
+                name.to_string()
+            } else {
+                // id.to_string()
+                format!("0x{:08X}", id)
             }
         }
     }

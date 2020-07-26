@@ -7,6 +7,38 @@ use crate::common;
 
 pub mod collada;
 
+/// A single influence on a vertex.
+/// `joint` refers to a group in `SceneSkin.groups`.
+/// `weight` is the weighted influence that this influence has.
+#[derive(Clone, Debug)]
+pub struct SceneSkinInfluence {
+    pub joint: usize,
+    pub weight: f32,
+}
+
+/// Every vertex has a list of influences.
+#[derive(Clone, Debug)]
+pub struct SceneSkinVertex {
+    pub influences: Vec<SceneSkinInfluence>,
+}
+
+impl SceneSkinVertex {
+    pub fn new_empty() -> SceneSkinVertex {
+        SceneSkinVertex {
+            influences: Vec::new(),
+        }
+    }
+}
+
+/// Skin for a scene object.
+/// `groups` is the name of each group that this skin uses.
+/// `vertices` corresponds to each of the vertices in the mesh.
+#[derive(Clone, Debug)]
+pub struct SceneSkin {
+    pub groups: Vec<String>,
+    pub vertices: Vec<SceneSkinVertex>,
+}
+
 #[derive(Clone, Debug)]
 pub struct SceneTriMesh {
     pub name: String,
@@ -14,7 +46,8 @@ pub struct SceneTriMesh {
     pub vertices: Vec<common::Vector3>,
     pub texcoords: Vec<common::Vector2>,
     pub normals: Vec<common::Vector3>,
-    pub elements: Vec<[(usize, usize, usize); 3]>, // pub tris: Vec<common::Tri>,
+    pub elements: Vec<[(usize, usize, usize); 3]>,
+    pub skin: Option<SceneSkin>,
 }
 
 #[derive(Clone, Debug)]

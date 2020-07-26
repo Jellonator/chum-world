@@ -2,12 +2,12 @@ use crate::chumfile::ChumFile;
 use crate::reader::ChumReader;
 use crate::util;
 use gdnative::*;
-use libchum::reader::surface;
 use libchum::common;
+use libchum::reader::surface;
 
 pub struct SurfaceResult {
     pub surface: Reference,
-    pub transform: common::Mat4x4
+    pub transform: common::Mat4x4,
 }
 
 pub fn read_surface(
@@ -84,7 +84,7 @@ pub fn read_surface(
         .unwrap();
     Some(SurfaceResult {
         surface: mesh.to_reference(),
-        transform: surfaceobj.transform.transform.clone()
+        transform: surfaceobj.transform.transform.clone(),
     })
 }
 
@@ -95,7 +95,10 @@ pub fn read_surface_from_res(data: &ChumFile, reader: &mut ChumReader) -> Dictio
         Some(mesh) => {
             dict.set(&"exists".into(), &true.into());
             dict.set(&"mesh".into(), &mesh.surface.to_variant());
-            dict.set(&"transform".into(), &util::mat4x4_to_transform(&mesh.transform).to_variant());
+            dict.set(
+                &"transform".into(),
+                &util::mat4x4_to_transform(&mesh.transform).to_variant(),
+            );
         }
         None => {
             godot_print!("read_tmesh returned None");

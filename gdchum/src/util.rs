@@ -1,6 +1,6 @@
 use gdnative::*;
 use libchum::common;
-use libchum::structure::{ChumStructVariant, IntType, ArrayData};
+use libchum::structure::{ArrayData, ChumStructVariant, IntType};
 
 pub fn vec3_to_godot(value: &common::Vector3) -> Vector3 {
     Vector3::new(value.x, value.y, value.z)
@@ -26,14 +26,7 @@ pub fn mat4x4_to_transform(tx: &common::Mat4x4) -> Transform {
 
 pub fn mat3x3_to_transform2d(tx: &common::Mat3x3) -> Transform2D {
     let mat = &tx.mat;
-    Transform2D::row_major(
-        mat[0],
-        mat[1],
-        mat[3],
-        mat[4],
-        mat[6],
-        mat[7]
-    )
+    Transform2D::row_major(mat[0], mat[1], mat[3], mat[4], mat[6], mat[7])
 }
 
 pub fn transform_to_mat4x4(value: &Transform) -> common::Mat4x4 {
@@ -63,16 +56,8 @@ pub fn transform2d_to_mat3x3(value: &Transform2D) -> common::Mat3x3 {
     let array = value.to_row_major_array();
     common::Mat3x3 {
         mat: [
-            array[0],
-            array[1],
-            0.0,
-            array[2],
-            array[3],
-            0.0,
-            array[4],
-            array[5],
-            1.0
-        ]
+            array[0], array[1], 0.0, array[2], array[3], 0.0, array[4], array[5], 1.0,
+        ],
     }
 }
 
@@ -142,7 +127,7 @@ pub fn dict_to_struct(dict: &Dictionary) -> ChumStructVariant {
         "color" => {
             let value = dict.get_ref(&"value".into()).try_to_color().unwrap();
             ChumStructVariant::Color(common::Color {
-                values: [value.r, value.g, value.b, value.a]
+                values: [value.r, value.g, value.b, value.a],
             })
         }
         "reference" => {
@@ -151,7 +136,7 @@ pub fn dict_to_struct(dict: &Dictionary) -> ChumStructVariant {
             let reference = match typename.get_type() {
                 VariantType::Nil => None,
                 VariantType::GodotString => Some(typename.try_to_string().unwrap()),
-                _ => panic!()
+                _ => panic!(),
             };
             ChumStructVariant::Reference(value, reference)
         }
@@ -169,7 +154,7 @@ pub fn dict_to_struct(dict: &Dictionary) -> ChumStructVariant {
             ChumStructVariant::Array(ArrayData {
                 data: values,
                 default_value: Box::new(default_value),
-                can_resize
+                can_resize,
             })
         }
         "struct" => {
@@ -337,17 +322,28 @@ pub fn struct_to_dict(value: &ChumStructVariant) -> Dictionary {
         ChumStructVariant::Color(color) => {
             let mut dict = Dictionary::new();
             dict.set(&"type".into(), &"color".into());
-            dict.set(&"value".into(), &Variant::from_color(&Color::rgba(color.values[0], color.values[1], color.values[2], color.values[3])));
+            dict.set(
+                &"value".into(),
+                &Variant::from_color(&Color::rgba(
+                    color.values[0],
+                    color.values[1],
+                    color.values[2],
+                    color.values[3],
+                )),
+            );
             dict
         }
         ChumStructVariant::Reference(value, ref typename) => {
             let mut dict = Dictionary::new();
             dict.set(&"type".into(), &"reference".into());
             dict.set(&"value".into(), &Variant::from_i64(*value as i64));
-            dict.set(&"reference".into(), &match typename {
-                Some(ref val) => Variant::from_str(val),
-                None => Variant::new(),
-            });
+            dict.set(
+                &"reference".into(),
+                &match typename {
+                    Some(ref val) => Variant::from_str(val),
+                    None => Variant::new(),
+                },
+            );
             dict
         }
         ChumStructVariant::Array(ref data) => {

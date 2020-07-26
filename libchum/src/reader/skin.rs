@@ -3,6 +3,7 @@ use crate::common::*;
 use crate::animsymbol::AnimSymbol;
 use crate::format::TotemFormat;
 // use std::error::Error;
+use crate::scene;
 use std::io::{self, Read};
 
 #[derive(Clone, Debug)]
@@ -149,5 +150,49 @@ impl Skin {
     /// Read a TMesh from data
     pub fn read_data(data: &[u8], fmt: TotemFormat) -> io::Result<Skin> {
         Skin::read_from(&mut data.as_ref(), fmt)
+    }
+
+    pub fn generate_scene_skin_for_mesh(
+        &self,
+        names: &[String],
+        meshid: i32,
+        num_vertices: usize,
+    ) -> scene::SceneSkin {
+        if names.len() != self.vertex_groups.len() {
+            panic!();
+        }
+        let mut out_group_names = Vec::new();
+        let mut usable_groups = Vec::new();
+        for (name, group) in names.iter().zip(self.vertex_groups.iter()) {
+            if group
+                .sections
+                .iter()
+                .any(|x| self.meshes[x.mesh_index as usize] == meshid)
+            {
+                out_group_names.push(name.clone());
+                usable_groups.push(group);
+            }
+        }
+        let mut out_group_vertices = vec![scene::SceneSkinVertex::new_empty(); num_vertices];
+        for (i, group) in usable_groups.iter().enumerate() {
+            for subsection in group
+                .sections
+                .iter()
+                .filter(|x| self.meshes[x.mesh_index as usize] == meshid)
+            {
+                for vertex in subsection.vertices.iter() {
+                    out_group_vertices[vertex.vertex_id as usize]
+                        .influences
+                        .push(scene::SceneSkinInfluence {
+                            joint: i,
+                            weight: vertex.weight,
+                        })
+                }
+            }
+        }
+        scene::SceneSkin {
+            groups: out_group_names,
+            vertices: out_group_vertices,
+        }
     }
 }

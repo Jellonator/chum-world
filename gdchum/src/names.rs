@@ -273,5 +273,5 @@ pub static NAMES: phf::Map<i32, &str> = phf_map! {
     -401359373i32 => "F_POD",
     496180019i32 => "B_POD",
     1701277131i32 => "GUN_S",
-    146442528i32 => "GUN_F",    
+    146442528i32 => "GUN_F",
 };

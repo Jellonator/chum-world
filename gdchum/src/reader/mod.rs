@@ -6,10 +6,10 @@ use std::collections::HashMap;
 pub mod readerbitmap;
 pub mod readermaterial;
 pub mod readermaterialanim;
+pub mod readerskin;
 pub mod readersurface;
 pub mod readertext;
 pub mod readertmesh;
-pub mod readerskin;
 
 pub struct MaterialAnimEntry {
     resource: Resource,
@@ -261,17 +261,17 @@ impl ChumReader {
     }
     pub fn read_skin_nodeless(&mut self, data: Instance<ChumFile>) -> Dictionary {
         data.script()
-        .map(|x| {
-            let hash = x.get_hash_id_ownerless();
-            if let Some(data) = self.cache.get(&hash) {
-                data.new_ref()
-            } else {
-                let value = readerskin::read_skin_from_res(x);
-                self.cache.insert(hash, value.new_ref());
-                value
-            }
-        })
-        .unwrap()
+            .map(|x| {
+                let hash = x.get_hash_id_ownerless();
+                if let Some(data) = self.cache.get(&hash) {
+                    data.new_ref()
+                } else {
+                    let value = readerskin::read_skin_from_res(x);
+                    self.cache.insert(hash, value.new_ref());
+                    value
+                }
+            })
+            .unwrap()
     }
 
     #[export]

@@ -190,17 +190,120 @@ impl XMLContent for common::Mat4x4 {
     }
 }
 
+#[derive(Clone, Debug)]
+pub struct TagStruct {
+    pub name: String,
+    pub attributes: Vec<(String, String)>,
+    pub content: Option<String>,
+    pub tags: Vec<TagStruct>,
+}
+
+impl TagStruct {
+    pub fn new_empty(name: String) -> TagStruct {
+        TagStruct {
+            name,
+            attributes: vec![],
+            content: None,
+            tags: vec![],
+        }
+    }
+    pub fn new(
+        name: String,
+        content: Option<String>,
+        attributes: Vec<(String, String)>,
+        tags: Vec<TagStruct>,
+    ) -> TagStruct {
+        TagStruct {
+            name,
+            content,
+            attributes,
+            tags,
+        }
+    }
+}
+
+impl XMLTag for TagStruct {
+    fn get_name(&self) -> &str {
+        self.name.as_str()
+    }
+    fn get_attributes(&self) -> Vec<(&str, &dyn XMLAttribute)> {
+        self.attributes
+            .iter()
+            .map(|x| (x.0.as_str(), &x.1 as &dyn XMLAttribute))
+            .collect()
+    }
+    fn get_contents(&self) -> Option<&dyn XMLContent> {
+        self.content.as_ref().map(|x| x as &dyn XMLContent)
+    }
+    fn get_child_tags(&self) -> Vec<&dyn XMLTag> {
+        self.tags.iter().map(|x| x as &dyn XMLTag).collect()
+    }
+}
+
+#[derive(Clone, Debug)]
+pub struct ConstTagStruct {
+    pub name: &'static str,
+    pub attributes: &'static [(&'static str, &'static str)],
+    pub content: Option<&'static str>,
+    pub tags: &'static [ConstTagStruct],
+}
+
+impl ConstTagStruct {
+    pub fn new_empty(name: String) -> TagStruct {
+        TagStruct {
+            name,
+            attributes: vec![],
+            content: None,
+            tags: vec![],
+        }
+    }
+    pub fn new(
+        name: String,
+        content: Option<String>,
+        attributes: Vec<(String, String)>,
+        tags: Vec<TagStruct>,
+    ) -> TagStruct {
+        TagStruct {
+            name,
+            content,
+            attributes,
+            tags,
+        }
+    }
+}
+
+impl XMLTag for ConstTagStruct {
+    fn get_name(&self) -> &str {
+        self.name
+    }
+    fn get_attributes(&self) -> Vec<(&str, &dyn XMLAttribute)> {
+        self.attributes
+            .iter()
+            .map(|x| (x.0, &x.1 as &dyn XMLAttribute))
+            .collect()
+    }
+    fn get_contents(&self) -> Option<&dyn XMLContent> {
+        self.content.as_ref().map(|x| x as &dyn XMLContent)
+    }
+    fn get_child_tags(&self) -> Vec<&dyn XMLTag> {
+        self.tags.iter().map(|x| x as &dyn XMLTag).collect()
+    }
+}
+
 pub fn write_to(
     data: &dyn XMLTag,
     writer: &mut dyn Write,
     pretty: bool,
 ) -> Result<(), Box<dyn Error>> {
     // let xml = quick_xml::Writer::new(writer);
-    let xml = if pretty {
+    let mut xml = if pretty {
         quick_xml::Writer::new_with_indent(writer, 0x20, 2)
     } else {
         quick_xml::Writer::new(writer)
     };
+    xml.write_event(quick_xml::events::Event::Decl(
+        quick_xml::events::BytesDecl::new(b"1.0", Some(b"utf-8"), None),
+    ))?;
     let mut tagwriter = TagWriter { writer: xml };
     tagwriter.add_tag(data)
 }

@@ -11,11 +11,13 @@ const EXPORT_ID_BIN := 0
 const EXPORT_ID_TEXT := 1
 const EXPORT_ID_MODEL := 2
 const EXPORT_ID_TEXTURE := 3
+const EXPORT_ID_SCENE := 4
 
 const VALID_EXPORTS := {
 	EXPORT_ID_TEXT: ["TXT"],
 	EXPORT_ID_MODEL: ["MESH", "SURFACE"],
-	EXPORT_ID_TEXTURE: ["BITMAP"]
+	EXPORT_ID_TEXTURE: ["BITMAP"],
+	EXPORT_ID_SCENE: ["MESH", "SKIN"]#, "SURFACE", "SKIN"]
 }
 
 const EXPORT_FILE_FILTERS := {
@@ -23,6 +25,7 @@ const EXPORT_FILE_FILTERS := {
 	EXPORT_ID_TEXT: "*.txt ; Text Files",
 	EXPORT_ID_MODEL: "*.obj ; Wavefront OBJ",
 	EXPORT_ID_TEXTURE: "*.png ; PNG Images",
+	EXPORT_ID_SCENE: "*.dae; COLLADA Scene"
 }
 
 func set_exportbutton(file):

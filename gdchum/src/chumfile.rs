@@ -2,9 +2,25 @@ use crate::bytedata::ByteData;
 use crate::util;
 use crate::ChumArchive;
 use gdnative::*;
-use libchum::{self, export::ChumExport, reader, structure::ChumStruct};
+use libchum::{self, reader, structure::ChumStruct, scene::{self, collada}};
 use std::fs::File;
 use std::io::{BufReader, Write};
+
+pub fn get_filename(name: &str) -> &str {
+    match name.rfind('>') {
+        Some(pos) => &name[pos+1..],
+        None => name
+    }
+}
+
+pub fn get_basename(name: &str) -> &str{
+    let name = get_filename(name);
+    match name.find('.') {
+        Some(pos) => &name[..pos],
+        None => name
+    }
+}
+
 
 /// A File resource derived from a ChumArchive.
 #[derive(NativeClass)]
@@ -26,6 +42,7 @@ const EXPORT_ID_BIN: i64 = 0;
 const EXPORT_ID_TEXT: i64 = 1;
 const EXPORT_ID_MODEL: i64 = 2;
 const EXPORT_ID_TEXTURE: i64 = 3;
+const EXPORT_ID_COLLADA: i64 = 4;
 
 #[methods]
 impl ChumFile {
@@ -205,7 +222,7 @@ impl ChumFile {
                     panic!("BITMAP file invalid: {}", err);
                 }
             };
-        bitmap.export(&mut buffer).unwrap();
+        bitmap.export_png(&mut buffer).unwrap();
     }
 
     /// Export this file's raw data
@@ -224,7 +241,56 @@ impl ChumFile {
                 panic!("MESH file invalid: {}", err);
             }
         };
-        tmesh.export(&mut buffer).unwrap();
+        tmesh.export_obj(&mut buffer).unwrap();
+    }
+
+    fn export_mesh_to_collada(&mut self, path: &str) {
+        let mut buffer = File::create(path).unwrap();
+        let tmesh = match reader::tmesh::TMesh::read_data(&mut self.get_data_as_vec(), self.format)
+        {
+            Ok(x) => x,
+            Err(err) => {
+                panic!("MESH file invalid: {}", err);
+            }
+        };
+        let mut scene = scene::Scene::new_empty();
+        scene.add_trimesh(tmesh.create_scene_mesh(get_basename(&self.namestr).to_owned()));
+        collada::scene_to_writer_dae(&scene, &mut buffer).unwrap();
+    }
+
+    fn export_skin_to_collada(&mut self, path: &str) {
+        let mut buffer = File::create(path).unwrap();
+        let skin = match reader::skin::Skin::read_data(&mut self.get_data_as_vec(), self.format)
+        {
+            Ok(x) => x,
+            Err(err) => {
+                panic!("MESH file invalid: {}", err);
+            }
+        };
+        let mut scene = scene::Scene::new_empty();
+        let archiveinstance = self.get_archive_instance();
+        archiveinstance
+            .map(|archive, res| {
+                for meshid in skin.meshes {
+                    if let Some(meshfile) = archive.get_file_from_hash(res.new_ref(), meshid) {
+                        meshfile.script()
+                        .map(|meshscript| {
+                            let mesh = match reader::tmesh::TMesh::read_data(&mut meshscript.get_data_as_vec(), self.format)
+                            {
+                                Ok(x) => x,
+                                Err(err) => {
+                                    panic!("MESH file invalid: {}", err);
+                                }
+                            };
+                            scene.add_trimesh(mesh.create_scene_mesh(get_basename(&meshscript.namestr).to_owned()));
+                        }).unwrap();
+                    } else {
+                        godot_warn!("Mesh {} does not exist!", meshid);
+                    }
+                }
+            })
+            .unwrap();
+        collada::scene_to_writer_dae(&scene, &mut buffer).unwrap();
     }
 
     /// Export a SURFACE file as a .obj
@@ -242,7 +308,7 @@ impl ChumFile {
         surf.begin_export(reader::surface::SurfaceExportMode::Mesh(
             reader::surface::SurfaceGenMode::BezierInterp(10),
         ))
-        .export(&mut buffer)
+        .export_obj(&mut buffer)
         .unwrap();
     }
 
@@ -267,6 +333,13 @@ impl ChumFile {
                     panic!("Unexpected type for OBJ export {}", other);
                 }
             },
+            EXPORT_ID_COLLADA => match &self.typestr.as_str() {
+                &"MESH" => self.export_mesh_to_collada(&pathstr),
+                &"SKIN" => self.export_skin_to_collada(&pathstr),
+                other => {
+                    panic!("Unexpected type for OBJ export {}", other);
+                }
+            }
             other => {
                 panic!("Unexpected export type {}", other);
             }

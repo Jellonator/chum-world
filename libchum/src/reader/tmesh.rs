@@ -403,67 +403,18 @@ impl TMesh {
         scene::SceneTriMesh {
             name,
             transform: Mat4x4::new_basis(),
-            tris: self
-                .gen_triangle_indices()
+            vertices: self.vertices.clone(),
+            normals: self.normals.clone(),
+            texcoords: self.texcoords.clone(),
+            elements: self.gen_triangle_indices()
                 .into_iter()
                 .flat_map(|x| x)
-                .map(|indices| Tri {
-                    points: [
-                        Point {
-                            vertex: self.vertices[indices[0].0 as usize],
-                            texcoord: self.texcoords[indices[0].1 as usize],
-                            normal: self.normals[indices[0].2 as usize],
-                        },
-                        Point {
-                            vertex: self.vertices[indices[0].0 as usize],
-                            texcoord: self.texcoords[indices[0].1 as usize],
-                            normal: self.normals[indices[0].2 as usize],
-                        },
-                        Point {
-                            vertex: self.vertices[indices[0].0 as usize],
-                            texcoord: self.texcoords[indices[0].1 as usize],
-                            normal: self.normals[indices[0].2 as usize],
-                        },
-                    ],
-                })
-                .collect(),
+                .map(|x| [
+                    (x[0].0 as usize, x[0].1 as usize, x[0].2 as usize),
+                    (x[2].0 as usize, x[2].1 as usize, x[2].2 as usize),
+                    (x[1].0 as usize, x[1].1 as usize, x[1].2 as usize),
+                ])
+                .collect()
         }
     }
 }
-
-// fn export_obj<W>(&self, writer: &mut W) -> Result<(), Box<dyn Error>>
-// where
-//     W: Write,
-// {
-//     for v in &self.vertices {
-//         writeln!(writer, "v {} {} {}", v.x, v.y, v.z)?;
-//     }
-//     for vt in &self.texcoords {
-//         writeln!(writer, "vt {} {}", vt.x, vt.y)?;
-//     }
-//     for vn in &self.normals {
-//         writeln!(writer, "vn {} {} {}", vn.x, vn.y, vn.z)?;
-//     }
-//     for stripdata in self.strips.iter() {
-//         let b = stripdata.strip.tri_order;
-//         let a = 3 - b;
-//         let lists = [[0, a, b], [0, b, a]];
-//         // Rust doesn't prevent you from writing bad code
-//         for ((vertex_ids, elements), cycle) in stripdata.strip
-//             .vertex_ids
-//             .windows(3)
-//             .zip(stripdata.ext.as_ref().unwrap().elements.windows(3).into_iter())
-//             .zip(lists.iter().cycle())
-//         {
-//             write!(writer, "f")?;
-//             for i in cycle {
-//                 let texcoord = elements[*i as usize].texcoord_id + 1;
-//                 let normal = elements[*i as usize].normal_id + 1;
-//                 let vertex = vertex_ids[*i as usize] + 1;
-//                 write!(writer, " {}/{}/{}", vertex, texcoord, normal)?;
-//             }
-//             writeln!(writer, "")?;
-//         }
-//     }
-//     Ok(())
-// }

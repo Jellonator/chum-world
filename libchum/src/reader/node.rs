@@ -5,6 +5,16 @@ use std::io::{self, Read};
 use std::fmt;
 use std::error::Error;
 
+// node union
+const T_ROTSHAPEDATA: i32 =   733875652;
+const T_MESHDATA: i32 =     -1724712303;
+const T_SKEL: i32 =          1985457034;
+const T_SURFACEDATAS: i32 =   413080818;
+const T_LODDATA: i32 =       -141015160;
+const T_PARTICLESDATA: i32 = -241612565;
+// extra data union
+const E_USERDATA: i32 = -1879206489;
+
 #[derive(Debug, Clone)]
 pub enum NodeReadError {
     InvalidNodeData(i32),
@@ -33,7 +43,7 @@ pub struct Node {
     pub userdefine_id: i32,
     pub floatv1: [f32; 9],
     pub floatv2: [f32; 9],
-    pub transform_local: Mat4x4,
+    pub local_transform: Mat4x4,
     pub local_translation: Vector3,
     pub local_rotation: Quaternion,
     pub local_scale: Vector3,
@@ -69,7 +79,7 @@ impl Node {
                 fmt.read_f32_into(file, &mut data)?;
                 data
             },
-            transform_local: read_mat4(file, fmt)?,
+            local_transform: read_mat4(file, fmt)?,
             local_translation: {
                 let v = read_vec3(file, fmt)?;
                 fmt.skip_n_bytes(file, 4)?;
@@ -108,12 +118,12 @@ impl Node {
 /// String                Hash | Resource Type
 /// ------------------------------------------
 ///                          0 | (empty)
-/// ROTSHAPEDATA    -530155058 | ROTSHAPE
-/// MESHDATA         901337692 | MESH
-/// SKEL           -1136871491 | SKIN
-/// SURFACEDATAS    -428296696 | SURFACE
-/// LODDATA        -1458796790 | LOD
-/// PARTICLESDATA   1710014574 | PARTICLES
+/// ROTSHAPEDATA     733875652 | ROTSHAPE
+/// MESHDATA       -1724712303 | MESH
+/// SKEL            1985457034 | SKIN
+/// SURFACEDATAS     413080818 | SURFACE
+/// LODDATA         -141015160 | LOD
+/// PARTICLESDATA   -241612565 | PARTICLES
 pub enum NodeDataUnion {
     Empty,
     NodeDataLod {
@@ -143,7 +153,6 @@ pub enum NodeDataUnion {
     NodeDataSurface {
         data_id: i32,
         subtype_id: i32,
-        unk0: u32,
         data: [f32; 5],
         unk1: Vec<NodeDataSurfaceUnk>,
         unk2: u32,
@@ -175,7 +184,7 @@ impl NodeDataUnion {
         let datatype = fmt.read_i32(file)?;
         match datatype {
             0 => Ok(Empty),
-            -530155058 => { // ROTSHAPEDATA
+            T_ROTSHAPEDATA => { // ROTSHAPEDATA
                 Ok(NodeDataRotshape {
                     data_id: fmt.read_i32(file)?,
                     subtype_id: fmt.read_i32(file)?,
@@ -192,7 +201,7 @@ impl NodeDataUnion {
                     }
                 })
             },
-            901337692 => { // MESHDATA
+            T_MESHDATA => { // MESHDATA
                 Ok(NodeDataMesh {
                     data_id: fmt.read_i32(file)?,
                     subtype_id: fmt.read_i32(file)?,
@@ -203,7 +212,7 @@ impl NodeDataUnion {
                     }
                 })
             },
-            -1136871491 => { // SKEL
+            T_SKEL => { // SKEL
                 Ok(NodeDataSkin{
                     path_id: fmt.read_i32(file)?,
                     subtype_id: fmt.read_i32(file)?,
@@ -256,11 +265,10 @@ impl NodeDataUnion {
                     unk7: NodeSkinUnk7::read_from(file, fmt)?
                 })
             }
-            -428296696 => { // SURFACEDATAS
+            T_SURFACEDATAS => { // SURFACEDATAS
                 Ok(NodeDataSurface {
                     data_id: fmt.read_i32(file)?,
                     subtype_id: fmt.read_i32(file)?,
-                    unk0: fmt.read_u32(file)?,
                     data: {
                         let mut data = [0f32; 5];
                         fmt.read_f32_into(file, &mut data)?;
@@ -278,7 +286,7 @@ impl NodeDataUnion {
                     unk3: fmt.read_u32(file)?
                 })
             },
-            -1458796790 => { // LODDATA
+            T_LODDATA => { // LODDATA
                 Ok(NodeDataLod{
                     path_id: fmt.read_i32(file)?,
                     subtype_id: fmt.read_i32(file)?,
@@ -321,7 +329,7 @@ impl NodeDataUnion {
                     }
                 })
             },
-            1710014574 => { // PARTICLESDATA
+            T_PARTICLESDATA => { // PARTICLESDATA
                 Ok(NodeDataParticles{
                     data_id: fmt.read_i32(file)?,
                     subtype_id: fmt.read_i32(file)?,
@@ -420,7 +428,7 @@ impl NodeSkinUnk2ExtraDataUnion {
         let datatype = fmt.read_i32(file)?;
         match datatype {
             0 => Ok(NodeSkinUnk2ExtraDataUnion::Empty),
-            -1879206489 => {
+            E_USERDATA => {
                 let type1 = fmt.read_i32(file)?;
                 let type2 = fmt.read_i32(file)?;
                 let length = fmt.read_u32(file)?;

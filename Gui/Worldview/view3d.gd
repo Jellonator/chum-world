@@ -15,25 +15,93 @@ const SPEED_MULT = 1.25
 
 var speed = 2.0
 
-func try_add_surface_from_file(file):
-	var data = ChumReader.read_surface(file)
-	if data == null:
-		print("INVALID DATA")
-	elif data["exists"]:
-		var node_mesh := MeshInstance.new()
-		node_mesh.mesh = data["mesh"]
-#		node_mesh.transform = data["transform"].affine_inverse()
-		node_mesh.show()
-		node_surfaces.add_child(node_mesh)
-	else:
-		print("DOES NOT EXIST")
+func try_make_child(resfile):
+	match resfile.type:
+		"SURFACE":
+			var data = ChumReader.read_surface(resfile)
+			if data == null:
+				print("INVALID DATA")
+			elif data["exists"]:
+				var node_mesh = MeshInstance.new()
+				node_mesh.mesh = data["mesh"]
+				node_mesh.transform = Transform()
+				return node_mesh
+			else:
+				print("DOES NOT EXIST")
+		"MESH":
+			var data = ChumReader.read_tmesh(resfile)
+			if data == null:
+				print("INVALID DATA")
+			elif data["exists"]:
+				var node_mesh = MeshInstance.new()
+				node_mesh.mesh = data["mesh"]
+				node_mesh.transform = Transform()
+				return node_mesh
+			else:
+				print("DOES NOT EXIST")
+		"SKIN":
+			var data = ChumReader.read_skin(resfile)
+			if data == null:
+				print("INVALID DATA")
+			elif data["exists"]:
+				var skin = data["skin"]
+				var parent = Spatial.new()
+				for id in skin["meshes"]:
+					var mesh_file = archive.get_file_from_hash(id)
+					var mesh_data = ChumReader.read_tmesh(mesh_file)
+					if mesh_data == null or not mesh_data["exists"]:
+						print("COULD NOT LOAD")
+					else:
+						var mesh := MeshInstance.new()
+						mesh.mesh = mesh_data["mesh"]
+						parent.add_child(mesh)
+				return parent
+			else:
+				print("DOES NOT EXIST")
+		"LOD":
+			pass
+		_:
+			return null
+
+func try_add_node(nodedata: Dictionary):
+	var node_base = Spatial.new()
+	node_base.transform = nodedata["global_transform"]
+	var resid = nodedata["resource_id"]
+	if resid != 0:
+		var resfile = archive.get_file_from_hash(resid)
+		if resfile == null:
+			print("Could not load file ", resid, " from archive")
+		else:
+			var child = try_make_child(resfile)
+			if child != null:
+				node_base.add_child(child)
+	node_surfaces.add_child(node_base)
+
+#func try_add_surface_from_file(file):
+#	var data = ChumReader.read_surface(file)
+#	if data == null:
+#		print("INVALID DATA")
+#	elif data["exists"]:
+#		var node_mesh := MeshInstance.new()
+#		node_mesh.mesh = data["mesh"]
+##		node_mesh.transform = data["transform"].affine_inverse()
+#		node_mesh.show()
+#		node_surfaces.add_child(node_mesh)
+#	else:
+#		print("DOES NOT EXIST")
 
 func reset_surfaces():
 	for child in node_surfaces.get_children():
 		child.queue_free()
 	for file in archive_files:
-		if file.type == "SURFACE":
-			try_add_surface_from_file(file)
+		if file.type == "NODE":
+#			print("===============================")
+			var node_data = ChumReader.read_node(file)
+			if not node_data["exists"]:
+				print("COULD NOT READ ", file.name)
+			else:
+				try_add_node(node_data["node"])
+#			prints(node_data["exists"], file.name)
 
 func set_archive(p_archive):
 	self.archive = p_archive

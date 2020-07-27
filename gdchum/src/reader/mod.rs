@@ -1,19 +1,20 @@
 use crate::ChumArchive;
 use gdnative::*;
-use libchum::reader::materialanim;
+use libchum::reader;
 use std::collections::HashMap;
 
-pub mod readerbitmap;
-pub mod readermaterial;
-pub mod readermaterialanim;
-pub mod readerskin;
-pub mod readersurface;
-pub mod readertext;
-pub mod readertmesh;
+pub mod bitmap;
+pub mod material;
+pub mod materialanim;
+pub mod skin;
+pub mod surface;
+pub mod text;
+pub mod tmesh;
+pub mod node;
 
 pub struct MaterialAnimEntry {
     resource: Resource,
-    data: materialanim::MaterialAnimation,
+    data: reader::materialanim::MaterialAnimation,
     textures: Vec<Option<Texture>>,
     time: f32,
 }
@@ -103,7 +104,7 @@ impl ChumReader {
     pub fn add_materialanim(
         &mut self,
         resource: Resource,
-        data: materialanim::MaterialAnimation,
+        data: reader::materialanim::MaterialAnimation,
         archive: &ChumArchive,
         res: Resource,
     ) {
@@ -146,7 +147,7 @@ impl ChumReader {
         // text can mess up the cache.
         data.script()
             .map(|x| {
-                let value = readertext::read_text_from_res(x);
+                let value = text::read_text_from_res(x);
                 value
             })
             .unwrap()
@@ -163,7 +164,7 @@ impl ChumReader {
                 if let Some(data) = self.cache.get(&hash) {
                     data.new_ref()
                 } else {
-                    let value = readertmesh::read_tmesh_from_res(x, self);
+                    let value = tmesh::read_tmesh_from_res(x, self);
                     self.cache.insert(hash, value.new_ref());
                     value
                 }
@@ -182,7 +183,7 @@ impl ChumReader {
                 if let Some(data) = self.cache.get(&hash) {
                     data.new_ref()
                 } else {
-                    let value = readersurface::read_surface_from_res(x, self);
+                    let value = surface::read_surface_from_res(x, self);
                     self.cache.insert(hash, value.new_ref());
                     value
                 }
@@ -201,7 +202,7 @@ impl ChumReader {
                 if let Some(data) = self.cache.get(&hash) {
                     data.new_ref()
                 } else {
-                    let value = readerbitmap::read_bitmap_from_res(x);
+                    let value = bitmap::read_bitmap_from_res(x);
                     self.cache.insert(hash, value.new_ref());
                     value
                 }
@@ -220,7 +221,7 @@ impl ChumReader {
                 if let Some(data) = self.cache.get(&hash) {
                     data.new_ref()
                 } else {
-                    let value = readermaterial::read_material_from_res(x, self);
+                    let value = material::read_material_from_res(x, self);
                     self.cache.insert(hash, value.new_ref());
                     value
                 }
@@ -230,7 +231,7 @@ impl ChumReader {
     pub fn read_material_nodeless_nocache(&mut self, data: Instance<ChumFile>) -> Dictionary {
         data.script()
             .map(|x| {
-                let value = readermaterial::read_material_from_res(x, self);
+                let value = material::read_material_from_res(x, self);
                 value
             })
             .unwrap()
@@ -247,7 +248,7 @@ impl ChumReader {
                 if let Some(data) = self.cache.get(&hash) {
                     data.new_ref()
                 } else {
-                    let value = readermaterialanim::read_materialanim_from_res(x, self);
+                    let value = materialanim::read_materialanim_from_res(x, self);
                     self.cache.insert(hash, value.new_ref());
                     value
                 }
@@ -266,7 +267,26 @@ impl ChumReader {
                 if let Some(data) = self.cache.get(&hash) {
                     data.new_ref()
                 } else {
-                    let value = readerskin::read_skin_from_res(x);
+                    let value = skin::read_skin_from_res(x);
+                    self.cache.insert(hash, value.new_ref());
+                    value
+                }
+            })
+            .unwrap()
+    }
+
+    #[export]
+    pub fn read_node(&mut self, _owner: Node, data: Instance<ChumFile>) -> Dictionary {
+        self.read_node_nodeless(data)
+    }
+    pub fn read_node_nodeless(&mut self, data: Instance<ChumFile>) -> Dictionary {
+        data.script()
+            .map(|x| {
+                let hash = x.get_hash_id_ownerless();
+                if let Some(data) = self.cache.get(&hash) {
+                    data.new_ref()
+                } else {
+                    let value = node::read_node_from_res(x);
                     self.cache.insert(hash, value.new_ref());
                     value
                 }

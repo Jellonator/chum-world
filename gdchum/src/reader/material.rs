@@ -35,7 +35,6 @@ pub fn read_material(
                 {
                     let texturedict = reader.read_bitmap_nodeless(texturefile);
                     if texturedict.get(&"exists".into()) == true.into() {
-                        godot_print!("Found material for {}", matdata.get_texture());
                         let image: Image =
                             texturedict.get(&"bitmap".into()).try_to_object().unwrap();
                         let mut texture: ImageTexture = ImageTexture::new();

@@ -38,6 +38,13 @@ text = "File"
 flat = false
 items = [ "Open Archive", null, 0, false, false, 0, 0, null, "", false, "Save Archive As", null, 0, false, true, 2, 0, null, "", false, "Exit", null, 0, false, false, 1, 0, null, "", false ]
 
+[node name="Archive" type="MenuButton" parent="VBox/Menu"]
+margin_left = 39.0
+margin_right = 99.0
+margin_bottom = 20.0
+text = "Archive"
+flat = false
+
 [node name="Tabs" type="TabContainer" parent="VBox"]
 margin_top = 24.0
 margin_right = 1280.0

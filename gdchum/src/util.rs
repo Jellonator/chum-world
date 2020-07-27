@@ -12,6 +12,7 @@ pub fn vec2_to_godot(value: &common::Vector2) -> Vector2 {
 
 pub fn mat4x4_to_transform(tx: &common::Mat4x4) -> Transform {
     let mat = tx.as_slice();
+    println!("{:?}", &mat[12..]);
     Transform {
         basis: Basis {
             elements: [

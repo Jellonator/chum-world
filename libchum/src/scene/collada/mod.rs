@@ -453,9 +453,9 @@ pub fn trimesh_to_skin_node(
     let mut nodes = Vec::new();
     for group in skin.groups.iter() {
         nodes.push(Node {
-            name: Some(group.clone()),
-            sid: Some(group.clone()),
-            id: Some(format!("{}-{}", id_armature, group)),
+            name: Some(group.name.clone()),
+            sid: Some(group.name.clone()),
+            id: Some(format!("{}-{}", id_armature, group.name)),
             datatype: NodeType::JOINT,
             geometry: vec![],
             controller: vec![],

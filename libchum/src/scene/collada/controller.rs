@@ -153,7 +153,7 @@ pub fn skin_to_controller(skin: &scene::SceneSkin, meshname: &str) -> Controller
                         count: skin.groups.len(),
                         id: Some(id_skin_joints_array.clone()),
                         name: None,
-                        data: skin.groups.clone(),
+                        data: skin.groups.iter().map(|group| group.name.clone()).collect(),
                     },
                     technique_common: Some(SourceTechnique {
                         accessor: Accessor {

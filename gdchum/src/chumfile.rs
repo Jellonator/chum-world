@@ -261,7 +261,7 @@ impl ChumFile {
         collada::scene_to_writer_dae(&scene, &mut buffer).unwrap();
     }
 
-    fn export_skin_to_collada(&mut self, path: &str) {
+    fn export_skin_to_collada(&mut self, path: &str, merge_models: bool) {
         let mut buffer = File::create(path).unwrap();
         let skin = match reader::skin::Skin::read_data(&mut self.get_data_as_vec(), self.format) {
             Ok(x) => x,
@@ -281,20 +281,25 @@ impl ChumFile {
                         meshfile
                             .script()
                             .map(|meshscript| {
-                                let mesh = match reader::tmesh::TMesh::read_data(
-                                    &mut meshscript.get_data_as_vec(),
-                                    self.format,
-                                ) {
-                                    Ok(x) => x,
-                                    Err(err) => {
-                                        panic!("MESH file invalid: {}", err);
+                                match meshscript.typestr.as_str() {
+                                    "MESH" => {
+                                        let mesh = match reader::tmesh::TMesh::read_data(
+                                            &mut meshscript.get_data_as_vec(),
+                                            self.format,
+                                        ) {
+                                            Ok(x) => x,
+                                            Err(err) => {
+                                                panic!("MESH file invalid: {}", err);
+                                            }
+                                        };
+                                        let mut trimesh = mesh.create_scene_mesh(
+                                            get_basename(&meshscript.namestr).to_owned(),
+                                        );
+                                        trimesh.skin = Some(skin.generate_scene_skin_for_mesh(names.as_slice(), *meshid, mesh.vertices.len()));
+                                        scene.add_trimesh(trimesh);
                                     }
-                                };
-                                let mut trimesh = mesh.create_scene_mesh(
-                                    get_basename(&meshscript.namestr).to_owned(),
-                                );
-                                trimesh.skin = Some(skin.generate_scene_skin_for_mesh(names.as_slice(), *meshid, mesh.vertices.len()));
-                                scene.add_trimesh(trimesh);
+                                    _ => {}
+                                }
                             })
                             .unwrap();
                     } else {
@@ -303,6 +308,13 @@ impl ChumFile {
                 }
             })
             .unwrap();
+        if merge_models {
+            let mut data = Vec::new();
+            data.append(&mut scene.trimeshes);
+            if let Some(realmodel) = scene::merge_mesh_vec(data) {
+                scene.add_trimesh(realmodel);
+            }
+        }
         collada::scene_to_writer_dae(&scene, &mut buffer).unwrap();
     }
 
@@ -348,7 +360,7 @@ impl ChumFile {
             },
             EXPORT_ID_COLLADA => match &self.typestr.as_str() {
                 &"MESH" => self.export_mesh_to_collada(&pathstr),
-                &"SKIN" => self.export_skin_to_collada(&pathstr),
+                &"SKIN" => self.export_skin_to_collada(&pathstr, true),
                 other => {
                     panic!("Unexpected type for OBJ export {}", other);
                 }

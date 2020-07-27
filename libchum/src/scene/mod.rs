@@ -31,7 +31,7 @@ impl SceneSkinVertex {
 }
 
 #[derive(Clone, Debug)]
-pub struct SceeneGroup {
+pub struct SceneGroup {
     pub name: String,
     pub transform: common::Mat4x4
 }
@@ -41,7 +41,7 @@ pub struct SceeneGroup {
 /// `vertices` corresponds to each of the vertices in the mesh.
 #[derive(Clone, Debug)]
 pub struct SceneSkin {
-    pub groups: Vec<String>,
+    pub groups: Vec<SceneGroup>,
     pub vertices: Vec<SceneSkinVertex>,
 }
 
@@ -54,6 +54,104 @@ pub struct SceneTriMesh {
     pub normals: Vec<common::Vector3>,
     pub elements: Vec<[(usize, usize, usize); 3]>,
     pub skin: Option<SceneSkin>,
+}
+
+pub fn merge_scene_skins(a: Option<SceneSkin>, b: Option<SceneSkin>, averts: usize, bverts: usize) -> Option<SceneSkin> {
+    if a.is_none() && b.is_none() {
+        return None;
+    }
+    let a = if let Some(mut skin) = a {
+        skin.vertices.resize(averts, SceneSkinVertex::new_empty());
+        skin
+    } else {
+        SceneSkin {
+            groups: Vec::new(),
+            vertices: vec![SceneSkinVertex::new_empty(); averts]
+        }
+    };
+    let b = if let Some(mut skin) = b {
+        skin.vertices.resize(bverts, SceneSkinVertex::new_empty());
+        skin
+    } else {
+        SceneSkin {
+            groups: Vec::new(),
+            vertices: vec![SceneSkinVertex::new_empty(); bverts]
+        }
+    };
+    let mut b_indices: Vec<usize> = Vec::new();
+    let mut groups = a.groups;
+    for group in b.groups {
+        if let Some((i, _x)) = groups.iter().enumerate().find(|(_i, x)| x.name == group.name) {
+            b_indices.push(i);
+        } else {
+            b_indices.push(groups.len());
+            groups.push(group.clone());
+        }
+    }
+    let mut vertices = a.vertices;
+    for vert in b.vertices {
+        vertices.push(SceneSkinVertex {
+            influences: vert.influences.into_iter().map(|inf| {
+                SceneSkinInfluence {
+                    joint: b_indices[inf.joint],
+                    weight: inf.weight
+                }
+            }).collect()
+        })
+    }
+    Some(SceneSkin {
+        groups,
+        vertices
+    })
+}
+
+pub fn merge_meshes(mut a: SceneTriMesh, mut b: SceneTriMesh) -> SceneTriMesh {
+    let averts = a.vertices.len();
+    let bverts = b.vertices.len();
+    let atex = a.texcoords.len();
+    let anorm = a.normals.len();
+    let skin = merge_scene_skins(a.skin, b.skin, averts, bverts);
+    a.vertices.append(&mut b.vertices);
+    a.texcoords.append(&mut b.texcoords);
+    a.normals.append(&mut b.normals);
+    a.elements.extend(b.elements.into_iter().map(|elem| {
+        [
+            (elem[0].0 + averts, elem[0].1 + atex, elem[0].2 + anorm),
+            (elem[1].0 + averts, elem[1].1 + atex, elem[1].2 + anorm),
+            (elem[2].0 + averts, elem[2].1 + atex, elem[2].2 + anorm),
+        ]
+    }));
+    SceneTriMesh {
+        name: a.name,
+        transform: common::Mat4x4::identity(),
+        vertices: a.vertices,
+        texcoords: a.texcoords,
+        normals: a.normals,
+        elements: a.elements,
+        skin
+    }
+}
+
+pub fn merge_mesh_vec(mut meshes: Vec<SceneTriMesh>) -> Option<SceneTriMesh> {
+    if let Some(mut value) = meshes.pop() {
+        while let Some(newvalue) = meshes.pop() {
+            value = merge_meshes(newvalue, value);
+        }
+        Some(value)
+    } else {
+        None
+    }
+    // match meshes.len() {
+    //     0 => None,
+    //     1 => Some(meshes.pop().un),
+    //     n => {
+    //         let mut initial = merge_meshes(meshes[0], meshes[1]);
+    //         for i in 2..n {
+    //             initial = merge_meshes(initial, meshes[2]);
+    //         }
+    //         Some(initial)
+    //     }
+    // }
 }
 
 #[derive(Clone, Debug)]

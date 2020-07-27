@@ -169,7 +169,10 @@ impl Skin {
                 .iter()
                 .any(|x| self.meshes[x.mesh_index as usize] == meshid)
             {
-                out_group_names.push(name.clone());
+                out_group_names.push(scene::SceneGroup {
+                    name: name.clone(),
+                    transform: Mat4x4::identity()
+                });
                 usable_groups.push(group);
             }
         }

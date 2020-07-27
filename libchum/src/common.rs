@@ -5,10 +5,27 @@ use std::mem;
 
 pub type Vector3 = nalgebra::Vector3<f32>;
 pub type Vector2 = nalgebra::Vector2<f32>;
-pub type Quaternion = nalgebra::UnitQuaternion<f32>;
+pub type Quaternion = nalgebra::Quaternion<f32>;
 pub type Mat4x4 = nalgebra::Matrix4<f32>;
 pub type Mat3x3 = nalgebra::Matrix3<f32>;
 pub type Color = nalgebra::Vector4<f32>;
+
+pub fn read_quat<R: Read>(reader: &mut R, fmt: TotemFormat) -> io::Result<Quaternion> {
+    Ok(Quaternion::new(
+        fmt.read_f32(reader)?,
+        fmt.read_f32(reader)?,
+        fmt.read_f32(reader)?,
+        fmt.read_f32(reader)?
+    ))
+}
+
+pub fn write_quat<W: Write>(q: &Quaternion, writer: &mut W, fmt: TotemFormat) -> io::Result<()> {
+    fmt.write_f32(writer, q[0])?;
+    fmt.write_f32(writer, q[1])?;
+    fmt.write_f32(writer, q[2])?;
+    fmt.write_f32(writer, q[3])?;
+    Ok(())
+}
 
 /// Read a Vector3 from a file (12 bytes)
 pub fn read_vec3<R: Read>(reader: &mut R, fmt: TotemFormat) -> io::Result<Vector3> {

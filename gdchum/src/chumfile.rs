@@ -311,8 +311,13 @@ impl ChumFile {
         if merge_models {
             let mut data = Vec::new();
             data.append(&mut scene.trimeshes);
-            if let Some(realmodel) = scene::merge_mesh_vec(data) {
+            if let Some(mut realmodel) = scene::merge_mesh_vec(data) {
+                scene::try_determine_group_transforms(&mut realmodel);
                 scene.add_trimesh(realmodel);
+            }
+        } else {
+            for mesh in scene.trimeshes.iter_mut() {
+                scene::try_determine_group_transforms(mesh);
             }
         }
         collada::scene_to_writer_dae(&scene, &mut buffer).unwrap();

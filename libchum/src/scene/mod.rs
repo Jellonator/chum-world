@@ -141,17 +141,30 @@ pub fn merge_mesh_vec(mut meshes: Vec<SceneTriMesh>) -> Option<SceneTriMesh> {
     } else {
         None
     }
-    // match meshes.len() {
-    //     0 => None,
-    //     1 => Some(meshes.pop().un),
-    //     n => {
-    //         let mut initial = merge_meshes(meshes[0], meshes[1]);
-    //         for i in 2..n {
-    //             initial = merge_meshes(initial, meshes[2]);
-    //         }
-    //         Some(initial)
-    //     }
-    // }
+}
+
+pub fn try_determine_group_transforms(mesh: &mut SceneTriMesh) {
+    if let Some(ref mut skin) = mesh.skin {
+        for (groupi, group) in skin.groups.iter_mut().enumerate() {
+            let mut sum = common::Vector3::new(0.0, 0.0, 0.0);
+            let mut sum_weight = 0.0;
+            for (skinv, meshv) in skin.vertices.iter().zip(mesh.vertices.iter()) {
+                for influence in skinv.influences.iter() {
+                    if influence.joint == groupi {
+                        sum += meshv * influence.weight;
+                        sum_weight += influence.weight;
+                    }
+                }
+            }
+            if sum_weight > 1e-5 {
+                group.transform = common::Mat4x4::new_translation(&(sum / sum_weight)).transpose();
+                println!("{:?}", group.transform);
+                println!("{:?}", group.transform.as_slice());
+            } else {
+                group.transform = common::Mat4x4::identity();
+            }
+        }
+    }
 }
 
 #[derive(Clone, Debug)]

@@ -462,7 +462,7 @@ pub fn trimesh_to_skin_node(
             layer: vec![],
             transform: vec![NodeTransform::Matrix {
                 sid: Some("transform".to_owned()),
-                data: mesh.transform.clone(),
+                data: group.transform.clone(),
             }],
             node: vec![]
         });

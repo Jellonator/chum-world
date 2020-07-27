@@ -142,7 +142,7 @@ pub fn skin_to_controller(skin: &scene::SceneSkin, meshname: &str) -> Controller
         name: Some(id_skin.clone()),
         data: ControllerData::Skin {
             bind_shape_matrix: Some(BindShapeMatrix {
-                data: common::Mat4x4::new_basis(),
+                data: common::Mat4x4::identity(),
             }),
             source: format!("#{}", id_mesh),
             source_elements: vec![
@@ -180,7 +180,7 @@ pub fn skin_to_controller(skin: &scene::SceneSkin, meshname: &str) -> Controller
                         digits: None,
                         magnitude: None,
                         data: (0..skin.groups.len())
-                            .flat_map(|_i| common::Mat4x4::new_basis().mat.to_vec())
+                            .flat_map(|_i| common::Mat4x4::identity().as_slice().to_vec())
                             .collect(),
                     },
                     technique_common: Some(SourceTechnique {

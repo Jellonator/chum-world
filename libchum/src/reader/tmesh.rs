@@ -256,15 +256,15 @@ impl TMesh {
         // Read coordinate data
         let num_vertices: u32 = fmt.read_u32(file)?;
         let vertices: Vec<Vector3> = (0..num_vertices)
-            .map(|_| Vector3::read_from(file, fmt))
+            .map(|_| read_vec3(file, fmt))
             .collect::<io::Result<_>>()?;
         let num_texcoords: u32 = fmt.read_u32(file)?;
         let texcoords: Vec<Vector2> = (0..num_texcoords)
-            .map(|_| Vector2::read_from(file, fmt))
+            .map(|_| read_vec2(file, fmt))
             .collect::<io::Result<_>>()?;
         let num_normals: u32 = fmt.read_u32(file)?;
         let normals: Vec<Vector3> = (0..num_normals)
-            .map(|_| Vector3::read_from(file, fmt))
+            .map(|_| read_vec3(file, fmt))
             .collect::<io::Result<_>>()?;
         // Read strip data
         let num_strips: u32 = fmt.read_u32(file)?;
@@ -303,7 +303,7 @@ impl TMesh {
         let footer1: Vec<Footer1> = (0..num_unk1)
             .map(|_| {
                 Ok(Footer1 {
-                    pos: Vector3::read_from(file, fmt)?,
+                    pos: read_vec3(file, fmt)?,
                     radius: fmt.read_f32(file)?,
                 })
             })
@@ -311,7 +311,7 @@ impl TMesh {
         let num_unk2: u32 = fmt.read_u32(file)?;
         let footer2: Vec<Footer2> = (0..num_unk2)
             .map(|_| {
-                let transform = Mat4x4::read_from(file, fmt)?;
+                let transform = read_mat4(file, fmt)?;
                 fmt.skip_n_bytes(file, 16)?;
                 Ok(Footer2 { transform })
             })
@@ -323,7 +323,7 @@ impl TMesh {
                 fmt.read_f32_into(file, &mut unk1)?;
                 Ok(Footer3 {
                     unk1,
-                    normal: Vector3::read_from(file, fmt)?,
+                    normal: read_vec3(file, fmt)?,
                     junk: fmt.read_u32(file)?,
                     unk2: fmt.read_f32(file)?,
                 })
@@ -402,7 +402,8 @@ impl TMesh {
     pub fn create_scene_mesh(&self, name: String) -> scene::SceneTriMesh {
         scene::SceneTriMesh {
             name,
-            transform: Mat4x4::new_basis(),
+            // TMesh.transform.transform is NOT actually applied to this mesh
+            transform: Mat4x4::identity(),
             vertices: self.vertices.clone(),
             normals: self.normals.clone(),
             texcoords: self.texcoords.clone(),

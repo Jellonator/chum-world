@@ -182,9 +182,8 @@ where
 
 impl XMLContent for common::Mat4x4 {
     fn serialize_content(&self) -> Result<String, SerializeError> {
-        let realtx = self.swap_order();
-        let mut s = realtx.mat[0].to_string();
-        for value in &realtx.mat[1..] {
+        let mut s = self[0].to_string();
+        for value in &self.as_slice()[1..] {
             s += &format!(" {}", value);
         }
         Ok(s)

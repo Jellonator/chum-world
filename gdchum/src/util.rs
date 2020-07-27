@@ -11,27 +11,27 @@ pub fn vec2_to_godot(value: &common::Vector2) -> Vector2 {
 }
 
 pub fn mat4x4_to_transform(tx: &common::Mat4x4) -> Transform {
-    let mat = &tx.mat;
+    let mat = tx.as_slice();
     Transform {
         basis: Basis {
             elements: [
-                Vector3::new(mat[0], mat[1], mat[2]),
-                Vector3::new(mat[4], mat[5], mat[6]),
-                Vector3::new(mat[8], mat[9], mat[10]),
+                Vector3::new(mat[0], mat[4], mat[8]),
+                Vector3::new(mat[1], mat[5], mat[9]),
+                Vector3::new(mat[2], mat[6], mat[10]),
             ],
         },
-        origin: Vector3::new(mat[12], mat[13], mat[14]),
+        origin: Vector3::new(mat[3], mat[7], mat[11]),
     }
 }
 
 pub fn mat3x3_to_transform2d(tx: &common::Mat3x3) -> Transform2D {
-    let mat = &tx.mat;
-    Transform2D::row_major(mat[0], mat[1], mat[3], mat[4], mat[6], mat[7])
+    let mat = tx.as_slice();
+    Transform2D::row_major(mat[0], mat[3], mat[1], mat[4], mat[2], mat[5])
 }
 
 pub fn transform_to_mat4x4(value: &Transform) -> common::Mat4x4 {
-    common::Mat4x4 {
-        mat: [
+    common::Mat4x4::from_row_slice(
+        &[
             value.basis.elements[0].x,
             value.basis.elements[0].y,
             value.basis.elements[0].z,
@@ -48,17 +48,17 @@ pub fn transform_to_mat4x4(value: &Transform) -> common::Mat4x4 {
             value.origin.y,
             value.origin.z,
             1.0,
-        ],
-    }
+        ]
+    )
 }
 
 pub fn transform2d_to_mat3x3(value: &Transform2D) -> common::Mat3x3 {
     let array = value.to_row_major_array();
-    common::Mat3x3 {
-        mat: [
+    common::Mat3x3::from_row_slice(
+        &[
             array[0], array[1], 0.0, array[2], array[3], 0.0, array[4], array[5], 1.0,
-        ],
-    }
+        ]
+    )
 }
 
 /// Convert a Godot Dictionary to a ChumStructVariant
@@ -108,11 +108,11 @@ pub fn dict_to_struct(dict: &Dictionary) -> ChumStructVariant {
         }
         "vec2" => {
             let value = dict.get_ref(&"value".into()).try_to_vector2().unwrap();
-            ChumStructVariant::Vec2(common::Vector2::with(value.x, value.y))
+            ChumStructVariant::Vec2(common::Vector2::new(value.x, value.y))
         }
         "vec3" => {
             let value = dict.get_ref(&"value".into()).try_to_vector3().unwrap();
-            ChumStructVariant::Vec3(common::Vector3::with(value.x, value.y, value.z))
+            ChumStructVariant::Vec3(common::Vector3::new(value.x, value.y, value.z))
         }
         "transform3d" => {
             let value = dict.get_ref(&"value".into()).try_to_transform().unwrap();
@@ -126,9 +126,9 @@ pub fn dict_to_struct(dict: &Dictionary) -> ChumStructVariant {
         }
         "color" => {
             let value = dict.get_ref(&"value".into()).try_to_color().unwrap();
-            ChumStructVariant::Color(common::Color {
-                values: [value.r, value.g, value.b, value.a],
-            })
+            ChumStructVariant::Color(common::Color::new(
+                value.r, value.g, value.b, value.a
+            ))
         }
         "reference" => {
             let value = dict.get_ref(&"value".into()).try_to_i64().unwrap() as i32;
@@ -325,10 +325,10 @@ pub fn struct_to_dict(value: &ChumStructVariant) -> Dictionary {
             dict.set(
                 &"value".into(),
                 &Variant::from_color(&Color::rgba(
-                    color.values[0],
-                    color.values[1],
-                    color.values[2],
-                    color.values[3],
+                    color[0],
+                    color[1],
+                    color[2],
+                    color[3]
                 )),
             );
             dict

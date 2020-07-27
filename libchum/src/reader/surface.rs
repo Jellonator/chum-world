@@ -103,16 +103,16 @@ fn generate_surface_quad9(
         [curves[3][1], pts_bl, pts_br, curves[1][2]],
         [curves[2][3], curves[2][2], curves[2][1], curves[1][3]],
     ];
-    let mut ttexc = [[Vector2::new(); 4]; 4];
-    let mut tnorm = [[Vector3::new(); 4]; 4];
+    let mut ttexc = [[Vector2::new(0.0, 0.0); 4]; 4];
+    let mut tnorm = [[Vector3::new(0.0, 0.0, 0.0); 4]; 4];
     let texvals = [[texcoords[0], texcoords[1]], [texcoords[3], texcoords[2]]];
     let normvals = [[normals[0], normals[1]], [normals[3], normals[2]]];
     for ix in 0..4 {
         for iy in 0..4 {
             let u = (ix as f32) / 3.0;
             let v = (iy as f32) / 3.0;
-            ttexc[iy][ix] = Vector2::qlerp(&texvals, u, v);
-            tnorm[iy][ix] = Vector3::qlerp(&normvals, u, v);
+            ttexc[iy][ix] = qlerp_vec2(&texvals, u, v);
+            tnorm[iy][ix] = qlerp_vec3(&normvals, u, v);
         }
     }
     for iy in 0..3 {
@@ -211,7 +211,7 @@ impl SurfaceObject {
             let normal1 = self.normals[surface.normal_ids[1] as usize];
             let normal2 = self.normals[surface.normal_ids[2] as usize];
             let normal3 = self.normals[surface.normal_ids[3] as usize];
-            let mut curves = [[Vector3::new(); 4]; 4];
+            let mut curves = [[Vector3::new(0.0, 0.0, 0.0); 4]; 4];
             for i in 0..4 {
                 let curve = &self.curves[surface.curve_ids[i] as usize];
                 if surface.curve_order & (0b10 << i) == 0 {
@@ -244,11 +244,7 @@ impl SurfaceObject {
         let num_vertices = fmt.read_u32(file)?;
         let mut vertices = Vec::with_capacity(num_vertices as usize);
         for _ in 0..num_vertices {
-            vertices.push(Vector3 {
-                x: fmt.read_f32(file)?,
-                y: fmt.read_f32(file)?,
-                z: fmt.read_f32(file)?,
-            });
+            vertices.push(read_vec3(file, fmt)?);
         }
         let num_unk0 = fmt.read_u32(file)?;
         fmt.skip_n_bytes(file, num_unk0 as u64 * 24)?;
@@ -258,22 +254,10 @@ impl SurfaceObject {
         let mut surfaces = Vec::with_capacity(num_surfaces as usize);
         for _ in 0..num_surfaces {
             let texcoords = [
-                Vector2 {
-                    x: fmt.read_f32(file)?,
-                    y: fmt.read_f32(file)?,
-                },
-                Vector2 {
-                    x: fmt.read_f32(file)?,
-                    y: fmt.read_f32(file)?,
-                },
-                Vector2 {
-                    x: fmt.read_f32(file)?,
-                    y: fmt.read_f32(file)?,
-                },
-                Vector2 {
-                    x: fmt.read_f32(file)?,
-                    y: fmt.read_f32(file)?,
-                },
+                read_vec2(file, fmt)?,
+                read_vec2(file, fmt)?,
+                read_vec2(file, fmt)?,
+                read_vec2(file, fmt)?,
             ];
             fmt.skip_n_bytes(file, 12 * 4)?;
             let mut normal_ids = [0; 4];
@@ -304,11 +288,7 @@ impl SurfaceObject {
         let num_normals = fmt.read_u32(file)?;
         let mut normals = Vec::with_capacity(num_normals as usize);
         for _ in 0..num_normals {
-            normals.push(Vector3 {
-                x: fmt.read_f32(file)?,
-                y: fmt.read_f32(file)?,
-                z: fmt.read_f32(file)?,
-            });
+            normals.push(read_vec3(file, fmt)?);
         }
         Ok(SurfaceObject {
             transform,
@@ -365,15 +345,15 @@ impl<'a> SurfaceExport<'a> {
     where
         W: Write,
     {
-        let mut vertices = HashMap::<Vector3, u64>::new();
-        let mut normals = HashMap::<Vector3, u64>::new();
-        let mut texcoords = HashMap::<Vector2, u64>::new();
+        let mut vertices = HashMap::<[u32; 3], u64>::new();
+        let mut normals = HashMap::<[u32; 3], u64>::new();
+        let mut texcoords = HashMap::<[u32; 2], u64>::new();
         let gen = self.surface.generate_meshes(mode);
         for mesh in gen.iter() {
             for quad in mesh.quads.iter() {
                 for point in quad.points.iter() {
                     let nvert = vertices.len() as u64;
-                    if insert_if_not_exist(&mut vertices, point.vertex, nvert + 1) {
+                    if insert_if_not_exist(&mut vertices, reinterpret_vec3(&point.vertex), nvert + 1) {
                         writeln!(
                             writer,
                             "v {} {} {}",
@@ -381,7 +361,7 @@ impl<'a> SurfaceExport<'a> {
                         )?;
                     }
                     let nnorm = normals.len() as u64;
-                    if insert_if_not_exist(&mut normals, point.normal, nnorm + 1) {
+                    if insert_if_not_exist(&mut normals, reinterpret_vec3(&point.normal), nnorm + 1) {
                         writeln!(
                             writer,
                             "vn {} {} {}",
@@ -389,7 +369,7 @@ impl<'a> SurfaceExport<'a> {
                         )?;
                     }
                     let ntex = texcoords.len() as u64;
-                    if insert_if_not_exist(&mut texcoords, point.texcoord, ntex + 1) {
+                    if insert_if_not_exist(&mut texcoords, reinterpret_vec2(&point.texcoord), ntex + 1) {
                         writeln!(writer, "vt {} {}", point.texcoord.x, point.texcoord.y)?;
                     }
                 }
@@ -402,7 +382,9 @@ impl<'a> SurfaceExport<'a> {
                     write!(
                         writer,
                         " {}/{}/{}",
-                        vertices[&point.vertex], texcoords[&point.texcoord], normals[&point.normal]
+                        vertices[&reinterpret_vec3(&point.vertex)],
+                        texcoords[&reinterpret_vec2(&point.texcoord)],
+                        normals[&reinterpret_vec3(&point.normal)]
                     )?;
                 }
                 writeln!(writer, "")?;

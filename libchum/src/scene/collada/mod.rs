@@ -499,7 +499,7 @@ pub fn trimesh_to_skin_node(
             layer: vec![],
             transform: vec![NodeTransform::Matrix {
                 sid: Some("transform".to_owned()),
-                data: common::Mat4x4::new_basis()
+                data: common::Mat4x4::identity()
             }],
             node: vec![
                 Node {

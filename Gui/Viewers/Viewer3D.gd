@@ -55,8 +55,7 @@ func set_file(file):
 		elif data["exists"]:
 			print("LOADED: ", data)
 			node_mesh.mesh = data["mesh"]
-#			node_mesh.transform = Transform()
-			node_mesh.transform = data["transform"]
+			node_mesh.transform = Transform()
 			node_mesh.show()
 		else:
 			print("DOES NOT EXIST")

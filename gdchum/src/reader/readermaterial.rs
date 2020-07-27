@@ -2,6 +2,7 @@ use crate::chumfile::ChumFile;
 use crate::reader::ChumReader;
 use gdnative::*;
 use libchum::reader::material;
+use crate::util;
 
 pub fn read_material(
     data: &Vec<u8>,
@@ -38,7 +39,7 @@ pub fn read_material(
                         let image: Image =
                             texturedict.get(&"bitmap".into()).try_to_object().unwrap();
                         let mut texture: ImageTexture = ImageTexture::new();
-                        texture.create_from_image(Some(image), 2);
+                        texture.create_from_image(Some(image), 1 | 2 | 4);
                         material.set_shader_param("has_texture".into(), true.into());
                         material.set_shader_param("arg_texture".into(), texture.into());
                     } else {
@@ -73,24 +74,14 @@ pub fn read_material(
     material.set_shader_param(
         "arg_color".into(),
         Vector3::new(
-            matdata.color.values[0],
-            matdata.color.values[1],
-            matdata.color.values[2],
+            matdata.color[0],
+            matdata.color[1],
+            matdata.color[2]
         )
         .to_variant(),
     );
-    material.set_shader_param("arg_alpha".into(), matdata.color.values[3].to_variant());
-    let mat = &matdata.transform.mat;
-    let tx = Transform {
-        basis: Basis {
-            elements: [
-                Vector3::new(mat[0], mat[1], mat[2]),
-                Vector3::new(mat[3], mat[4], mat[5]),
-                Vector3::new(mat[6], mat[7], mat[8]),
-            ],
-        },
-        origin: Vector3::new(0.0, 0.0, 0.0),
-    };
+    material.set_shader_param("arg_alpha".into(), matdata.color[3].to_variant());
+    let tx = util::mat3x3_to_transform2d(&matdata.transform);
     material.set_shader_param("arg_texcoord_transform".into(), tx.to_variant());
     Some(material.to_reference())
 }

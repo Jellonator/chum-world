@@ -30,6 +30,12 @@ impl SceneSkinVertex {
     }
 }
 
+#[derive(Clone, Debug)]
+pub struct SceeneGroup {
+    pub name: String,
+    pub transform: common::Mat4x4
+}
+
 /// Skin for a scene object.
 /// `groups` is the name of each group that this skin uses.
 /// `vertices` corresponds to each of the vertices in the mesh.

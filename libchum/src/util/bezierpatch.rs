@@ -12,10 +12,12 @@ pub fn eval_bezier(points: &[Vector3; 4], t: f32) -> Vector3 {
 /// Evaluate a surface patch through points at the position (u, v).
 /// u and v should be in the range [0, 1]
 pub fn evaluate_surface(points: &[[Vector3; 4]; 4], u: f32, v: f32) -> Vector3 {
-    let mut pu = [Vector3::new(); 4];
-    for i in 0..4 {
-        pu[i] = eval_bezier(&points[i], u);
-    }
+    let pu = [
+        eval_bezier(&points[0], u),
+        eval_bezier(&points[1], u),
+        eval_bezier(&points[2], u),
+        eval_bezier(&points[3], u),
+    ];
     return eval_bezier(&pu, v);
 }
 
@@ -64,14 +66,16 @@ pub fn evaluate_surface_texnorm(
     tx: &[[Vector2; 2]; 2],
     nm: &[[Vector3; 2]; 2],
 ) -> Point {
-    let mut pu = [Vector3::new(); 4];
-    for i in 0..4 {
-        pu[i] = eval_bezier(&points[i], u);
-    }
+    let pu = [
+        eval_bezier(&points[0], u),
+        eval_bezier(&points[1], u),
+        eval_bezier(&points[2], u),
+        eval_bezier(&points[3], u),
+    ];
     Point {
         vertex: eval_bezier(&pu, v),
-        texcoord: Vector2::qlerp(tx, u, v),
-        normal: Vector3::qlerp(nm, u, v),
+        texcoord: qlerp_vec2(tx, u, v),
+        normal: qlerp_vec3(nm, u, v),
     }
 }
 

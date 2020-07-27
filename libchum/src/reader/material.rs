@@ -30,10 +30,10 @@ impl Material {
 
     /// Read a TMesh from a file
     pub fn read_from<R: Read>(file: &mut R, fmt: TotemFormat) -> io::Result<Material> {
-        let color = common::Color::read_from(file, fmt)?;
-        let unk1 = common::Vector3::read_from(file, fmt)?;
+        let color = common::read_color(file, fmt)?;
+        let unk1 = common::read_vec3(file, fmt)?;
         let unk2 = fmt.read_f32(file)?;
-        let transform = common::Mat3x3::read_from(file, fmt)?;
+        let transform = common::read_mat3(file, fmt)?;
         let mut unk3 = [0.0; 5];
         fmt.read_f32_into(file, &mut unk3)?;
         let mut unk4 = [0u8; 13];
@@ -59,10 +59,10 @@ impl Material {
 
     /// Write a Material to a file
     pub fn write_to<W: Write>(&self, writer: &mut W, fmt: TotemFormat) -> io::Result<()> {
-        self.color.write_to(writer, fmt)?;
-        self.unk1.write_to(writer, fmt)?;
+        common::write_color(&self.color, writer, fmt)?;
+        common::write_vec3(&self.unk1, writer, fmt)?;
         fmt.write_f32(writer, self.unk2)?;
-        self.transform.write_to(writer, fmt)?;
+        common::write_mat3(&self.transform, writer, fmt)?;
         for value in self.unk3.iter() {
             fmt.write_f32(writer, *value)?;
         }

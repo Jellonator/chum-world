@@ -1,5 +1,5 @@
 shader_type spatial;
-render_mode depth_draw_always, cull_disabled;
+render_mode depth_draw_alpha_prepass, cull_disabled;
 
 uniform vec3 arg_color = vec3(1, 1, 1);
 uniform float arg_alpha = 1.0;

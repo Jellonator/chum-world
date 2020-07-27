@@ -23,6 +23,7 @@ config/icon="res://icon.png"
 
 ChumReader="*res://gdchum/ChumReader.gdns"
 Structure="*res://Gui/Struct/Structure.gd"
+ExportData="*res://Global/ExportData.gd"
 
 [display]
 

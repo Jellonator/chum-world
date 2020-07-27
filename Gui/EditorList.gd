@@ -7,27 +7,6 @@ onready var node_tabs := $Split/TabContainer
 onready var node_struct := $Split/Margin/Panel/Scroll/VBox
 onready var node_margin := $Split/Margin
 
-const EXPORT_ID_BIN := 0
-const EXPORT_ID_TEXT := 1
-const EXPORT_ID_MODEL := 2
-const EXPORT_ID_TEXTURE := 3
-const EXPORT_ID_SCENE := 4
-
-const VALID_EXPORTS := {
-	EXPORT_ID_TEXT: ["TXT"],
-	EXPORT_ID_MODEL: ["MESH", "SURFACE"],
-	EXPORT_ID_TEXTURE: ["BITMAP"],
-	EXPORT_ID_SCENE: ["MESH", "SKIN"]#, "SURFACE", "SKIN"]
-}
-
-const EXPORT_FILE_FILTERS := {
-	EXPORT_ID_BIN: "*.bin ; Binary Files",
-	EXPORT_ID_TEXT: "*.txt ; Text Files",
-	EXPORT_ID_MODEL: "*.obj ; Wavefront OBJ",
-	EXPORT_ID_TEXTURE: "*.png ; PNG Images",
-	EXPORT_ID_SCENE: "*.dae; COLLADA Scene"
-}
-
 func set_exportbutton(file):
 	if file == null:
 		button_export.disabled = true
@@ -37,7 +16,8 @@ func set_exportbutton(file):
 	var typename = file.get_type()
 	var popup = button_export.get_popup()
 	for i in range(1, popup.get_item_count()):
-		popup.set_item_disabled(i, not typename in VALID_EXPORTS[popup.get_item_id(i)])
+		popup.set_item_disabled(i,
+		not typename in ExportData.VALID_EXPORTS[popup.get_item_id(i)])
 
 func set_tab(id: int, file):
 	node_tabs.get_child(id).set_file(file)
@@ -84,7 +64,7 @@ func _on_export_pressed(id: int):
 		print("No file selected; could not export.")
 	else:
 		var dialog := owner.get_node("SaveDialog") as FileDialog
-		dialog.filters = PoolStringArray([EXPORT_FILE_FILTERS[id]])
+		dialog.filters = PoolStringArray([ExportData.EXPORT_FILE_FILTERS[id]])
 		owner.export_file = cfile
 		owner.export_mode = id
 		dialog.popup_centered()

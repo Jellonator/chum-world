@@ -137,8 +137,8 @@ size_flags_horizontal = 3
 size_flags_vertical = 3
 
 [node name="ConfirmationDialog" type="ConfirmationDialog" parent="."]
-margin_top = 530.0
-margin_right = 1024.0
-margin_bottom = 600.0
+margin_top = 650.0
+margin_right = 1280.0
+margin_bottom = 720.0
 popup_exclusive = true
 [connection signal="tab_changed" from="Split/TabContainer" to="." method="_on_TabContainer_tab_changed"]

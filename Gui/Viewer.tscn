@@ -1,9 +1,10 @@
-[gd_scene load_steps=7 format=2]
+[gd_scene load_steps=8 format=2]
 
 [ext_resource path="res://Gui/Viewer.gd" type="Script" id=1]
 [ext_resource path="res://Gui/EditorList.tscn" type="PackedScene" id=2]
 [ext_resource path="res://Gui/ArchiveFileSaver.tscn" type="PackedScene" id=3]
 [ext_resource path="res://Gui/Worldview/3D View.tscn" type="PackedScene" id=4]
+[ext_resource path="res://Gui/BulkExport.tscn" type="PackedScene" id=5]
 [ext_resource path="res://Gui/ArchiveFileSelector.tscn" type="PackedScene" id=6]
 [ext_resource path="res://Gui/FileTree.gd" type="Script" id=7]
 
@@ -44,6 +45,7 @@ margin_right = 99.0
 margin_bottom = 20.0
 text = "Archive"
 flat = false
+items = [ "Bulk Export", null, 0, false, false, 0, 0, null, "", false ]
 
 [node name="Tabs" type="TabContainer" parent="VBox"]
 margin_top = 24.0
@@ -117,6 +119,12 @@ margin_bottom = 548.0
 access = 2
 current_dir = "/home/jellonator/Workspace/Rust/ChumWorld"
 current_path = "/home/jellonator/Workspace/Rust/ChumWorld/"
+
+[node name="BulkExport" parent="." instance=ExtResource( 5 )]
+margin_left = 339.408
+margin_top = 297.42
+margin_right = 990.408
+margin_bottom = 397.42
 [connection signal="text_changed" from="VBox/Tabs/Files/VBox/HBox/LineEdit" to="VBox/Tabs/Files/VBox/Tree" method="_on_LineEdit_text_changed"]
 [connection signal="file_selected" from="VBox/Tabs/Files/VBox/Tree" to="." method="_on_Tree_file_selected"]
 [connection signal="item_selected" from="VBox/Tabs/Files/VBox/Tree" to="VBox/Tabs/Files/VBox/Tree" method="_on_Tree_item_selected"]

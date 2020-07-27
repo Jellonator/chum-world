@@ -1,0 +1,93 @@
+[gd_scene load_steps=2 format=2]
+
+[ext_resource path="res://Gui/BulkExport.gd" type="Script" id=1]
+
+[node name="BulkExport" type="ConfirmationDialog"]
+margin_right = 651.0
+margin_bottom = 140.0
+popup_exclusive = true
+window_title = "Bulk Export Tool"
+resizable = true
+script = ExtResource( 1 )
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="GridContainer" type="GridContainer" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+margin_left = 8.0
+margin_top = 8.0
+margin_right = -8.0
+margin_bottom = -36.0
+custom_constants/vseparation = 16
+custom_constants/hseparation = 16
+columns = 2
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="Label" type="Label" parent="GridContainer"]
+margin_top = 3.0
+margin_right = 74.0
+margin_bottom = 17.0
+text = "File Type"
+
+[node name="FileType" type="OptionButton" parent="GridContainer"]
+margin_left = 90.0
+margin_right = 635.0
+margin_bottom = 20.0
+size_flags_horizontal = 3
+text = "BITMAP"
+selected = 0
+
+[node name="Label2" type="Label" parent="GridContainer"]
+margin_top = 39.0
+margin_right = 74.0
+margin_bottom = 53.0
+text = "Export Type"
+
+[node name="ExportType" type="OptionButton" parent="GridContainer"]
+margin_left = 90.0
+margin_top = 36.0
+margin_right = 635.0
+margin_bottom = 56.0
+
+[node name="Label3" type="Label" parent="GridContainer"]
+margin_top = 77.0
+margin_right = 74.0
+margin_bottom = 91.0
+text = "Export Path"
+
+[node name="HBox" type="HBoxContainer" parent="GridContainer"]
+margin_left = 90.0
+margin_top = 72.0
+margin_right = 635.0
+margin_bottom = 96.0
+
+[node name="ExportPath" type="LineEdit" parent="GridContainer/HBox"]
+margin_right = 517.0
+margin_bottom = 24.0
+size_flags_horizontal = 3
+
+[node name="ExportPathSelect" type="Button" parent="GridContainer/HBox"]
+margin_left = 521.0
+margin_right = 545.0
+margin_bottom = 24.0
+text = "..."
+
+[node name="FolderDialog" type="FileDialog" parent="."]
+margin_left = 8.0
+margin_top = 8.0
+margin_right = 643.0
+margin_bottom = 473.0
+popup_exclusive = true
+window_title = "Select a Folder"
+resizable = true
+mode = 2
+access = 2
+current_dir = "/home/jellonator/Workspace/Rust/ChumWorld"
+current_path = "/home/jellonator/Workspace/Rust/ChumWorld/"
+[connection signal="confirmed" from="." to="." method="_on_BulkExport_confirmed"]
+[connection signal="item_selected" from="GridContainer/FileType" to="." method="_on_FileType_item_selected"]
+[connection signal="pressed" from="GridContainer/HBox/ExportPathSelect" to="." method="_on_ExportPathSelect_pressed"]

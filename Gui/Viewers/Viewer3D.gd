@@ -12,6 +12,8 @@ const SPEED_MULT = 1.25
 
 var speed = 2.0
 
+var surfaces = []
+
 func _ready():
 	node_viewport.size = node_rect.rect_size
 	node_rect.connect("item_rect_changed", self, "_on_TextureRect_item_rect_changed")
@@ -20,6 +22,9 @@ func _on_TextureRect_item_rect_changed():
 	node_viewport.size = node_rect.rect_size
 
 func set_file(file):
+	for surf in surfaces:
+		surf.queue_free()
+	surfaces.clear()
 	node_camera.reset_transform()
 	print("========================================")
 	if file == null:
@@ -54,9 +59,14 @@ func set_file(file):
 			node_mesh.hide()
 		elif data["exists"]:
 			print("LOADED: ", data)
-			node_mesh.mesh = data["mesh"]
-			node_mesh.transform = Transform()
-			node_mesh.show()
+			for mesh in data["surfaces"]:
+				var instance = MeshInstance.new()
+				instance.mesh = mesh
+				node_viewport.add_child(instance)
+				surfaces.append(instance)
+#			node_mesh.mesh = data["mesh"]
+#			node_mesh.transform = Transform()
+			node_mesh.hide()
 		else:
 			print("DOES NOT EXIST")
 			node_mesh.hide()

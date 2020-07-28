@@ -81,7 +81,17 @@ pub fn read_material(
     );
     material.set_shader_param("arg_alpha".into(), matdata.color[3].to_variant());
     let tx = util::mat3x3_to_transform2d(&matdata.transform);
-    material.set_shader_param("arg_texcoord_transform".into(), tx.to_variant());
+    let realtx = Transform {
+        basis: Basis {
+            elements: [
+                Vector3::new(tx.m11, tx.m12, 0.0),
+                Vector3::new(tx.m21, tx.m22, 0.0),
+                Vector3::new(tx.m31, tx.m32, 1.0),
+            ],
+        },
+        origin: Vector3::new(0.0, 0.0, 0.0),
+    };
+    material.set_shader_param("arg_texcoord_transform".into(), realtx.to_variant());
     Some(material.to_reference())
 }
 

@@ -11,15 +11,16 @@ pub type Mat3x3 = nalgebra::Matrix3<f32>;
 pub type Color = nalgebra::Vector4<f32>;
 
 pub fn read_quat<R: Read>(reader: &mut R, fmt: TotemFormat) -> io::Result<Quaternion> {
-    Ok(Quaternion::new(
-        fmt.read_f32(reader)?,
-        fmt.read_f32(reader)?,
-        fmt.read_f32(reader)?,
-        fmt.read_f32(reader)?
-    ))
+    let i = fmt.read_f32(reader)?;
+    let j = fmt.read_f32(reader)?;
+    let k = fmt.read_f32(reader)?;
+    let w = fmt.read_f32(reader)?;
+    // Quaternion::new is in (w, i, j, k) order
+    Ok(Quaternion::new(w, i, j, k))
 }
 
 pub fn write_quat<W: Write>(q: &Quaternion, writer: &mut W, fmt: TotemFormat) -> io::Result<()> {
+    // Quat indexing is in (i, j, k, w) order
     fmt.write_f32(writer, q[0])?;
     fmt.write_f32(writer, q[1])?;
     fmt.write_f32(writer, q[2])?;

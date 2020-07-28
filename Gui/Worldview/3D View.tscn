@@ -33,6 +33,8 @@ world = SubResource( 1 )
 [node name="CameraViewer" parent="Viewport" instance=ExtResource( 4 )]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -13.8483 )
 
+[node name="Draw" type="Sprite" parent="Viewport"]
+
 [node name="PanelContainer" type="PanelContainer" parent="."]
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -58,4 +60,22 @@ text = "Speed: 2.0"
 __meta__ = {
 "_edit_use_anchors_": false
 }
+
+[node name="Controls" type="VBoxContainer" parent="PanelContainer/TextureRect"]
+anchor_left = 1.0
+anchor_right = 1.0
+margin_left = -200.0
+margin_bottom = 40.0
+grow_horizontal = 0
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="CheckButton" type="CheckButton" parent="PanelContainer/TextureRect/Controls"]
+margin_right = 235.0
+margin_bottom = 40.0
+text = "Show Node Names"
+align = 2
+[connection signal="draw" from="Viewport/Draw" to="." method="_on_Draw_draw"]
 [connection signal="item_rect_changed" from="PanelContainer/TextureRect" to="." method="_on_TextureRect_item_rect_changed"]
+[connection signal="toggled" from="PanelContainer/TextureRect/Controls/CheckButton" to="." method="_on_CheckButton_toggled"]

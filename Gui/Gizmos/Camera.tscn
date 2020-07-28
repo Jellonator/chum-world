@@ -10,6 +10,7 @@ script = ExtResource( 1 )
 [node name="PivotX" type="Spatial" parent="PivotY"]
 
 [node name="Camera" type="Camera" parent="PivotY/PivotX"]
+current = true
 far = 2500.0
 
 [node name="SpotLight" type="SpotLight" parent="PivotY/PivotX/Camera"]

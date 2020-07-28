@@ -1,19 +1,24 @@
 extends Control
 
+const SCENE_EMPTYNODE = preload("res://Gui/Worldview/EmptyNode.tscn")
+
 var archive = null
 var archive_files = []
+var node_draws = []
 
 onready var node_surfaces := $Viewport/Surfaces
 onready var node_camera := $Viewport/CameraViewer
 onready var node_rect := $PanelContainer/TextureRect
 onready var node_viewport := $Viewport
 onready var node_speed := $PanelContainer/TextureRect/SpeedLabel
+onready var node_draw := $Viewport/Draw
 
 const MIN_SPEED = 0.0125
 const MAX_SPEED = 128
 const SPEED_MULT = 1.25
 
 var speed = 2.0
+var show_node_names := false
 
 func try_make_child(resfile):
 	match resfile.type:
@@ -22,10 +27,14 @@ func try_make_child(resfile):
 			if data == null:
 				print("INVALID DATA")
 			elif data["exists"]:
-				var node_mesh = MeshInstance.new()
-				node_mesh.mesh = data["mesh"]
-				node_mesh.transform = Transform()
-				return node_mesh
+				var node_object = Spatial.new()
+				for surf in data["surfaces"]:
+					var node_mesh = MeshInstance.new()
+					node_mesh.mesh = surf
+					node_object.add_child(node_mesh)
+				return node_object
+#				node_mesh.transform = Transform()
+#				return node_mesh
 			else:
 				print("DOES NOT EXIST")
 		"MESH":
@@ -61,11 +70,29 @@ func try_make_child(resfile):
 		"LOD":
 			pass
 		_:
-			return null
+			return SCENE_EMPTYNODE.instance()
 
-func try_add_node(nodedata: Dictionary):
+func get_simple_name(name: String) -> String:
+	var a = name.find_last(">")
+	if a != -1:
+		name = name.substr(a+1, -1)
+	var b = name.find(".")
+	if b != -1:
+		name = name.substr(0, b)
+	return name
+
+func try_add_node(nodedata: Dictionary, name: String):
 	var node_base = Spatial.new()
 	node_base.transform = nodedata["global_transform"]
+#	node_base.scale = nodedata["local_scale"]
+#	node_base.translate() = 
+	var tx_rot = Transform(nodedata["local_rotation"])
+	var tx = Transform().scaled(nodedata["local_scale"]) * tx_rot
+	tx.origin += nodedata["local_translation"]
+#	print(nodedata["global_transform"])
+#	print(tx)
+#	print(nodedata["local_transform"].affine_inverse())
+#	print("--")
 	var resid = nodedata["resource_id"]
 	if resid != 0:
 		var resfile = archive.get_file_from_hash(resid)
@@ -75,7 +102,14 @@ func try_add_node(nodedata: Dictionary):
 			var child = try_make_child(resfile)
 			if child != null:
 				node_base.add_child(child)
+#	var text_child = SCENE_TEXT.instance()
+#	node_base.add_child(text_child)
 	node_surfaces.add_child(node_base)
+	node_draws.append({
+		"node": node_base,
+		"name": get_simple_name(name)
+	})
+#	text_child.set_text(get_simple_name(name))
 
 #func try_add_surface_from_file(file):
 #	var data = ChumReader.read_surface(file)
@@ -91,6 +125,7 @@ func try_add_node(nodedata: Dictionary):
 #		print("DOES NOT EXIST")
 
 func reset_surfaces():
+	node_draws.clear()
 	for child in node_surfaces.get_children():
 		child.queue_free()
 	for file in archive_files:
@@ -100,7 +135,7 @@ func reset_surfaces():
 			if not node_data["exists"]:
 				print("COULD NOT READ ", file.name)
 			else:
-				try_add_node(node_data["node"])
+				try_add_node(node_data["node"], file.name)
 #			prints(node_data["exists"], file.name)
 
 func set_archive(p_archive):
@@ -138,3 +173,22 @@ func _physics_process(delta: float):
 	if Input.is_action_pressed("view_move_slow"):
 		input_dir *= 0.5
 	node_camera.move_strafe(input_dir * delta * speed)
+	node_draw.update()
+
+const FONT := preload("res://Font/Base.tres")
+
+func _on_Draw_draw():
+	if not show_node_names:
+		return
+	var camera = node_viewport.get_camera()
+	for data in node_draws:
+		var node = data["node"]
+		if not camera.is_position_behind(node.transform.origin):
+			var screen_pos = camera.unproject_position(node.transform.origin)
+			node_draw.draw_string(FONT, screen_pos, data["name"])
+
+func _on_CheckButton_toggled(button_pressed):
+	show_node_names = button_pressed
+
+func _ready():
+	$PanelContainer/TextureRect/Controls/CheckButton.pressed = show_node_names

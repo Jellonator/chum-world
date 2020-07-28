@@ -16,6 +16,9 @@ pub fn read_node(data: &Vec<u8>, fmt: libchum::format::TotemFormat) -> Option<Di
     data.set(&"resource_id".into(), &node.resource_id.to_variant());
     data.set(&"global_transform".into(), &util::mat4x4_to_transform(&node.global_transform).to_variant());
     data.set(&"local_transform".into(), &util::mat4x4_to_transform(&node.local_transform).to_variant());
+    data.set(&"local_translation".into(), &util::vec3_to_godot(&node.local_translation).to_variant());
+    data.set(&"local_scale".into(), &util::vec3_to_godot(&node.local_scale).to_variant());
+    data.set(&"local_rotation".into(), &util::quat_to_godot(&node.local_rotation).to_variant());
     Some(data)
 }
 

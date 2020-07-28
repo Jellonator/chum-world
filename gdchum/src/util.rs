@@ -2,6 +2,10 @@ use gdnative::*;
 use libchum::common;
 use libchum::structure::{ArrayData, ChumStructVariant, IntType};
 
+pub fn quat_to_godot(value: &common::Quaternion) -> Quat {
+    Quat::quaternion(value[0], value[1], value[2], value[3])
+}
+
 pub fn vec3_to_godot(value: &common::Vector3) -> Vector3 {
     Vector3::new(value.x, value.y, value.z)
 }
@@ -12,13 +16,12 @@ pub fn vec2_to_godot(value: &common::Vector2) -> Vector2 {
 
 pub fn mat4x4_to_transform(tx: &common::Mat4x4) -> Transform {
     let mat = tx.as_slice();
-    println!("{:?}", &mat[12..]);
     Transform {
         basis: Basis {
             elements: [
-                Vector3::new(mat[0], mat[4], mat[8]),
-                Vector3::new(mat[1], mat[5], mat[9]),
-                Vector3::new(mat[2], mat[6], mat[10]),
+                Vector3::new(mat[0], mat[1], mat[2]),
+                Vector3::new(mat[4], mat[5], mat[6]),
+                Vector3::new(mat[8], mat[9], mat[10]),
             ],
         },
         origin: Vector3::new(mat[3], mat[7], mat[11]),
@@ -27,7 +30,7 @@ pub fn mat4x4_to_transform(tx: &common::Mat4x4) -> Transform {
 
 pub fn mat3x3_to_transform2d(tx: &common::Mat3x3) -> Transform2D {
     let mat = tx.as_slice();
-    Transform2D::row_major(mat[0], mat[3], mat[1], mat[4], mat[2], mat[5])
+    Transform2D::column_major(mat[0], mat[1], mat[2], mat[3], mat[4], mat[5])
 }
 
 pub fn transform_to_mat4x4(value: &Transform) -> common::Mat4x4 {
@@ -57,7 +60,7 @@ pub fn transform2d_to_mat3x3(value: &Transform2D) -> common::Mat3x3 {
     let array = value.to_row_major_array();
     common::Mat3x3::from_row_slice(
         &[
-            array[0], array[1], 0.0, array[2], array[3], 0.0, array[4], array[5], 1.0,
+            array[0], array[2], array[4], array[1], array[3], array[5], 0.0, 0.0, 1.0,
         ]
     )
 }

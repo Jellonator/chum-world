@@ -6,8 +6,9 @@ use libchum::common;
 use libchum::reader::surface;
 
 pub struct SurfaceResult {
-    pub surface: Reference,
+    // pub surface: Reference,
     pub transform: common::Mat4x4,
+    pub surfaces: Vec<Reference>
 }
 
 pub fn read_surface(
@@ -23,16 +24,17 @@ pub fn read_surface(
             return None;
         }
     };
-    let mut mesh = ArrayMesh::new();
+    let mut meshes: Vec<Reference> = Vec::new();
     let surfaces = surfaceobj.generate_meshes(surface::SurfaceGenMode::BezierInterp(8));
-    let mut materials = Vec::new();
+    // let mut materials = Vec::new();
     for surface in surfaces {
+        let mut mesh = ArrayMesh::new();
         let mut verts = Vector3Array::new();
         let mut texcoords = Vector2Array::new();
         let mut normals = Vector3Array::new();
         let mut meshdata = VariantArray::new();
         // let mut colordata = ColorArray::new();
-        for quad in surface.quads {
+        for quad in surface.quads.iter() {
             for tri in &quad.tris() {
                 for point in &tri.points {
                     verts.push(&Vector3::new(
@@ -49,7 +51,7 @@ pub fn read_surface(
                 }
             }
         }
-        materials.push(surface.material_index);
+        // materials.push(surface.material_index);
         meshdata.resize(ArrayMesh::ARRAY_MAX as i32);
         meshdata.set(ArrayMesh::ARRAY_VERTEX as i32, &Variant::from(&verts));
         meshdata.set(ArrayMesh::ARRAY_NORMAL as i32, &Variant::from(&normals));
@@ -59,31 +61,33 @@ pub fn read_surface(
             meshdata,
             VariantArray::new(),
             97280,
-        )
-    }
-    let archiveinstance = file.get_archive_instance();
-    archiveinstance
-        .map(|archive, res| {
-            for (i, mat) in materials.iter().enumerate() {
-                if let Some(materialfile) = archive.get_file_from_hash(res.new_ref(), *mat) {
+        );
+        meshes.push(mesh.to_reference());
+        let archiveinstance = file.get_archive_instance();
+        archiveinstance
+            .map(|archive, res| {
+                // let mat = &materials[i];
+                // for (i, mat) in materials.iter().enumerate() {
+                if let Some(materialfile) = archive.get_file_from_hash(res.new_ref(), surface.material_index) {
                     let materialdict = reader.read_materialanim_nodeless(materialfile);
                     if materialdict.get(&"exists".into()) == true.into() {
                         let material: Material = materialdict
                             .get(&"material".into())
                             .try_to_object()
                             .unwrap();
-                        mesh.surface_set_material(i as i64, Some(material));
+                        mesh.surface_set_material(0, Some(material));
                     } else {
-                        godot_warn!("Material {}/{:08X} could not be loaded!", i, mat);
+                        godot_warn!("Material {} could not be loaded!", surface.material_index);
                     }
                 } else {
-                    godot_warn!("Material {}/{:08X} does not exist!", i, mat);
+                    godot_warn!("Material {} does not exist!", surface.material_index);
                 }
-            }
-        })
-        .unwrap();
+                // }
+            })
+            .unwrap();
+    }
     Some(SurfaceResult {
-        surface: mesh.to_reference(),
+        surfaces: meshes,
         transform: surfaceobj.transform.transform.clone(),
     })
 }
@@ -94,7 +98,7 @@ pub fn read_surface_from_res(data: &ChumFile, reader: &mut ChumReader) -> Dictio
     match read_surface(&data.get_data_as_vec(), fmt, reader, data) {
         Some(mesh) => {
             dict.set(&"exists".into(), &true.into());
-            dict.set(&"mesh".into(), &mesh.surface.to_variant());
+            dict.set(&"surfaces".into(), &mesh.surfaces.to_variant());
             dict.set(
                 &"transform".into(),
                 &util::mat4x4_to_transform(&mesh.transform).to_variant(),

@@ -10,3 +10,4 @@ pub mod tmesh;
 pub mod node;
 pub mod lod;
 pub mod rotshape;
+pub mod spline;

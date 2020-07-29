@@ -82,7 +82,7 @@ pub fn read_tmesh(
             meshdata,
             VariantArray::new(),
             97280,
-        )
+        );
     }
     let archiveinstance = file.get_archive_instance();
     archiveinstance

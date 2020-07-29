@@ -12,6 +12,7 @@ pub mod text;
 pub mod tmesh;
 pub mod node;
 pub mod lod;
+pub mod rotshape;
 
 pub struct MaterialAnimEntry {
     resource: Resource,
@@ -307,6 +308,25 @@ impl ChumReader {
                     data.new_ref()
                 } else {
                     let value = lod::read_lod_from_res(x);
+                    self.cache.insert(hash, value.new_ref());
+                    value
+                }
+            })
+            .unwrap()
+    }
+
+    #[export]
+    pub fn read_rotshape(&mut self, _owner: Node, data: Instance<ChumFile>) -> Dictionary {
+        self.read_rotshape_nodeless(data)
+    }
+    pub fn read_rotshape_nodeless(&mut self, data: Instance<ChumFile>) -> Dictionary {
+        data.script()
+            .map(|x| {
+                let hash = x.get_hash_id_ownerless();
+                if let Some(data) = self.cache.get(&hash) {
+                    data.new_ref()
+                } else {
+                    let value = rotshape::read_rotshape_from_res(x, self);
                     self.cache.insert(hash, value.new_ref());
                     value
                 }

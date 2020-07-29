@@ -9,3 +9,4 @@ pub mod surface;
 pub mod tmesh;
 pub mod node;
 pub mod lod;
+pub mod rotshape;

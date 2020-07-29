@@ -91,6 +91,19 @@ func load_lod_from_file(file):
 	else:
 		print("DOES NOT EXIST ", file.name)
 
+func load_rotshape_from_file(file):
+	print("ROTSHAPE: ", file.name)
+	var data = ChumReader.read_rotshape(file)
+	if data == null:
+		print("INVALID DATA ", file.name)
+	elif data["exists"]:
+		var rotshape = data["rotshape"]
+		var node := MeshInstance.new()
+		node.mesh = rotshape["mesh"]
+		return node
+	else:
+		print("DOES NOT EXIST ", file.name)
+
 func try_file_to_spatial(file):
 	if file == null:
 		push_warning("Attempt to get spatial from NULL file")
@@ -104,5 +117,7 @@ func try_file_to_spatial(file):
 			return load_skin_from_file(file)
 		"LOD":
 			return load_lod_from_file(file)
+		"ROTSHAPE":
+			return load_rotshape_from_file(file)
 		_:
 			return SCENE_EMPTYNODE.instance()

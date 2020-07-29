@@ -25,6 +25,7 @@ ChumReader="*res://gdchum/ChumReader.gdns"
 Structure="*res://Gui/Struct/Structure.gd"
 ExportData="*res://Global/ExportData.gd"
 MeshData="*res://Global/MeshData.gd"
+MessageOverlay="*res://Global/MessageOverlay.tscn"
 
 [display]
 

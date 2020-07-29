@@ -1,0 +1,108 @@
+[gd_scene load_steps=2 format=2]
+
+[ext_resource path="res://Global/MessageOverlay.gd" type="Script" id=1]
+
+[node name="MessageOverlay" type="Control"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+script = ExtResource( 1 )
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="FullView" type="CanvasLayer" parent="."]
+layer = 2
+
+[node name="Color" type="ColorRect" parent="FullView"]
+visible = false
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color( 0.0588235, 0.0588235, 0.0588235, 0.556863 )
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="HBox" type="HBoxContainer" parent="FullView/Color"]
+anchor_right = 1.0
+margin_left = 4.0
+margin_top = 4.0
+margin_right = -4.0
+alignment = 2
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="HideLog" type="Button" parent="FullView/Color/HBox"]
+margin_left = 1204.0
+margin_right = 1272.0
+margin_bottom = 20.0
+grow_horizontal = 0
+text = "Hide Log"
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="Scroll" type="ScrollContainer" parent="FullView/Color"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+margin_left = 8.0
+margin_top = 32.0
+margin_bottom = -8.0
+follow_focus = true
+scroll_horizontal_enabled = false
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="Log" type="VBoxContainer" parent="FullView/Color/Scroll"]
+
+[node name="Overlay" type="CanvasLayer" parent="."]
+
+[node name="HBox" type="HBoxContainer" parent="Overlay"]
+anchor_right = 1.0
+margin_left = 4.0
+margin_top = 4.0
+margin_right = -4.0
+margin_bottom = 24.0
+mouse_filter = 2
+alignment = 2
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="EmptyPreview" type="Button" parent="Overlay/HBox"]
+margin_left = 1086.0
+margin_right = 1197.0
+margin_bottom = 20.0
+grow_horizontal = 0
+text = "Clear Messages"
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="ShowLog" type="Button" parent="Overlay/HBox"]
+margin_left = 1201.0
+margin_right = 1272.0
+margin_bottom = 20.0
+grow_horizontal = 0
+text = "Show Log"
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="Preview" type="VBoxContainer" parent="Overlay"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+margin_left = 8.0
+margin_top = 32.0
+margin_right = -8.0
+margin_bottom = -8.0
+mouse_filter = 2
+custom_constants/separation = 4
+__meta__ = {
+"_edit_use_anchors_": false
+}
+[connection signal="pressed" from="FullView/Color/HBox/HideLog" to="." method="_on_HideLog_pressed"]
+[connection signal="pressed" from="Overlay/HBox/EmptyPreview" to="." method="_on_EmptyPreview_pressed"]
+[connection signal="pressed" from="Overlay/HBox/ShowLog" to="." method="_on_ShowLog_pressed"]

@@ -107,12 +107,12 @@ impl ChumReader {
         resource: Resource,
         data: reader::materialanim::MaterialAnimation,
         archive: &ChumArchive,
-        res: Resource,
+        archive_res: Resource,
     ) {
         let mut textures = Vec::with_capacity(data.track_texture.len());
         for track in &data.track_texture.frames {
             let id = track.data;
-            textures.push(match archive.get_file_from_hash(res.clone(), id) {
+            textures.push(match archive.get_file_from_hash(archive_res.clone(), id) {
                 Some(texturefile) => {
                     let texturedict = self.read_bitmap_nodeless(texturefile);
                     if texturedict.get(&"exists".into()) == true.into() {

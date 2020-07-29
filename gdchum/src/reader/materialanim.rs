@@ -18,9 +18,9 @@ pub fn read_materialanim(
     };
     let archiveinstance = file.get_archive_instance();
     archiveinstance
-        .map(|archive, res| {
+        .map(|archive, archiveres| {
             if let Some(materialfile) =
-                archive.get_file_from_hash(res.clone(), matanimdata.material_id)
+                archive.get_file_from_hash(archiveres.clone(), matanimdata.material_id)
             {
                 let materialdict = reader.read_material_nodeless_nocache(materialfile);
                 if materialdict.get(&"exists".into()) == true.into() {
@@ -28,7 +28,7 @@ pub fn read_materialanim(
                         .get(&"material".into())
                         .try_to_object()
                         .unwrap();
-                    reader.add_materialanim(res.clone(), matanimdata, archive, res.new_ref());
+                    reader.add_materialanim(res.clone(), matanimdata, archive, archiveres.new_ref());
                     Some(res)
                 } else {
                     None

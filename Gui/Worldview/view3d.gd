@@ -68,7 +68,23 @@ func try_make_child(resfile):
 			else:
 				print("DOES NOT EXIST")
 		"LOD":
-			pass
+			var data = ChumReader.read_lod(resfile)
+			if data == null:
+				print("INVALID DATA ", resfile.name)
+			elif data["exists"]:
+				var lod = data["lod"]
+				var parent = Spatial.new()
+				for id in lod["skins"]:
+					var skin_file = archive.get_file_from_hash(id)
+					if skin_file == null:
+						print("Could not load file ", id, " from archive")
+					else:
+						var child = try_make_child(skin_file)
+						if child != null:
+							parent.add_child(child)
+				return parent
+			else:
+				print("DOES NOT EXIST ", resfile.name)
 		_:
 			return SCENE_EMPTYNODE.instance()
 
@@ -93,12 +109,14 @@ func try_add_node(nodedata: Dictionary, name: String):
 #	print(tx)
 #	print(nodedata["local_transform"].affine_inverse())
 #	print("--")
+	var ftype := ""
 	var resid = nodedata["resource_id"]
 	if resid != 0:
 		var resfile = archive.get_file_from_hash(resid)
 		if resfile == null:
 			print("Could not load file ", resid, " from archive")
 		else:
+			ftype = ":" + resfile.type
 			var child = try_make_child(resfile)
 			if child != null:
 				node_base.add_child(child)
@@ -107,7 +125,7 @@ func try_add_node(nodedata: Dictionary, name: String):
 	node_surfaces.add_child(node_base)
 	node_draws.append({
 		"node": node_base,
-		"name": get_simple_name(name)
+		"name": get_simple_name(name) + ftype
 	})
 #	text_child.set_text(get_simple_name(name))
 

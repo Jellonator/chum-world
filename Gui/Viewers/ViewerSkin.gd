@@ -69,17 +69,34 @@ func set_file(file):
 	if file == null:
 		pass
 	else:
-		var data = ChumReader.read_skin(file)
-		if data == null:
-			print("INVALID DATA")
-		elif data["exists"]:
-			print("LOADED SKIN")
-			var skin = data["skin"]
+		if file.type == "LOD":
+			var data = ChumReader.read_lod(file)
 			var archive = file.get_archive()
-			set_meshes(skin["meshes"])
-			set_groups(skin["groups"])
+			if data == null:
+				print("INVALID DATA")
+			elif data["exists"]:
+				var lod = data["lod"]
+				var skinfile = archive.get_file_from_hash(lod["skins"][0])
+				print("LOADED LOD ", skinfile.type)
+				if skinfile.type == "SKIN":
+					set_file(skinfile)
+				else:
+					set_meshes([skinfile.get_hash_id()])
+					set_groups({})
+			else:
+				print("DOES NOT EXIST")
 		else:
-			print("DOES NOT EXIST")
+			var data = ChumReader.read_skin(file)
+			if data == null:
+				print("INVALID DATA")
+			elif data["exists"]:
+				print("LOADED SKIN")
+				var skin = data["skin"]
+				var archive = file.get_archive()
+				set_meshes(skin["meshes"])
+				set_groups(skin["groups"])
+			else:
+				print("DOES NOT EXIST")
 
 func _on_TextureRect_item_rect_changed():
 	node_viewport.size = node_rect.rect_size

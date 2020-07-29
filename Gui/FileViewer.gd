@@ -24,7 +24,7 @@ func set_file(file):
 				set_tab(TAB_TEXTURE, file)
 			"MATERIAL", "MATERIALANIM":
 				set_tab(TAB_MATERIAL, file)
-			"SKIN":
+			"SKIN", "LOD":
 				set_tab(TAB_SKIN, file)
 			_:
 				set_tab(TAB_DEFAULT, file)

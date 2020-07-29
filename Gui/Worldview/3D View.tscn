@@ -11,9 +11,10 @@ environment = ExtResource( 1 )
 [sub_resource type="ViewportTexture" id=2]
 viewport_path = NodePath("Viewport")
 
-[node name="3D View" type="Control"]
+[node name="3D View" type="HSplitContainer"]
 anchor_right = 1.0
 anchor_bottom = 1.0
+focus_mode = 1
 script = ExtResource( 2 )
 __meta__ = {
 "_edit_use_anchors_": false
@@ -35,9 +36,20 @@ transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -13.8483 )
 
 [node name="Draw" type="Sprite" parent="Viewport"]
 
+[node name="Tree" type="PanelContainer" parent="."]
+margin_right = 15.0
+margin_bottom = 720.0
+
+[node name="Items" type="Tree" parent="Tree"]
+margin_left = 7.0
+margin_top = 7.0
+margin_right = 8.0
+margin_bottom = 713.0
+
 [node name="PanelContainer" type="PanelContainer" parent="."]
-anchor_right = 1.0
-anchor_bottom = 1.0
+margin_left = 27.0
+margin_right = 1280.0
+margin_bottom = 720.0
 __meta__ = {
 "_edit_use_anchors_": false
 }
@@ -45,7 +57,7 @@ __meta__ = {
 [node name="TextureRect" type="TextureRect" parent="PanelContainer"]
 margin_left = 7.0
 margin_top = 7.0
-margin_right = 1273.0
+margin_right = 1246.0
 margin_bottom = 713.0
 focus_mode = 1
 texture = SubResource( 2 )
@@ -72,7 +84,7 @@ __meta__ = {
 }
 
 [node name="CheckButton" type="CheckButton" parent="PanelContainer/TextureRect/Controls"]
-margin_right = 235.0
+margin_right = 200.0
 margin_bottom = 40.0
 text = "Show Node Names"
 align = 2

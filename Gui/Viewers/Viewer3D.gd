@@ -75,7 +75,7 @@ func set_file(file):
 		print("UNRECOGNIZED TYPE ", file.type)
 
 func _input(event):
-	if self.has_focus() or node_rect.has_focus():
+	if node_rect.has_focus():
 		if Input.is_action_pressed("view_look"):
 			if event is InputEventMouseMotion:
 				node_camera.move_mouse(event.relative)
@@ -87,17 +87,18 @@ func _input(event):
 			$SpeedLabel.text = "Speed: " + str(speed)
 
 func _physics_process(delta):
-	var tx = node_camera.get_camera_transform()
-	var input_dir := Vector3()
-	if Input.is_action_pressed("view_move_forward"):
-		input_dir += -tx.basis.z
-	if Input.is_action_pressed("view_move_backward"):
-		input_dir += tx.basis.z
-	if Input.is_action_pressed("view_move_left"):
-		input_dir += -tx.basis.x
-	if Input.is_action_pressed("view_move_right"):
-		input_dir += tx.basis.x
-	input_dir = input_dir.normalized()
-	if Input.is_action_pressed("view_move_slow"):
-		input_dir *= 0.5
-	node_camera.move_strafe(input_dir * delta * speed)
+	if node_rect.has_focus():
+		var tx = node_camera.get_camera_transform()
+		var input_dir := Vector3()
+		if Input.is_action_pressed("view_move_forward"):
+			input_dir += -tx.basis.z
+		if Input.is_action_pressed("view_move_backward"):
+			input_dir += tx.basis.z
+		if Input.is_action_pressed("view_move_left"):
+			input_dir += -tx.basis.x
+		if Input.is_action_pressed("view_move_right"):
+			input_dir += tx.basis.x
+		input_dir = input_dir.normalized()
+		if Input.is_action_pressed("view_move_slow"):
+			input_dir *= 0.5
+		node_camera.move_strafe(input_dir * delta * speed)

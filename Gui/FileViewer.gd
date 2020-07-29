@@ -18,13 +18,35 @@ func set_file(file):
 		set_tab(TAB_DEFAULT, file)
 	else:
 		match file.type:
-			"MESH", "SURFACE":
+			"MESH", "SURFACE", "LOD", "ROTSHAPE":
 				set_tab(TAB_VIEWER3D, file)
 			"BITMAP":
 				set_tab(TAB_TEXTURE, file)
 			"MATERIAL", "MATERIALANIM":
 				set_tab(TAB_MATERIAL, file)
-			"SKIN", "LOD":
+			"SKIN":
 				set_tab(TAB_SKIN, file)
 			_:
 				set_tab(TAB_DEFAULT, file)
+# FILES WITHOUT VIEWERS:
+# ANIMATION*
+# CAMERA
+# CAMERAZONE
+# COLLISIONVOL
+# GAMEOBJ
+# HFOG
+# LIGHT
+# MATERIALOBJ
+# NODE (appears in 3d view)
+# OCCLUDER
+# OMNI
+# PARTICLES*
+# RTC
+# SOUND*
+# SPLINE*
+# TXT (appears in text editor)
+# USERDEFINE (appears in text editor)
+# WARP
+# WORLD
+# 
+# * = files that could eventually get a custom viewer

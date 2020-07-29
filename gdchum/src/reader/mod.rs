@@ -14,6 +14,7 @@ pub mod node;
 pub mod lod;
 pub mod rotshape;
 pub mod spline;
+pub mod collisionvol;
 
 pub struct MaterialAnimEntry {
     resource: Resource,
@@ -347,6 +348,25 @@ impl ChumReader {
                     data.new_ref()
                 } else {
                     let value = spline::read_spline_from_res(x);
+                    self.cache.insert(hash, value.new_ref());
+                    value
+                }
+            })
+            .unwrap()
+    }
+
+    #[export]
+    pub fn read_collisionvol(&mut self, _owner: Node, data: Instance<ChumFile>) -> Dictionary {
+        self.read_collisionvol_nodeless(data)
+    }
+    pub fn read_collisionvol_nodeless(&mut self, data: Instance<ChumFile>) -> Dictionary {
+        data.script()
+            .map(|x| {
+                let hash = x.get_hash_id_ownerless();
+                if let Some(data) = self.cache.get(&hash) {
+                    data.new_ref()
+                } else {
+                    let value = collisionvol::read_collisionvol_from_res(x);
                     self.cache.insert(hash, value.new_ref());
                     value
                 }

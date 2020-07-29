@@ -11,3 +11,4 @@ pub mod node;
 pub mod lod;
 pub mod rotshape;
 pub mod spline;
+pub mod collisionvol;

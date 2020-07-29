@@ -18,7 +18,7 @@ func set_file(file):
 		set_tab(TAB_DEFAULT, file)
 	else:
 		match file.type:
-			"MESH", "SURFACE", "LOD", "ROTSHAPE":
+			"MESH", "SURFACE", "LOD", "ROTSHAPE", "SPLINE":
 				set_tab(TAB_VIEWER3D, file)
 			"BITMAP":
 				set_tab(TAB_TEXTURE, file)
@@ -43,7 +43,6 @@ func set_file(file):
 # PARTICLES*
 # RTC
 # SOUND*
-# SPLINE*
 # TXT (appears in text editor)
 # USERDEFINE (appears in text editor)
 # WARP

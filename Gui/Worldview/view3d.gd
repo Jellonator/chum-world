@@ -20,13 +20,15 @@ const SPEED_MULT = 1.25
 var speed = 2.0
 var show_node_names := false
 
-func get_simple_name(name: String) -> String:
+func get_simple_name(name: String, ftype: String) -> String:
 	var a = name.find_last(">")
 	if a != -1:
 		name = name.substr(a+1, -1)
 	var b = name.find(".")
 	if b != -1:
 		name = name.substr(0, b)
+	if ftype != "":
+		name = name + ":" + ftype
 	return name
 
 func try_add_node(nodedata: Dictionary, name: String):
@@ -39,14 +41,15 @@ func try_add_node(nodedata: Dictionary, name: String):
 		if resfile == null:
 			print("Could not load file ", resid, " from archive")
 		else:
-			ftype = ":" + resfile.type
+			ftype = resfile.type
 			var child = MeshData.try_file_to_spatial(resfile)
 			if child != null:
 				node_base.add_child(child)
 	node_surfaces.add_child(node_base)
 	node_draws.append({
 		"node": node_base,
-		"name": get_simple_name(name) + ftype
+		"name": get_simple_name(name, ftype),
+		"type": ftype
 	})
 
 func reset_surfaces():
@@ -108,6 +111,8 @@ func _on_Draw_draw():
 		return
 	var camera = node_viewport.get_camera()
 	for data in node_draws:
+		if data["type"] != "COLLISIONVOL":
+			continue
 		var node = data["node"]
 		var distance = node.global_transform.origin.distance_to(camera.global_transform.origin)
 		if distance >= DIST_MAX:

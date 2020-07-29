@@ -29,6 +29,8 @@ func get_emptynode_mesh():
 
 const COLLISIONVOL_GRID_SIZE := 8
 
+const COLLISIONVOL_SIZE := 0.5
+
 func get_collisionvol_mesh():
 	if _COLLISIONVOL_MESH != null:
 		return _COLLISIONVOL_MESH
@@ -36,18 +38,16 @@ func get_collisionvol_mesh():
 	st.begin(Mesh.PRIMITIVE_LINES)
 	st.set_material(preload("res://Shader/unshaded.tres"))
 	st.add_color(Color.yellow)
+	var s := COLLISIONVOL_SIZE
 	for ix in range(COLLISIONVOL_GRID_SIZE+1):
-		var x = range_lerp(ix, 0, COLLISIONVOL_GRID_SIZE, -1, 1)
-		for a in [-1, 1]:
-			_add_line(st, Vector3(x, a, 1), Vector3(x, a, -1))
-			_add_line(st, Vector3(a, x, 1), Vector3(a, x, -1))
-			_add_line(st, Vector3(x, 1, a), Vector3(x, -1, a))
-			_add_line(st, Vector3(a, 1, x), Vector3(a, -1, x))
-			_add_line(st, Vector3(1, x, a), Vector3(-1, x, a))
-			_add_line(st, Vector3(1, a, x), Vector3(-1, a, x))
-				
-#			var b = range_lerp(ib, 0, COLLISIONVOL_GRID_SIZE, -1, 1)
-#		_add_line(st, Vector3(a, -1, 1), Vector3(a, -1, 1))
+		var x = range_lerp(ix, 0, COLLISIONVOL_GRID_SIZE, -s, s)
+		for a in [-s, s]:
+			_add_line(st, Vector3(x, a, s), Vector3(x, a, -s))
+			_add_line(st, Vector3(a, x, s), Vector3(a, x, -s))
+			_add_line(st, Vector3(x, s, a), Vector3(x, -s, a))
+			_add_line(st, Vector3(a, s, x), Vector3(a, -s, x))
+			_add_line(st, Vector3(s, x, a), Vector3(-s, x, a))
+			_add_line(st, Vector3(s, a, x), Vector3(-s, a, x))
 	_COLLISIONVOL_MESH = st.commit()
 	return _COLLISIONVOL_MESH
 
@@ -162,9 +162,17 @@ func load_spline_from_file(file):
 		print("DOES NOT EXIST ", file.name)
 
 func load_collisionvol_from_file(file):
-	var mesh = MeshInstance.new()
-	mesh.mesh = get_collisionvol_mesh()
-	return mesh
+	var data = ChumReader.read_collisionvol(file)
+	if data == null:
+		print("INVALID DATA ", file.name)
+	elif data["exists"]:
+		var volume = data["collisionvol"]
+		var mesh = MeshInstance.new()
+		mesh.mesh = get_collisionvol_mesh()
+		mesh.transform = volume["local_transform"]
+		return mesh
+	else:
+		print("DOES NOT EXIST ", file.name)
 
 func try_file_to_spatial(file):
 	if file == null:

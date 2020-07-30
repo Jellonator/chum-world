@@ -4,7 +4,9 @@ const SCENE_EMPTYNODE = preload("res://Gui/Worldview/EmptyNode.tscn")
 
 var archive = null
 var archive_files = []
-var node_draws = []
+var tnodes_by_id := {}
+#var tnode_children := {}
+var tnode_root = null
 
 onready var node_surfaces := $Viewport/Surfaces
 onready var node_camera := $Viewport/CameraViewer
@@ -12,6 +14,7 @@ onready var node_rect := $PanelContainer/TextureRect
 onready var node_viewport := $Viewport
 onready var node_speed := $PanelContainer/TextureRect/SpeedLabel
 onready var node_draw := $Viewport/Draw
+onready var node_tree := $Tree/Items
 
 const MIN_SPEED = 0.0125
 const MAX_SPEED = 128
@@ -31,7 +34,7 @@ func get_simple_name(name: String, ftype: String) -> String:
 		name = name + ":" + ftype
 	return name
 
-func try_add_node(nodedata: Dictionary, name: String):
+func try_add_node(nodedata: Dictionary, file):
 	var node_base = Spatial.new()
 	node_base.transform = nodedata["global_transform"]
 	var ftype := ""
@@ -46,14 +49,19 @@ func try_add_node(nodedata: Dictionary, name: String):
 			if child != null:
 				node_base.add_child(child)
 	node_surfaces.add_child(node_base)
-	node_draws.append({
+	tnodes_by_id[file.get_hash_id()] = {
 		"node": node_base,
-		"name": get_simple_name(name, ftype),
-		"type": ftype
-	})
+		"name": get_simple_name(file.name, ftype),
+		"type": ftype,
+		"parent": nodedata["parent_id"],
+		"id": file.get_hash_id(),
+		"file": file,
+		"children": []
+	}
 
 func reset_surfaces():
-	node_draws.clear()
+	tnodes_by_id.clear()
+	tnode_root = null
 	for child in node_surfaces.get_children():
 		child.queue_free()
 	for file in archive_files:
@@ -62,7 +70,18 @@ func reset_surfaces():
 			if not node_data["exists"]:
 				print("COULD NOT READ ", file.name)
 			else:
-				try_add_node(node_data["node"], file.name)
+				try_add_node(node_data["node"], file)
+	for data in tnodes_by_id.values():
+		var parentid = data["parent"]
+		if parentid == 0:
+			print("ROOT: ", data["file"].name)
+			tnode_root = data
+		elif parentid in tnodes_by_id:
+			tnodes_by_id[parentid]["children"].append(data)
+		else:
+			print("INVALID PARENT ID ", parentid)
+#	if tnode_root != null:
+	node_tree.assemble_tree(tnode_root)
 
 func set_archive(p_archive):
 	self.archive = p_archive
@@ -103,18 +122,18 @@ func _physics_process(delta: float):
 		node_draw.update()
 
 const FONT := preload("res://Font/Base.tres")
-const DIST_MAX := 35
-const DIST_MIN := 25
+const DIST_MAX := 35.0
+const DIST_MIN := 25.0
 
 func _on_Draw_draw():
 	if not show_node_names:
 		return
 	var camera = node_viewport.get_camera()
-	for data in node_draws:
+	for data in tnodes_by_id.values():
 		var node = data["node"]
 		var distance = node.global_transform.origin.distance_to(camera.global_transform.origin)
-#		if distance >= DIST_MAX:
-#			continue
+		if distance >= DIST_MAX:
+			continue
 		var alpha = 1.0
 		if distance > DIST_MIN:
 			alpha = lerp(1.0, 0.0, (distance-DIST_MIN)/(DIST_MAX-DIST_MIN))

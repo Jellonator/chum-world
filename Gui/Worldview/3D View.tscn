@@ -1,9 +1,10 @@
-[gd_scene load_steps=7 format=2]
+[gd_scene load_steps=8 format=2]
 
 [ext_resource path="res://default_env.tres" type="Environment" id=1]
 [ext_resource path="res://Gui/Worldview/view3d.gd" type="Script" id=2]
 [ext_resource path="res://Gui/Gizmos/Grid3D.tscn" type="PackedScene" id=3]
 [ext_resource path="res://Gui/Gizmos/Camera.tscn" type="PackedScene" id=4]
+[ext_resource path="res://Gui/Worldview/NodeTree.gd" type="Script" id=5]
 
 [sub_resource type="World" id=1]
 environment = ExtResource( 1 )
@@ -37,17 +38,20 @@ transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -13.8483 )
 [node name="Draw" type="Sprite" parent="Viewport"]
 
 [node name="Tree" type="PanelContainer" parent="."]
-margin_right = 15.0
+margin_right = 174.0
 margin_bottom = 720.0
 
 [node name="Items" type="Tree" parent="Tree"]
 margin_left = 7.0
 margin_top = 7.0
-margin_right = 8.0
+margin_right = 167.0
 margin_bottom = 713.0
+rect_min_size = Vector2( 160, 0 )
+hide_root = true
+script = ExtResource( 5 )
 
 [node name="PanelContainer" type="PanelContainer" parent="."]
-margin_left = 27.0
+margin_left = 186.0
 margin_right = 1280.0
 margin_bottom = 720.0
 __meta__ = {
@@ -57,7 +61,7 @@ __meta__ = {
 [node name="TextureRect" type="TextureRect" parent="PanelContainer"]
 margin_left = 7.0
 margin_top = 7.0
-margin_right = 1246.0
+margin_right = 1087.0
 margin_bottom = 713.0
 focus_mode = 1
 texture = SubResource( 2 )

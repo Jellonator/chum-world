@@ -44,6 +44,15 @@ func get_preview_speed() -> float:
 		MIN_PREVIEW_SPEED, MAX_PREVIEW_SPEED)
 	return clamp(value, MIN_PREVIEW_SPEED, MAX_PREVIEW_SPEED)
 
+func push_info(text: String):
+	push(text, MessageLevel.INFORMATION)
+
+func push_warn(text: String):
+	push(text, MessageLevel.WARNING)
+
+func push_err(text: String):
+	push(text, MessageLevel.ERROR)
+
 # Log the given message
 func push(text: String, level: int):
 	var label := Label.new()

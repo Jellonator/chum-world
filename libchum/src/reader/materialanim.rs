@@ -146,21 +146,15 @@ impl MaterialAnimation {
         fmt.skip_n_bytes(file, 1)?;
         let length = fmt.read_f32(file)?;
         let track_texture = read_texture_track(file, fmt, |file, fmt| fmt.read_i32(file))?;
-        let track_scroll = read_track(file, fmt, |file, fmt| {
-            Ok(read_vec2(file, fmt)?)
-        })?;
-        let track_stretch = read_track(file, fmt, |file, fmt| {
-            Ok(read_vec2(file, fmt)?)
-        })?;
+        let track_scroll = read_track(file, fmt, |file, fmt| Ok(read_vec2(file, fmt)?))?;
+        let track_stretch = read_track(file, fmt, |file, fmt| Ok(read_vec2(file, fmt)?))?;
         let track_rotation = read_track(file, fmt, |file, fmt| fmt.read_f32(file))?;
         let track_color = read_track(file, fmt, |file, fmt| {
             let mut data = [0.0; 3];
             fmt.read_f32_into(file, &mut data)?;
             Ok(data)
         })?;
-        let _track_unknown = read_track(file, fmt, |file, fmt| {
-            Ok(read_vec3(file, fmt)?)
-        })?;
+        let _track_unknown = read_track(file, fmt, |file, fmt| Ok(read_vec3(file, fmt)?))?;
         let track_alpha = read_track(file, fmt, |file, fmt| fmt.read_f32(file))?;
         let _track_unk1 = read_track(file, fmt, |file, fmt| fmt.read_u32(file))?;
         let _track_unk2 = read_track(file, fmt, |file, fmt| fmt.read_u32(file))?;

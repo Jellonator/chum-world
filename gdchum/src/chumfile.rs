@@ -272,34 +272,38 @@ impl ChumFile {
         let mut scene = scene::Scene::new_empty();
         let archiveinstance = self.get_archive_instance();
         archiveinstance
-        .map(|archive, res| {
-                let names: Vec<String> = skin.vertex_groups.iter().map(|group| {
-                    archive.maybe_get_name_from_hash_str(group.group_id)
-                }).collect();
+            .map(|archive, res| {
+                let names: Vec<String> = skin
+                    .vertex_groups
+                    .iter()
+                    .map(|group| archive.maybe_get_name_from_hash_str(group.group_id))
+                    .collect();
                 for meshid in skin.meshes.iter() {
                     if let Some(meshfile) = archive.get_file_from_hash(res.new_ref(), *meshid) {
                         meshfile
                             .script()
-                            .map(|meshscript| {
-                                match meshscript.typestr.as_str() {
-                                    "MESH" => {
-                                        let mesh = match reader::tmesh::TMesh::read_data(
-                                            &mut meshscript.get_data_as_vec(),
-                                            self.format,
-                                        ) {
-                                            Ok(x) => x,
-                                            Err(err) => {
-                                                panic!("MESH file invalid: {}", err);
-                                            }
-                                        };
-                                        let mut trimesh = mesh.create_scene_mesh(
-                                            get_basename(&meshscript.namestr).to_owned(),
-                                        );
-                                        trimesh.skin = Some(skin.generate_scene_skin_for_mesh(names.as_slice(), *meshid, mesh.vertices.len()));
-                                        scene.add_trimesh(trimesh);
-                                    }
-                                    _ => {}
+                            .map(|meshscript| match meshscript.typestr.as_str() {
+                                "MESH" => {
+                                    let mesh = match reader::tmesh::TMesh::read_data(
+                                        &mut meshscript.get_data_as_vec(),
+                                        self.format,
+                                    ) {
+                                        Ok(x) => x,
+                                        Err(err) => {
+                                            panic!("MESH file invalid: {}", err);
+                                        }
+                                    };
+                                    let mut trimesh = mesh.create_scene_mesh(
+                                        get_basename(&meshscript.namestr).to_owned(),
+                                    );
+                                    trimesh.skin = Some(skin.generate_scene_skin_for_mesh(
+                                        names.as_slice(),
+                                        *meshid,
+                                        mesh.vertices.len(),
+                                    ));
+                                    scene.add_trimesh(trimesh);
                                 }
+                                _ => {}
                             })
                             .unwrap();
                     } else {

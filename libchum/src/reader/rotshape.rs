@@ -9,7 +9,7 @@ pub struct RotShape {
     pub size: [Vector3; 2],
     pub texcoords: [Vector2; 4],
     pub materialanim_id: i32,
-    pub billboard_mode: BillBoardMode
+    pub billboard_mode: BillBoardMode,
 }
 
 impl RotShape {
@@ -21,16 +21,13 @@ impl RotShape {
         let _unk6 = fmt.read_u32(file)?;
         let unk7 = fmt.read_f32(file)?;
         let _unk8 = fmt.read_u32(file)?;
-        let size = [
-            read_vec3(file, fmt)?,
-            read_vec3(file, fmt)?
-        ];
+        let size = [read_vec3(file, fmt)?, read_vec3(file, fmt)?];
         let _unk9 = fmt.read_u32(file)?;
         let texcoords = [
             read_vec2(file, fmt)?,
             read_vec2(file, fmt)?,
             read_vec2(file, fmt)?,
-            read_vec2(file, fmt)?
+            read_vec2(file, fmt)?,
         ];
         let _unk10 = fmt.read_u32(file)?;
         let materialanim_id = fmt.read_i32(file)?;
@@ -42,7 +39,7 @@ impl RotShape {
             size,
             texcoords,
             materialanim_id,
-            billboard_mode
+            billboard_mode,
         })
     }
 }
@@ -50,14 +47,14 @@ impl RotShape {
 #[derive(Copy, Clone, Debug)]
 pub enum BillBoardMode {
     YAxis,
-    Full
+    Full,
 }
 
 impl BillBoardMode {
     pub fn to_u16(&self) -> u16 {
         match self {
             BillBoardMode::YAxis => 0,
-            BillBoardMode::Full => 1
+            BillBoardMode::Full => 1,
         }
     }
 
@@ -65,7 +62,7 @@ impl BillBoardMode {
         match value {
             0 => Some(BillBoardMode::YAxis),
             1 => Some(BillBoardMode::Full),
-            _ => None
+            _ => None,
         }
     }
 }

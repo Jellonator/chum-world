@@ -2,13 +2,13 @@
 // interpretation of common file types.
 
 pub mod bitmap;
+pub mod collisionvol;
+pub mod lod;
 pub mod material;
 pub mod materialanim;
+pub mod node;
+pub mod rotshape;
 pub mod skin;
+pub mod spline;
 pub mod surface;
 pub mod tmesh;
-pub mod node;
-pub mod lod;
-pub mod rotshape;
-pub mod spline;
-pub mod collisionvol;

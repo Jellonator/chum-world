@@ -1,16 +1,16 @@
-use crate::reader::material;
 use crate::common::*;
 use crate::format::TotemFormat;
-use std::io::{self, Read};
-use std::fmt;
+use crate::reader::material;
 use std::error::Error;
+use std::fmt;
+use std::io::{self, Read};
 
 // node union
-const T_ROTSHAPEDATA: i32 =   733875652;
-const T_MESHDATA: i32 =     -1724712303;
-const T_SKEL: i32 =          1985457034;
-const T_SURFACEDATAS: i32 =   413080818;
-const T_LODDATA: i32 =       -141015160;
+const T_ROTSHAPEDATA: i32 = 733875652;
+const T_MESHDATA: i32 = -1724712303;
+const T_SKEL: i32 = 1985457034;
+const T_SURFACEDATAS: i32 = 413080818;
+const T_LODDATA: i32 = -141015160;
 const T_PARTICLESDATA: i32 = -241612565;
 // extra data union
 const E_USERDATA: i32 = -1879206489;
@@ -52,7 +52,7 @@ pub struct Node {
     pub unk3: [f32; 4],
     pub unk4: [u16; 2],
     pub global_transform: Mat4x4,
-    pub global_transform_inverse: Mat4x4
+    pub global_transform_inverse: Mat4x4,
 }
 
 impl Node {
@@ -91,10 +91,7 @@ impl Node {
                 fmt.skip_n_bytes(file, 4)?;
                 v
             },
-            unk1: [
-                fmt.read_f32(file)?,
-                fmt.read_f32(file)?
-            ],
+            unk1: [fmt.read_f32(file)?, fmt.read_f32(file)?],
             unk2: {
                 let mut data = [0u32; 8];
                 fmt.read_u32_into(file, &mut data)?;
@@ -105,12 +102,9 @@ impl Node {
                 fmt.read_f32_into(file, &mut data)?;
                 data
             },
-            unk4: [
-                fmt.read_u16(file)?,
-                fmt.read_u16(file)?
-            ],
+            unk4: [fmt.read_u16(file)?, fmt.read_u16(file)?],
             global_transform: read_mat4(file, fmt)?,
-            global_transform_inverse: read_mat4(file, fmt)?
+            global_transform_inverse: read_mat4(file, fmt)?,
         })
     }
 }
@@ -136,7 +130,7 @@ pub enum NodeDataUnion {
         light1_id: i32,
         light2_id: i32,
         nodes: Vec<i32>,
-        unk3: Vec<u32>
+        unk3: Vec<u32>,
     },
     NodeDataSkin {
         path_id: i32,
@@ -148,7 +142,7 @@ pub enum NodeDataUnion {
         unk4: Vec<NodeSkinUnk>,
         unk5: Vec<NodeSkinUnk>,
         unk6: Vec<NodeSkinUnk>,
-        unk7: Vec<NodeSkinUnk7>
+        unk7: Vec<NodeSkinUnk7>,
     },
     NodeDataSurface {
         data_id: i32,
@@ -156,14 +150,14 @@ pub enum NodeDataUnion {
         data: [f32; 5],
         unk1: Vec<NodeDataSurfaceUnk>,
         unk2: u32,
-        unk3: u32
+        unk3: u32,
     },
     NodeDataRotshape {
         data_id: i32,
         subtype_id: i32,
         unk1: [u32; 6],
         unk2: u16,
-        junk: [u8; 28]
+        junk: [u8; 28],
     },
     NodeDataMesh {
         data_id: i32,
@@ -174,8 +168,8 @@ pub enum NodeDataUnion {
         data_id: i32,
         subtype_id: i32,
         unk1: [f32; 5],
-        unk2: u16
-    }
+        unk2: u16,
+    },
 }
 
 impl NodeDataUnion {
@@ -184,7 +178,8 @@ impl NodeDataUnion {
         let datatype = fmt.read_i32(file)?;
         match datatype {
             0 => Ok(Empty),
-            T_ROTSHAPEDATA => { // ROTSHAPEDATA
+            T_ROTSHAPEDATA => {
+                // ROTSHAPEDATA
                 Ok(NodeDataRotshape {
                     data_id: fmt.read_i32(file)?,
                     subtype_id: fmt.read_i32(file)?,
@@ -198,10 +193,11 @@ impl NodeDataUnion {
                         let mut data = [0u8; 28];
                         fmt.read_u8_into(file, &mut data)?;
                         data
-                    }
+                    },
                 })
-            },
-            T_MESHDATA => { // MESHDATA
+            }
+            T_MESHDATA => {
+                // MESHDATA
                 Ok(NodeDataMesh {
                     data_id: fmt.read_i32(file)?,
                     subtype_id: fmt.read_i32(file)?,
@@ -209,11 +205,12 @@ impl NodeDataUnion {
                         let mut data = [0f32; 5];
                         fmt.read_f32_into(file, &mut data)?;
                         data
-                    }
+                    },
                 })
-            },
-            T_SKEL => { // SKEL
-                Ok(NodeDataSkin{
+            }
+            T_SKEL => {
+                // SKEL
+                Ok(NodeDataSkin {
                     path_id: fmt.read_i32(file)?,
                     subtype_id: fmt.read_i32(file)?,
                     unk1: {
@@ -262,10 +259,11 @@ impl NodeDataUnion {
                         }
                         v
                     },
-                    unk7: NodeSkinUnk7::read_from(file, fmt)?
+                    unk7: NodeSkinUnk7::read_from(file, fmt)?,
                 })
             }
-            T_SURFACEDATAS => { // SURFACEDATAS
+            T_SURFACEDATAS => {
+                // SURFACEDATAS
                 Ok(NodeDataSurface {
                     data_id: fmt.read_i32(file)?,
                     subtype_id: fmt.read_i32(file)?,
@@ -283,11 +281,12 @@ impl NodeDataUnion {
                         data
                     },
                     unk2: fmt.read_u32(file)?,
-                    unk3: fmt.read_u32(file)?
+                    unk3: fmt.read_u32(file)?,
                 })
-            },
-            T_LODDATA => { // LODDATA
-                Ok(NodeDataLod{
+            }
+            T_LODDATA => {
+                // LODDATA
+                Ok(NodeDataLod {
                     path_id: fmt.read_i32(file)?,
                     subtype_id: fmt.read_i32(file)?,
                     unk1: {
@@ -326,11 +325,12 @@ impl NodeDataUnion {
                             v.push(fmt.read_u32(file)?);
                         }
                         v
-                    }
+                    },
                 })
-            },
-            T_PARTICLESDATA => { // PARTICLESDATA
-                Ok(NodeDataParticles{
+            }
+            T_PARTICLESDATA => {
+                // PARTICLESDATA
+                Ok(NodeDataParticles {
                     data_id: fmt.read_i32(file)?,
                     subtype_id: fmt.read_i32(file)?,
                     unk1: {
@@ -338,25 +338,23 @@ impl NodeDataUnion {
                         fmt.read_f32_into(file, &mut data)?;
                         data
                     },
-                    unk2: fmt.read_u16(file)?
+                    unk2: fmt.read_u16(file)?,
                 })
             }
-            i => Err(NodeReadError::InvalidNodeData(i))?
+            i => Err(NodeReadError::InvalidNodeData(i))?,
         }
     }
 }
 
 pub struct NodeDataSurfaceUnk {
-    pub data: [u8; 104]
+    pub data: [u8; 104],
 }
 
 impl NodeDataSurfaceUnk {
     fn read_from<R: Read>(file: &mut R, fmt: TotemFormat) -> io::Result<NodeDataSurfaceUnk> {
         let mut data = [0u8; 104];
         fmt.read_u8_into(file, &mut data)?;
-        Ok(NodeDataSurfaceUnk {
-            data
-        })
+        Ok(NodeDataSurfaceUnk { data })
     }
 }
 
@@ -369,7 +367,7 @@ pub struct NodeSkinUnk2 {
     pub floatv1: [f32; 9],
     pub floatv2: [f32; 9],
     pub tx1: Mat4x4,
-    pub tx2: Mat4x4
+    pub tx2: Mat4x4,
 }
 
 impl NodeSkinUnk2 {
@@ -405,7 +403,7 @@ impl NodeSkinUnk2 {
             floatv1,
             floatv2,
             tx1,
-            tx2
+            tx2,
         })
     }
 }
@@ -420,11 +418,14 @@ pub enum NodeSkinUnk2ExtraDataUnion {
         type1: i32,
         type2: i32,
         data: Vec<u8>,
-    }
+    },
 }
 
 impl NodeSkinUnk2ExtraDataUnion {
-    fn read_from<R: Read>(file: &mut R, fmt: TotemFormat) -> Result<NodeSkinUnk2ExtraDataUnion, Box<dyn Error>> {
+    fn read_from<R: Read>(
+        file: &mut R,
+        fmt: TotemFormat,
+    ) -> Result<NodeSkinUnk2ExtraDataUnion, Box<dyn Error>> {
         let datatype = fmt.read_i32(file)?;
         match datatype {
             0 => Ok(NodeSkinUnk2ExtraDataUnion::Empty),
@@ -436,13 +437,9 @@ impl NodeSkinUnk2ExtraDataUnion {
                 for _ in 0..length {
                     data.push(fmt.read_u8(file)?);
                 }
-                Ok(NodeSkinUnk2ExtraDataUnion::UserDefine {
-                    type1,
-                    type2,
-                    data
-                })
-            },
-            i => Err(NodeReadError::InvalidNodeSkinUnk2ExtraData(i))?
+                Ok(NodeSkinUnk2ExtraDataUnion::UserDefine { type1, type2, data })
+            }
+            i => Err(NodeReadError::InvalidNodeSkinUnk2ExtraData(i))?,
         }
     }
 }
@@ -460,7 +457,7 @@ impl NodeSkinMaterial {
             filetype_id: fmt.read_i32(file)?,
             filename_id: fmt.read_i32(file)?,
             subtype_id: fmt.read_i32(file)?,
-            material: material::Material::read_from(file, fmt)?
+            material: material::Material::read_from(file, fmt)?,
         })
     }
 }
@@ -468,7 +465,7 @@ impl NodeSkinMaterial {
 pub struct NodeSkinUnk {
     pub unk1: [f32; 4],
     pub unk2_id: i32,
-    pub unk3_id: i32
+    pub unk3_id: i32,
 }
 
 impl NodeSkinUnk {
@@ -485,17 +482,20 @@ impl NodeSkinUnk {
 
 pub struct NodeSkinUnk7 {
     pub data: NodeDataUnion,
-    pub ids: Vec<i32>
+    pub ids: Vec<i32>,
 }
 
 impl NodeSkinUnk7 {
-    fn read_from<R: Read>(file: &mut R, fmt: TotemFormat) -> Result<Vec<NodeSkinUnk7>, Box<dyn Error>> {
+    fn read_from<R: Read>(
+        file: &mut R,
+        fmt: TotemFormat,
+    ) -> Result<Vec<NodeSkinUnk7>, Box<dyn Error>> {
         let num = fmt.read_u32(file)?;
         let mut v: Vec<NodeSkinUnk7> = Vec::with_capacity(num as usize);
         for _ in 0..num {
             v.push(NodeSkinUnk7 {
                 data: NodeDataUnion::read_from(file, fmt)?,
-                ids: Vec::new()
+                ids: Vec::new(),
             });
         }
         for i in 0..num {

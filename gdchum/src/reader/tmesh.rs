@@ -31,8 +31,8 @@ pub fn read_tmesh(
 ) -> Option<TMeshResult> {
     let tmesh = match tmesh::TMesh::read_data(data, fmt) {
         Ok(x) => x,
-        Err(_) => {
-            godot_print!("TMESH file invalid");
+        Err(err) => {
+            display_err!("Error loading MESH: {}\n{}", file.get_name_str(), err);
             return None;
         }
     };
@@ -89,7 +89,7 @@ pub fn read_tmesh(
         .map(|archive, res| {
             for (i, mat) in materials.iter().enumerate() {
                 if let Some(materialfile) = archive.get_file_from_hash(res.new_ref(), *mat) {
-                    let materialdict = reader.read_material_nodeless(materialfile);
+                    let materialdict = reader.read_material_nodeless(&materialfile);
                     if materialdict.get(&"exists".into()) == true.into() {
                         let material: Material = materialdict
                             .get(&"material".into())
@@ -97,10 +97,18 @@ pub fn read_tmesh(
                             .unwrap();
                         mesh.surface_set_material(i as i64, Some(material));
                     } else {
-                        godot_warn!("Material {} could not be loaded!", i);
+                        display_warn!(
+                            "Could not apply material {} to mesh {}.",
+                            materialfile.script().map(|x| x.get_name_str().to_owned()).unwrap(),
+                            file.get_name_str()
+                        );
                     }
                 } else {
-                    godot_warn!("Material {} does not exist!", i);
+                    display_warn!(
+                        "No such material with ID {} to apply to mesh {}.",
+                        mat,
+                        file.get_name_str()
+                    );
                 }
             }
         })

@@ -1,6 +1,6 @@
 use crate::format::TotemFormat;
-use std::io::{self, Read, Write};
 use nalgebra;
+use std::io::{self, Read, Write};
 use std::mem;
 
 pub type Vector3 = nalgebra::Vector3<f32>;
@@ -9,6 +9,15 @@ pub type Quaternion = nalgebra::Quaternion<f32>;
 pub type Mat4x4 = nalgebra::Matrix4<f32>;
 pub type Mat3x3 = nalgebra::Matrix3<f32>;
 pub type Color = nalgebra::Vector4<f32>;
+
+/// A good, safe capacity for small data structures
+/// e.g. primitives or Vector3
+/// This is so that out of memory errors don't occur with Vec::with_capacity
+pub const SAFE_CAPACITY_SMALL: u32 = 1024;
+/// A good, safe capacity for big data structures
+/// e.g. those that allocate memory (Vec) or > 100B
+/// This is so that out of memory errors don't occur with Vec::with_capacity
+pub const SAFE_CAPACITY_BIG: u32 = 128;
 
 pub fn read_quat<R: Read>(reader: &mut R, fmt: TotemFormat) -> io::Result<Quaternion> {
     let i = fmt.read_f32(reader)?;
@@ -33,7 +42,7 @@ pub fn read_vec3<R: Read>(reader: &mut R, fmt: TotemFormat) -> io::Result<Vector
     Ok(Vector3::new(
         fmt.read_f32(reader)?,
         fmt.read_f32(reader)?,
-        fmt.read_f32(reader)?
+        fmt.read_f32(reader)?,
     ))
 }
 
@@ -56,13 +65,13 @@ pub fn reinterpret_vec3(v: &Vector3) -> [u32; 3] {
         ]
     }
 }
-    
+
 /// Reinterpret a Vector2 as two u32. Used so that Vector3 can be a HashMap key.
 pub fn reinterpret_vec2(v: &Vector2) -> [u32; 2] {
     unsafe {
         [
             mem::transmute::<f32, u32>(v.x),
-            mem::transmute::<f32, u32>(v.y)
+            mem::transmute::<f32, u32>(v.y),
         ]
     }
 }
@@ -70,17 +79,14 @@ pub fn reinterpret_vec2(v: &Vector2) -> [u32; 2] {
 /// Linear interpolation between four Vector3
 pub fn qlerp_vec3(values: &[[Vector3; 2]; 2], t_x: f32, t_y: f32) -> Vector3 {
     values[0][0] * (1.0 - t_x) * (1.0 - t_y)
-    + values[0][1] * (t_x) * (1.0 - t_y)
-    + values[1][1] * (t_x) * (t_y)
-    + values[1][0] * (1.0 - t_x) * (t_y)
+        + values[0][1] * (t_x) * (1.0 - t_y)
+        + values[1][1] * (t_x) * (t_y)
+        + values[1][0] * (1.0 - t_x) * (t_y)
 }
 
 /// Read a Vector2 from a file (8 bytes)
 pub fn read_vec2<R: Read>(reader: &mut R, fmt: TotemFormat) -> io::Result<Vector2> {
-    Ok(Vector2::new(
-        fmt.read_f32(reader)?,
-        fmt.read_f32(reader)?
-    ))
+    Ok(Vector2::new(fmt.read_f32(reader)?, fmt.read_f32(reader)?))
 }
 
 /// Write a Vector2 to a file (8 bytes)
@@ -93,9 +99,9 @@ pub fn write_vec2<W: Write>(v: &Vector2, writer: &mut W, fmt: TotemFormat) -> io
 /// Linear interpolation between four Vector2
 pub fn qlerp_vec2(values: &[[Vector2; 2]; 2], t_x: f32, t_y: f32) -> Vector2 {
     values[0][0] * (1.0 - t_x) * (1.0 - t_y)
-    + values[0][1] * (t_x) * (1.0 - t_y)
-    + values[1][1] * (t_x) * (t_y)
-    + values[1][0] * (1.0 - t_x) * (t_y)
+        + values[0][1] * (t_x) * (1.0 - t_y)
+        + values[1][1] * (t_x) * (t_y)
+        + values[1][0] * (1.0 - t_x) * (t_y)
 }
 
 /// A point
@@ -219,7 +225,7 @@ impl TransformationHeader {
             item_subtype,
         })
     }
-    
+
     /// Write a transformation header to a file (100 bytes)
     pub fn write_to<W: Write>(&self, writer: &mut W, fmt: TotemFormat) -> io::Result<()> {
         for value in self.floats.iter() {

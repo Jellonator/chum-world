@@ -125,6 +125,7 @@ margin_left = 339.408
 margin_top = 297.42
 margin_right = 990.408
 margin_bottom = 397.42
+[connection signal="tab_changed" from="VBox/Tabs" to="." method="_on_Tabs_tab_changed"]
 [connection signal="text_changed" from="VBox/Tabs/Files/VBox/HBox/LineEdit" to="VBox/Tabs/Files/VBox/Tree" method="_on_LineEdit_text_changed"]
 [connection signal="file_selected" from="VBox/Tabs/Files/VBox/Tree" to="." method="_on_Tree_file_selected"]
 [connection signal="item_selected" from="VBox/Tabs/Files/VBox/Tree" to="VBox/Tabs/Files/VBox/Tree" method="_on_Tree_item_selected"]

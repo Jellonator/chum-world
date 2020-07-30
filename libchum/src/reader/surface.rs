@@ -353,7 +353,11 @@ impl<'a> SurfaceExport<'a> {
             for quad in mesh.quads.iter() {
                 for point in quad.points.iter() {
                     let nvert = vertices.len() as u64;
-                    if insert_if_not_exist(&mut vertices, reinterpret_vec3(&point.vertex), nvert + 1) {
+                    if insert_if_not_exist(
+                        &mut vertices,
+                        reinterpret_vec3(&point.vertex),
+                        nvert + 1,
+                    ) {
                         writeln!(
                             writer,
                             "v {} {} {}",
@@ -361,7 +365,8 @@ impl<'a> SurfaceExport<'a> {
                         )?;
                     }
                     let nnorm = normals.len() as u64;
-                    if insert_if_not_exist(&mut normals, reinterpret_vec3(&point.normal), nnorm + 1) {
+                    if insert_if_not_exist(&mut normals, reinterpret_vec3(&point.normal), nnorm + 1)
+                    {
                         writeln!(
                             writer,
                             "vn {} {} {}",
@@ -369,7 +374,11 @@ impl<'a> SurfaceExport<'a> {
                         )?;
                     }
                     let ntex = texcoords.len() as u64;
-                    if insert_if_not_exist(&mut texcoords, reinterpret_vec2(&point.texcoord), ntex + 1) {
+                    if insert_if_not_exist(
+                        &mut texcoords,
+                        reinterpret_vec2(&point.texcoord),
+                        ntex + 1,
+                    ) {
                         writeln!(writer, "vt {} {}", point.texcoord.x, point.texcoord.y)?;
                     }
                 }

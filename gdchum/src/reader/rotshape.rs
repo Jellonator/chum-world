@@ -2,8 +2,8 @@ use crate::chumfile::ChumFile;
 use crate::reader::ChumReader;
 use crate::util;
 use gdnative::*;
-use libchum::reader::rotshape;
 use libchum::common;
+use libchum::reader::rotshape;
 
 pub fn read_rotshape(
     data: &Vec<u8>,
@@ -13,8 +13,8 @@ pub fn read_rotshape(
 ) -> Option<Dictionary> {
     let rsdata = match rotshape::RotShape::read_from(&mut data.as_slice(), fmt) {
         Ok(x) => x,
-        Err(e) => {
-            godot_print!("ROTSHAPE file invalid: {}", e);
+        Err(err) => {
+            display_err!("Error loading ROTSHAPE: {}\n{}", file.get_name_str(), err);
             return None;
         }
     };
@@ -61,26 +61,33 @@ pub fn read_rotshape(
     );
     let archiveinstance = file.get_archive_instance();
     archiveinstance
-    .map(|archive, res| {
-        // let mat = &materials[i];
-        // for (i, mat) in materials.iter().enumerate() {
-        if let Some(materialfile) = archive.get_file_from_hash(res.new_ref(), rsdata.materialanim_id) {
-            let materialdict = reader.read_materialanim_nodeless(materialfile);
-            if materialdict.get(&"exists".into()) == true.into() {
-                let material: Material = materialdict
-                    .get(&"material".into())
-                    .try_to_object()
-                    .unwrap();
-                mesh.surface_set_material(0, Some(material));
+        .map(|archive, res| {
+            if let Some(materialfile) =
+                archive.get_file_from_hash(res.new_ref(), rsdata.materialanim_id)
+            {
+                let materialdict = reader.read_materialanim_nodeless(&materialfile);
+                if materialdict.get(&"exists".into()) == true.into() {
+                    let material: Material = materialdict
+                        .get(&"material".into())
+                        .try_to_object()
+                        .unwrap();
+                    mesh.surface_set_material(0, Some(material));
+                } else {
+                    display_warn!(
+                        "Could not apply material {} to rotshape {}.",
+                        materialfile.script().map(|x| x.get_name_str().to_owned()).unwrap(),
+                        file.get_name_str()
+                    );
+                }
             } else {
-                godot_warn!("Material {} could not be loaded!", rsdata.materialanim_id);
+                display_warn!(
+                    "No such material with ID {} to apply to rotshape {}.",
+                    rsdata.materialanim_id,
+                    file.get_name_str()
+                );
             }
-        } else {
-            godot_warn!("Material {} does not exist!", rsdata.materialanim_id);
-        }
-        // }
-    })
-    .unwrap();
+        })
+        .unwrap();
     data.set(&"mesh".into(), &mesh.to_variant());
     Some(data)
 }

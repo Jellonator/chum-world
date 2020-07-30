@@ -3,11 +3,11 @@ use crate::util;
 use gdnative::*;
 use libchum::reader::skin;
 
-pub fn read_skin(data: &Vec<u8>, fmt: libchum::format::TotemFormat) -> Option<Dictionary> {
+pub fn read_skin(data: &Vec<u8>, fmt: libchum::format::TotemFormat, file: &ChumFile) -> Option<Dictionary> {
     let skin = match skin::Skin::read_data(data, fmt) {
         Ok(x) => x,
-        Err(_) => {
-            godot_print!("SKIN file invalid");
+        Err(err) => {
+            display_err!("Error loading SKIN: {}\n{}", file.get_name_str(), err);
             return None;
         }
     };
@@ -33,16 +33,21 @@ pub fn read_skin(data: &Vec<u8>, fmt: libchum::format::TotemFormat) -> Option<Di
             sectiondata.set(&"vertices".into(), &vertices.to_variant());
             sectiondata.set(&"normals".into(), &normals.to_variant());
             if groupdict.contains(&section.mesh_index.to_variant()) {
-                godot_warn!(
-                    "Group {} already contains mesh {}",
+                display_warn!(
+                    "Group {} already contains mesh {}\n{}",
                     group.group_id,
-                    section.mesh_index
+                    section.mesh_index,
+                    file.get_name_str()
                 );
             }
             groupdict.set(&section.mesh_index.to_variant(), &sectiondata.to_variant());
         }
         if groups.contains(&group.group_id.to_variant()) {
-            godot_warn!("Skin already contains group {}", group.group_id);
+            display_warn!(
+                "Skin already contains group {}\n{}",
+                group.group_id,
+                file.get_name_str()
+            );
         }
         groups.set(&group.group_id.to_variant(), &groupdict.to_variant());
     }
@@ -53,7 +58,7 @@ pub fn read_skin(data: &Vec<u8>, fmt: libchum::format::TotemFormat) -> Option<Di
 pub fn read_skin_from_res(data: &ChumFile) -> Dictionary {
     let fmt = data.get_format();
     let mut dict = Dictionary::new();
-    match read_skin(&data.get_data_as_vec(), fmt) {
+    match read_skin(&data.get_data_as_vec(), fmt, data) {
         Some(mesh) => {
             dict.set(&"exists".into(), &true.into());
             dict.set(&"skin".into(), &mesh.to_variant());

@@ -4,17 +4,17 @@ use libchum::reader;
 use std::collections::HashMap;
 
 pub mod bitmap;
+pub mod collisionvol;
+pub mod lod;
 pub mod material;
 pub mod materialanim;
+pub mod node;
+pub mod rotshape;
 pub mod skin;
+pub mod spline;
 pub mod surface;
 pub mod text;
 pub mod tmesh;
-pub mod node;
-pub mod lod;
-pub mod rotshape;
-pub mod spline;
-pub mod collisionvol;
 
 pub struct MaterialAnimEntry {
     resource: Resource,
@@ -117,7 +117,7 @@ impl ChumReader {
             let id = track.data;
             textures.push(match archive.get_file_from_hash(archive_res.clone(), id) {
                 Some(texturefile) => {
-                    let texturedict = self.read_bitmap_nodeless(texturefile);
+                    let texturedict = self.read_bitmap_nodeless(&texturefile);
                     if texturedict.get(&"exists".into()) == true.into() {
                         godot_print!("Found material for {}", id);
                         let image: Image =
@@ -126,11 +126,20 @@ impl ChumReader {
                         texture.create_from_image(Some(image), 2);
                         Some(texture.cast().unwrap())
                     } else {
-                        godot_warn!("Material {} has invalid bitmap", id);
+                        display_warn!(
+                            "Could not apply bitmap {} to materialanim.",
+                            texturefile.script().map(|x| x.get_name_str().to_owned()).unwrap()
+                        );
                         None
                     }
                 }
-                None => None,
+                None => {
+                    display_warn!(
+                        "No such bitmap with ID {} to apply to materialanim.",
+                        id
+                    );
+                    None
+                },
             });
         }
         self.materialanims.push(MaterialAnimEntry {
@@ -143,9 +152,9 @@ impl ChumReader {
 
     #[export]
     pub fn read_text(&mut self, _owner: Node, data: Instance<ChumFile>) -> Dictionary {
-        self.read_text_nodeless(data)
+        self.read_text_nodeless(&data)
     }
-    pub fn read_text_nodeless(&mut self, data: Instance<ChumFile>) -> Dictionary {
+    pub fn read_text_nodeless(&mut self, data: &Instance<ChumFile>) -> Dictionary {
         // This is the only file that does not use the cache.
         // This is because any file can be viewed as text, so cacheing it as
         // text can mess up the cache.
@@ -159,9 +168,9 @@ impl ChumReader {
 
     #[export]
     pub fn read_tmesh(&mut self, _owner: Node, data: Instance<ChumFile>) -> Dictionary {
-        self.read_tmesh_nodeless(data)
+        self.read_tmesh_nodeless(&data)
     }
-    pub fn read_tmesh_nodeless(&mut self, data: Instance<ChumFile>) -> Dictionary {
+    pub fn read_tmesh_nodeless(&mut self, data: &Instance<ChumFile>) -> Dictionary {
         data.script()
             .map(|x| {
                 let hash = x.get_hash_id_ownerless();
@@ -178,9 +187,9 @@ impl ChumReader {
 
     #[export]
     pub fn read_surface(&mut self, _owner: Node, data: Instance<ChumFile>) -> Dictionary {
-        self.read_surface_nodeless(data)
+        self.read_surface_nodeless(&data)
     }
-    pub fn read_surface_nodeless(&mut self, data: Instance<ChumFile>) -> Dictionary {
+    pub fn read_surface_nodeless(&mut self, data: &Instance<ChumFile>) -> Dictionary {
         data.script()
             .map(|x| {
                 let hash = x.get_hash_id_ownerless();
@@ -197,9 +206,9 @@ impl ChumReader {
 
     #[export]
     pub fn read_bitmap(&mut self, _owner: Node, data: Instance<ChumFile>) -> Dictionary {
-        self.read_bitmap_nodeless(data)
+        self.read_bitmap_nodeless(&data)
     }
-    pub fn read_bitmap_nodeless(&mut self, data: Instance<ChumFile>) -> Dictionary {
+    pub fn read_bitmap_nodeless(&mut self, data: &Instance<ChumFile>) -> Dictionary {
         data.script()
             .map(|x| {
                 let hash = x.get_hash_id_ownerless();
@@ -216,9 +225,9 @@ impl ChumReader {
 
     #[export]
     pub fn read_material(&mut self, _owner: Node, data: Instance<ChumFile>) -> Dictionary {
-        self.read_material_nodeless(data)
+        self.read_material_nodeless(&data)
     }
-    pub fn read_material_nodeless(&mut self, data: Instance<ChumFile>) -> Dictionary {
+    pub fn read_material_nodeless(&mut self, data: &Instance<ChumFile>) -> Dictionary {
         data.script()
             .map(|x| {
                 let hash = x.get_hash_id_ownerless();
@@ -232,7 +241,7 @@ impl ChumReader {
             })
             .unwrap()
     }
-    pub fn read_material_nodeless_nocache(&mut self, data: Instance<ChumFile>) -> Dictionary {
+    pub fn read_material_nodeless_nocache(&mut self, data: &Instance<ChumFile>) -> Dictionary {
         data.script()
             .map(|x| {
                 let value = material::read_material_from_res(x, self);
@@ -243,9 +252,9 @@ impl ChumReader {
 
     #[export]
     pub fn read_materialanim(&mut self, _owner: Node, data: Instance<ChumFile>) -> Dictionary {
-        self.read_materialanim_nodeless(data)
+        self.read_materialanim_nodeless(&data)
     }
-    pub fn read_materialanim_nodeless(&mut self, data: Instance<ChumFile>) -> Dictionary {
+    pub fn read_materialanim_nodeless(&mut self, data: &Instance<ChumFile>) -> Dictionary {
         data.script()
             .map(|x| {
                 let hash = x.get_hash_id_ownerless();
@@ -262,9 +271,9 @@ impl ChumReader {
 
     #[export]
     pub fn read_skin(&mut self, _owner: Node, data: Instance<ChumFile>) -> Dictionary {
-        self.read_skin_nodeless(data)
+        self.read_skin_nodeless(&data)
     }
-    pub fn read_skin_nodeless(&mut self, data: Instance<ChumFile>) -> Dictionary {
+    pub fn read_skin_nodeless(&mut self, data: &Instance<ChumFile>) -> Dictionary {
         data.script()
             .map(|x| {
                 let hash = x.get_hash_id_ownerless();
@@ -281,9 +290,9 @@ impl ChumReader {
 
     #[export]
     pub fn read_node(&mut self, _owner: Node, data: Instance<ChumFile>) -> Dictionary {
-        self.read_node_nodeless(data)
+        self.read_node_nodeless(&data)
     }
-    pub fn read_node_nodeless(&mut self, data: Instance<ChumFile>) -> Dictionary {
+    pub fn read_node_nodeless(&mut self, data: &Instance<ChumFile>) -> Dictionary {
         data.script()
             .map(|x| {
                 let hash = x.get_hash_id_ownerless();
@@ -300,9 +309,9 @@ impl ChumReader {
 
     #[export]
     pub fn read_lod(&mut self, _owner: Node, data: Instance<ChumFile>) -> Dictionary {
-        self.read_lod_nodeless(data)
+        self.read_lod_nodeless(&data)
     }
-    pub fn read_lod_nodeless(&mut self, data: Instance<ChumFile>) -> Dictionary {
+    pub fn read_lod_nodeless(&mut self, data: &Instance<ChumFile>) -> Dictionary {
         data.script()
             .map(|x| {
                 let hash = x.get_hash_id_ownerless();
@@ -319,9 +328,9 @@ impl ChumReader {
 
     #[export]
     pub fn read_rotshape(&mut self, _owner: Node, data: Instance<ChumFile>) -> Dictionary {
-        self.read_rotshape_nodeless(data)
+        self.read_rotshape_nodeless(&data)
     }
-    pub fn read_rotshape_nodeless(&mut self, data: Instance<ChumFile>) -> Dictionary {
+    pub fn read_rotshape_nodeless(&mut self, data: &Instance<ChumFile>) -> Dictionary {
         data.script()
             .map(|x| {
                 let hash = x.get_hash_id_ownerless();
@@ -338,9 +347,9 @@ impl ChumReader {
 
     #[export]
     pub fn read_spline(&mut self, _owner: Node, data: Instance<ChumFile>) -> Dictionary {
-        self.read_spline_nodeless(data)
+        self.read_spline_nodeless(&data)
     }
-    pub fn read_spline_nodeless(&mut self, data: Instance<ChumFile>) -> Dictionary {
+    pub fn read_spline_nodeless(&mut self, data: &Instance<ChumFile>) -> Dictionary {
         data.script()
             .map(|x| {
                 let hash = x.get_hash_id_ownerless();
@@ -357,9 +366,9 @@ impl ChumReader {
 
     #[export]
     pub fn read_collisionvol(&mut self, _owner: Node, data: Instance<ChumFile>) -> Dictionary {
-        self.read_collisionvol_nodeless(data)
+        self.read_collisionvol_nodeless(&data)
     }
-    pub fn read_collisionvol_nodeless(&mut self, data: Instance<ChumFile>) -> Dictionary {
+    pub fn read_collisionvol_nodeless(&mut self, data: &Instance<ChumFile>) -> Dictionary {
         data.script()
             .map(|x| {
                 let hash = x.get_hash_id_ownerless();

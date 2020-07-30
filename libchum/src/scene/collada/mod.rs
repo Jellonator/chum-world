@@ -435,7 +435,7 @@ pub fn trimesh_to_geometry_node(mesh: &scene::SceneTriMesh) -> (geometry::Geomet
                 sid: None,
             }],
             node: vec![],
-            controller: vec![]
+            controller: vec![],
         },
     )
 }
@@ -464,7 +464,7 @@ pub fn trimesh_to_skin_node(
                 sid: Some("transform".to_owned()),
                 data: group.transform.clone(),
             }],
-            node: vec![]
+            node: vec![],
         });
     }
     let meshnode = Node {
@@ -478,15 +478,15 @@ pub fn trimesh_to_skin_node(
             url: format!("#{}", id_skin),
             name: None,
             skeleton: vec![controller::Skeleton {
-                data: format!("#{}-base", id_armature)
-            }]
+                data: format!("#{}-base", id_armature),
+            }],
         }],
         layer: vec![],
         transform: vec![NodeTransform::Matrix {
             sid: Some("transform".to_owned()),
             data: mesh.transform.clone(),
         }],
-        node: vec![]
+        node: vec![],
     };
     (
         controller,
@@ -499,7 +499,7 @@ pub fn trimesh_to_skin_node(
             layer: vec![],
             transform: vec![NodeTransform::Matrix {
                 sid: Some("transform".to_owned()),
-                data: common::Mat4x4::identity()
+                data: common::Mat4x4::identity(),
             }],
             node: vec![
                 Node {
@@ -516,11 +516,11 @@ pub fn trimesh_to_skin_node(
                         data: mesh.transform.clone(),
                     }],
                 },
-                meshnode
+                meshnode,
             ],
             geometry: vec![],
             controller: vec![],
-        }
+        },
     )
 }
 

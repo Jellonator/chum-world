@@ -3,11 +3,15 @@ use crate::chumfile::ChumFile;
 use gdnative::*;
 use libchum::reader::lod;
 
-pub fn read_lod(data: &Vec<u8>, fmt: libchum::format::TotemFormat) -> Option<Dictionary> {
+pub fn read_lod(
+    data: &Vec<u8>,
+    fmt: libchum::format::TotemFormat,
+    chumfile: &ChumFile,
+) -> Option<Dictionary> {
     let loddata = match lod::Lod::read_from(&mut data.as_slice(), fmt) {
         Ok(x) => x,
         Err(e) => {
-            godot_print!("LOD file invalid: {}", e);
+            display_err!("Error loading LOD: {}\n{}", chumfile.get_name_str(), e);
             return None;
         }
     };
@@ -19,7 +23,7 @@ pub fn read_lod(data: &Vec<u8>, fmt: libchum::format::TotemFormat) -> Option<Dic
 pub fn read_lod_from_res(data: &ChumFile) -> Dictionary {
     let fmt = data.get_format();
     let mut dict = Dictionary::new();
-    match read_lod(&data.get_data_as_vec(), fmt) {
+    match read_lod(&data.get_data_as_vec(), fmt, data) {
         Some(mesh) => {
             dict.set(&"exists".into(), &true.into());
             dict.set(&"lod".into(), &mesh.to_variant());

@@ -111,12 +111,10 @@ func _on_Draw_draw():
 		return
 	var camera = node_viewport.get_camera()
 	for data in node_draws:
-		if data["type"] != "COLLISIONVOL":
-			continue
 		var node = data["node"]
 		var distance = node.global_transform.origin.distance_to(camera.global_transform.origin)
-		if distance >= DIST_MAX:
-			continue
+#		if distance >= DIST_MAX:
+#			continue
 		var alpha = 1.0
 		if distance > DIST_MIN:
 			alpha = lerp(1.0, 0.0, (distance-DIST_MIN)/(DIST_MAX-DIST_MIN))

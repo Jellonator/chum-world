@@ -2,11 +2,15 @@ use crate::chumfile::ChumFile;
 use gdnative::*;
 use libchum::reader::bitmap;
 
-pub fn read_bitmap(data: &Vec<u8>, fmt: libchum::format::TotemFormat) -> Option<(Reference, bool)> {
+pub fn read_bitmap(
+    data: &Vec<u8>,
+    fmt: libchum::format::TotemFormat,
+    chumfile: &ChumFile,
+) -> Option<(Reference, bool)> {
     let bitmap = match bitmap::Bitmap::read_data(data, fmt) {
         Ok(x) => x,
         Err(err) => {
-            godot_print!("BITMAP file invalid: {}", err);
+            display_err!("Error loading BITMAP: {}\n{}", chumfile.get_name_str(), err);
             return None;
         }
     };
@@ -34,7 +38,7 @@ pub fn read_bitmap(data: &Vec<u8>, fmt: libchum::format::TotemFormat) -> Option<
 pub fn read_bitmap_from_res(data: &ChumFile) -> Dictionary {
     let fmt = data.get_format();
     let mut dict = Dictionary::new();
-    match read_bitmap(&data.get_data_as_vec(), fmt) {
+    match read_bitmap(&data.get_data_as_vec(), fmt, data) {
         Some((mesh, hasalpha)) => {
             dict.set(&"exists".into(), &true.into());
             dict.set(&"bitmap".into(), &mesh.to_variant());

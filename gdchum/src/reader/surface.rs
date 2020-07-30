@@ -8,7 +8,7 @@ use libchum::reader::surface;
 pub struct SurfaceResult {
     // pub surface: Reference,
     pub transform: common::Mat4x4,
-    pub surfaces: Vec<Reference>
+    pub surfaces: Vec<Reference>,
 }
 
 pub fn read_surface(
@@ -19,8 +19,8 @@ pub fn read_surface(
 ) -> Option<SurfaceResult> {
     let surfaceobj = match surface::SurfaceObject::read_data(data, fmt) {
         Ok(x) => x,
-        Err(_) => {
-            godot_print!("SURFACE file invalid");
+        Err(err) => {
+            display_err!("Error loading SURFACE: {}\n{}", file.get_name_str(), err);
             return None;
         }
     };
@@ -66,10 +66,10 @@ pub fn read_surface(
         let archiveinstance = file.get_archive_instance();
         archiveinstance
             .map(|archive, res| {
-                // let mat = &materials[i];
-                // for (i, mat) in materials.iter().enumerate() {
-                if let Some(materialfile) = archive.get_file_from_hash(res.new_ref(), surface.material_index) {
-                    let materialdict = reader.read_materialanim_nodeless(materialfile);
+                if let Some(materialfile) =
+                    archive.get_file_from_hash(res.new_ref(), surface.material_index)
+                {
+                    let materialdict = reader.read_materialanim_nodeless(&materialfile);
                     if materialdict.get(&"exists".into()) == true.into() {
                         let material: Material = materialdict
                             .get(&"material".into())
@@ -77,12 +77,19 @@ pub fn read_surface(
                             .unwrap();
                         mesh.surface_set_material(0, Some(material));
                     } else {
-                        godot_warn!("Material {} could not be loaded!", surface.material_index);
+                        display_warn!(
+                            "Could not apply materialanim {} to surface {}.",
+                            materialfile.script().map(|x| x.get_name_str().to_owned()).unwrap(),
+                            file.get_name_str()
+                        );
                     }
                 } else {
-                    godot_warn!("Material {} does not exist!", surface.material_index);
+                    display_warn!(
+                        "No such materialanim with ID {} to apply to surface {}.",
+                        surface.material_index,
+                        file.get_name_str()
+                    );
                 }
-                // }
             })
             .unwrap();
     }

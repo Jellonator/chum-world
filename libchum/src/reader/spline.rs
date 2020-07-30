@@ -7,7 +7,7 @@ pub struct Spline {
     pub vertices: Vec<Vector3>,
     pub sections: Vec<SplineSection>,
     pub unk4: [f32; 4],
-    pub length: f32
+    pub length: f32,
 }
 
 impl Spline {
@@ -60,7 +60,7 @@ impl Spline {
                 fmt.read_f32(file)?,
                 fmt.read_f32(file)?,
             ],
-            length: fmt.read_f32(file)?
+            length: fmt.read_f32(file)?,
         })
     }
 }
@@ -72,7 +72,7 @@ pub struct SplineSection {
     pub p2_t: u32,
     pub unk: u32,
     pub section_length: f32,
-    pub subsections: [SplineSubsection; 8]
+    pub subsections: [SplineSubsection; 8],
 }
 
 impl SplineSection {
@@ -93,7 +93,7 @@ impl SplineSection {
                 SplineSubsection::read_from(file, fmt)?,
                 SplineSubsection::read_from(file, fmt)?,
                 SplineSubsection::read_from(file, fmt)?,
-            ]
+            ],
         })
     }
 }
@@ -101,7 +101,7 @@ impl SplineSection {
 pub struct SplineSubsection {
     pub point1: Vector3,
     pub point2: Vector3,
-    pub subsection_length: f32
+    pub subsection_length: f32,
 }
 
 impl SplineSubsection {
@@ -109,7 +109,7 @@ impl SplineSubsection {
         Ok(SplineSubsection {
             point1: read_vec3(file, fmt)?,
             point2: read_vec3(file, fmt)?,
-            subsection_length: fmt.read_f32(file)?
+            subsection_length: fmt.read_f32(file)?,
         })
     }
 }

@@ -1,6 +1,7 @@
 use crate::common::*;
 use crate::format::TotemFormat;
-use std::io::{self, Read};
+use crate::util::error::*;
+use std::io::Read;
 
 pub struct CollisionVol {
     pub transform: TransformationHeader,
@@ -14,47 +15,59 @@ pub struct CollisionVol {
     pub unk5: Vec<i32>,
     pub bitmaps: Vec<i32>,
     pub volume_type: i32,
-    pub unk6: u32
+    pub unk6: u32,
 }
 
 impl CollisionVol {
     /// Read a CollisionVol from a file
-    pub fn read_from<R: Read>(file: &mut R, fmt: TotemFormat) -> io::Result<CollisionVol> {
+    pub fn read_from<R: Read>(file: &mut R, fmt: TotemFormat) -> StructUnpackResult<CollisionVol> {
         Ok(CollisionVol {
-            transform: TransformationHeader::read_from(file, fmt)?,
-            unk1: fmt.read_u32(file)?,
-            local_transform: read_mat4(file, fmt)?,
-            local_transform_inv: read_mat4(file, fmt)?,
-            unk2: fmt.read_u32(file)?,
-            unk3: fmt.read_u32(file)?,
+            transform: unpack_map(
+                TransformationHeader::read_from(file, fmt),
+                "CollisionVol",
+                "transform",
+            )?,
+            unk1: unpack_map(fmt.read_u32(file), "CollisionVol", "unk1")?,
+            local_transform: unpack_map(read_mat4(file, fmt), "CollisionVol", "local_transform")?,
+            local_transform_inv: unpack_map(
+                read_mat4(file, fmt),
+                "CollisionVol",
+                "local_transform_inv",
+            )?,
+            unk2: unpack_map(fmt.read_u32(file), "CollisionVol", "unk2")?,
+            unk3: unpack_map(fmt.read_u32(file), "CollisionVol", "unk3")?,
             node_ids: {
                 let mut data = [0i32; 10];
-                fmt.read_i32_into(file, &mut data)?;
+                unpack_map(
+                    fmt.read_i32_into(file, &mut data),
+                    "CollisionVol",
+                    "node_ids",
+                )?;
                 data
             },
             unk4: {
                 let mut data = [0f32; 10];
-                fmt.read_f32_into(file, &mut data)?;
+                unpack_map(fmt.read_f32_into(file, &mut data), "CollisionVol", "unk4")?;
                 data
             },
             unk5: {
-                let num = fmt.read_u32(file)?;
+                let num = unpack_map(fmt.read_u32(file), "CollisionVol", "unk5.len")?;
                 let mut vec = Vec::with_capacity(num as usize);
                 for _ in 0..num {
-                    vec.push(fmt.read_i32(file)?);
+                    vec.push(unpack_map(fmt.read_i32(file), "CollisionVol", "unk5")?);
                 }
                 vec
             },
             bitmaps: {
-                let num = fmt.read_u32(file)?;
+                let num = unpack_map(fmt.read_u32(file), "CollisionVol", "bitmaps.len")?;
                 let mut vec = Vec::with_capacity(num as usize);
                 for _ in 0..num {
-                    vec.push(fmt.read_i32(file)?);
+                    vec.push(unpack_map(fmt.read_i32(file), "CollisionVol", "bitmaps")?);
                 }
                 vec
             },
-            volume_type: fmt.read_i32(file)?,
-            unk6: fmt.read_u32(file)?
+            volume_type: unpack_map(fmt.read_i32(file), "CollisionVol", "volume_type")?,
+            unk6: unpack_map(fmt.read_u32(file), "CollisionVol", "unk6")?,
         })
     }
 }

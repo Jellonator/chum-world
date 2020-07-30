@@ -2,10 +2,10 @@
 pub mod structure;
 #[macro_use]
 pub mod util;
-pub mod format;
 pub mod animsymbol;
 pub mod common;
 pub mod dgc;
+pub mod format;
 pub mod ngc;
 pub mod reader;
 pub mod scene;

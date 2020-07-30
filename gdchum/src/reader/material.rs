@@ -1,8 +1,8 @@
 use crate::chumfile::ChumFile;
 use crate::reader::ChumReader;
+use crate::util;
 use gdnative::*;
 use libchum::reader::material;
-use crate::util;
 
 pub fn read_material(
     data: &Vec<u8>,
@@ -12,19 +12,26 @@ pub fn read_material(
 ) -> Option<Reference> {
     let matdata = match material::Material::read_data(data, fmt) {
         Ok(x) => x,
-        Err(_) => {
-            godot_print!("TMESH file invalid");
+        Err(err) => {
+            display_err!("Error loading MATERIAL: {}\n{}", file.get_name_str(), err);
             return None;
         }
     };
     let mut material = ShaderMaterial::new();
-    let shader: Resource = ResourceLoader::godot_singleton()
-        .load(
-            "res://Shader/material.shader".into(),
-            "Shader".into(),
-            false,
-        )
-        .unwrap();
+    let shader: Resource = match ResourceLoader::godot_singleton().load(
+        "res://Shader/material.shader".into(),
+        "Shader".into(),
+        false,
+    ) {
+        Some(x) => x,
+        None => {
+            display_err!(
+                "Error loading MATERIAL: {}\nCould not read shader.",
+                file.get_name_str(),
+            );
+            return None;
+        }
+    };
     material.set_shader(Some(shader.cast().unwrap()));
     let archiveinstance = file.get_archive_instance();
     archiveinstance
@@ -33,7 +40,7 @@ pub fn read_material(
                 if let Some(texturefile) =
                     archive.get_file_from_hash(res.clone(), matdata.get_texture())
                 {
-                    let texturedict = reader.read_bitmap_nodeless(texturefile);
+                    let texturedict = reader.read_bitmap_nodeless(&texturefile);
                     if texturedict.get(&"exists".into()) == true.into() {
                         let image: Image =
                             texturedict.get(&"bitmap".into()).try_to_object().unwrap();
@@ -42,17 +49,25 @@ pub fn read_material(
                         material.set_shader_param("has_texture".into(), true.into());
                         material.set_shader_param("arg_texture".into(), texture.into());
                     } else {
-                        godot_warn!("Material {} has invalid bitmap", matdata.get_texture());
+                        display_warn!(
+                            "Could not apply bitmap {} to material {}.",
+                            texturefile.script().map(|x| x.get_name_str().to_owned()).unwrap(),
+                            file.get_name_str()
+                        );
                     }
                 } else {
-                    godot_warn!("Material {} could not be found", matdata.get_texture());
+                    display_warn!(
+                        "No such bitmap with ID {} to apply to material {}.",
+                        matdata.get_texture(),
+                        file.get_name_str()
+                    );
                 }
             }
             if matdata.texture_reflection != 0 {
                 if let Some(texturefile) =
                     archive.get_file_from_hash(res, matdata.texture_reflection)
                 {
-                    let texturedict = reader.read_bitmap_nodeless(texturefile);
+                    let texturedict = reader.read_bitmap_nodeless(&texturefile);
                     if texturedict.get(&"exists".into()) == true.into() {
                         godot_print!("Found material for {}", matdata.texture_reflection);
                         let image: Image =
@@ -62,22 +77,25 @@ pub fn read_material(
                         material.set_shader_param("has_reflection".into(), true.into());
                         material.set_shader_param("arg_reflection".into(), texture.into());
                     } else {
-                        godot_warn!("Material {} has invalid bitmap", matdata.texture_reflection);
+                        display_warn!(
+                            "Could not apply bitmap {} to material {}.",
+                            texturefile.script().map(|x| x.get_name_str().to_owned()).unwrap(),
+                            file.get_name_str()
+                        );
                     }
                 } else {
-                    godot_warn!("Material {} could not be found", matdata.texture_reflection);
+                    display_warn!(
+                        "No such bitmap with ID {} to apply to material {}.",
+                        matdata.get_texture(),
+                        file.get_name_str()
+                    );
                 }
             }
         })
         .unwrap();
     material.set_shader_param(
         "arg_color".into(),
-        Vector3::new(
-            matdata.color[0],
-            matdata.color[1],
-            matdata.color[2]
-        )
-        .to_variant(),
+        Vector3::new(matdata.color[0], matdata.color[1], matdata.color[2]).to_variant(),
     );
     material.set_shader_param("arg_alpha".into(), matdata.color[3].to_variant());
     let tx = util::mat3x3_to_transform2d(&matdata.transform);

@@ -10,7 +10,7 @@ const MAX_LINES := 1000
 const MAX_PREVIEW_QUEUE := 500
 const PREVIEW_QUEUE_UPPER := 20
 const MAX_PREVIEW_NODES := 20
-const DEFAULT_PREVIEW_SPEED := 1/5.0 # When queue is empty
+const DEFAULT_PREVIEW_SPEED := 1/8.0 # When queue is empty
 const MIN_PREVIEW_SPEED := 1/2.0 # When queue >= 1
 const MAX_PREVIEW_SPEED := 1/0.1 # When queue >= 100
 
@@ -38,6 +38,8 @@ const TEXT_COLOR = {
 
 # Get the speed at which preview messages will disappear.
 func get_preview_speed() -> float:
+	if _preview_queue.size() == 0 and _preview_nodes.size() < 5:
+		return DEFAULT_PREVIEW_SPEED
 	var value = range_lerp(_preview_queue.size(), 0, PREVIEW_QUEUE_UPPER,
 		MIN_PREVIEW_SPEED, MAX_PREVIEW_SPEED)
 	return clamp(value, MIN_PREVIEW_SPEED, MAX_PREVIEW_SPEED)
@@ -121,3 +123,6 @@ func _on_EmptyPreview_pressed():
 		item["label"].queue_free()
 	_preview_nodes.clear()
 	_preview_queue.clear()
+
+func _ready():
+	print(get_tree().root.get_path_to(self))

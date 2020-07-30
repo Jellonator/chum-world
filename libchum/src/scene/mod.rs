@@ -33,7 +33,7 @@ impl SceneSkinVertex {
 #[derive(Clone, Debug)]
 pub struct SceneGroup {
     pub name: String,
-    pub transform: common::Mat4x4
+    pub transform: common::Mat4x4,
 }
 
 /// Skin for a scene object.
@@ -56,7 +56,12 @@ pub struct SceneTriMesh {
     pub skin: Option<SceneSkin>,
 }
 
-pub fn merge_scene_skins(a: Option<SceneSkin>, b: Option<SceneSkin>, averts: usize, bverts: usize) -> Option<SceneSkin> {
+pub fn merge_scene_skins(
+    a: Option<SceneSkin>,
+    b: Option<SceneSkin>,
+    averts: usize,
+    bverts: usize,
+) -> Option<SceneSkin> {
     if a.is_none() && b.is_none() {
         return None;
     }
@@ -66,7 +71,7 @@ pub fn merge_scene_skins(a: Option<SceneSkin>, b: Option<SceneSkin>, averts: usi
     } else {
         SceneSkin {
             groups: Vec::new(),
-            vertices: vec![SceneSkinVertex::new_empty(); averts]
+            vertices: vec![SceneSkinVertex::new_empty(); averts],
         }
     };
     let b = if let Some(mut skin) = b {
@@ -75,13 +80,17 @@ pub fn merge_scene_skins(a: Option<SceneSkin>, b: Option<SceneSkin>, averts: usi
     } else {
         SceneSkin {
             groups: Vec::new(),
-            vertices: vec![SceneSkinVertex::new_empty(); bverts]
+            vertices: vec![SceneSkinVertex::new_empty(); bverts],
         }
     };
     let mut b_indices: Vec<usize> = Vec::new();
     let mut groups = a.groups;
     for group in b.groups {
-        if let Some((i, _x)) = groups.iter().enumerate().find(|(_i, x)| x.name == group.name) {
+        if let Some((i, _x)) = groups
+            .iter()
+            .enumerate()
+            .find(|(_i, x)| x.name == group.name)
+        {
             b_indices.push(i);
         } else {
             b_indices.push(groups.len());
@@ -91,18 +100,17 @@ pub fn merge_scene_skins(a: Option<SceneSkin>, b: Option<SceneSkin>, averts: usi
     let mut vertices = a.vertices;
     for vert in b.vertices {
         vertices.push(SceneSkinVertex {
-            influences: vert.influences.into_iter().map(|inf| {
-                SceneSkinInfluence {
+            influences: vert
+                .influences
+                .into_iter()
+                .map(|inf| SceneSkinInfluence {
                     joint: b_indices[inf.joint],
-                    weight: inf.weight
-                }
-            }).collect()
+                    weight: inf.weight,
+                })
+                .collect(),
         })
     }
-    Some(SceneSkin {
-        groups,
-        vertices
-    })
+    Some(SceneSkin { groups, vertices })
 }
 
 pub fn merge_meshes(mut a: SceneTriMesh, mut b: SceneTriMesh) -> SceneTriMesh {
@@ -128,7 +136,7 @@ pub fn merge_meshes(mut a: SceneTriMesh, mut b: SceneTriMesh) -> SceneTriMesh {
         texcoords: a.texcoords,
         normals: a.normals,
         elements: a.elements,
-        skin
+        skin,
     }
 }
 

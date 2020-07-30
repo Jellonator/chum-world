@@ -2,11 +2,12 @@ use gdnative::*;
 use libchum;
 use std::fs::File;
 
+#[macro_use]
+pub mod util;
 pub mod bytedata;
 pub mod chumfile;
 pub mod names;
 pub mod reader;
-pub mod util;
 
 #[derive(NativeClass)]
 #[inherit(Resource)]
@@ -58,24 +59,38 @@ impl ChumArchive {
             "PS2" => libchum::format::TotemFormat::PS2,
             "NGC" => libchum::format::TotemFormat::NGC,
             a => {
-                godot_print!("{}", a);
+                display_err!(
+                    "Error loading archive: {}, {}\nInvalid format input {}",
+                    ngcpath,
+                    dgcpath,
+                    a
+                );
                 return gdnative::GodotError::InvalidParameter as i64;
             }
         };
         let mut ngcfile = match File::open(ngcpath.to_string()) {
             Ok(x) => x,
-            Err(_) => return gdnative::GodotError::FileBadPath as i64,
+            Err(e) => {
+                display_err!("Error loading archive: {}, {}\n{}", ngcpath, dgcpath, e);
+                return gdnative::GodotError::FileBadPath as i64;
+            }
         };
         let mut dgcfile = match File::open(dgcpath.to_string()) {
             Ok(x) => x,
-            Err(_) => return gdnative::GodotError::FileBadPath as i64,
+            Err(e) => {
+                display_err!("Error loading archive: {}, {}\n{}", ngcpath, dgcpath, e);
+                return gdnative::GodotError::FileBadPath as i64;
+            }
         };
         match libchum::ChumArchive::read_chum_archive(&mut ngcfile, &mut dgcfile, format) {
             Ok(x) => {
                 self.archive = Some(x);
                 0
             }
-            Err(_) => gdnative::GodotError::FileCantOpen as i64,
+            Err(e) => {
+                display_err!("Error loading archive: {}, {}\n{}", ngcpath, dgcpath, e);
+                gdnative::GodotError::FileCantOpen as i64
+            }
         }
     }
 

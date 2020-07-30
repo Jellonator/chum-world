@@ -8,11 +8,13 @@ const MENU_FILE_SAVE_AS := 2
 const MENU_ARCHIVE_BULKEXPORT := 0
 
 var archive: ChumArchive
+var should_3dview_reload := false
 
 onready var node_menu_file := $VBox/Menu/File
 onready var node_tree := $VBox/Tabs/Files/VBox/Tree
 onready var node_editor := $VBox/Tabs/Files/EditorList
 onready var node_view3d := $"VBox/Tabs/3D View"
+onready var node_tabs := $VBox/Tabs
 
 func _ready():
 #	node_editor.set_file(null)
@@ -62,7 +64,8 @@ func load_archive(ngc: String, dgc: String, ftype: String):
 		popup.set_item_disabled(popup.get_item_id(MENU_FILE_SAVE_AS), false)
 	ChumReader.clear_cache()
 	node_tree.set_archive(archive)
-	node_view3d.set_archive(archive)
+	should_3dview_reload = true
+	_on_Tabs_tab_changed(node_tabs.current_tab)
 
 func _on_ArchiveFileSelector_files_selected(ngc: String, dgc: String, ftype: String):
 	load_archive(ngc, dgc, ftype)
@@ -81,3 +84,8 @@ func _on_SaveDialog_file_selected(path):
 
 func _on_ArchiveFileSaver_files_selected(ngc, dgc, ftype):
 	archive.save(ngc, dgc)
+
+func _on_Tabs_tab_changed(tab):
+	if tab == 1 and should_3dview_reload:
+		should_3dview_reload = false
+		node_view3d.set_archive(archive)

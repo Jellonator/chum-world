@@ -2,6 +2,75 @@ use gdnative::*;
 use libchum::common;
 use libchum::structure::{ArrayData, ChumStructVariant, IntType};
 
+#[derive(Copy, Clone, Debug)]
+pub enum MessageLevel {
+    Information,
+    Warning,
+    Error,
+}
+
+impl MessageLevel {
+    pub fn to_i64(&self) -> i64 {
+        match self {
+            MessageLevel::Information => 0,
+            MessageLevel::Warning => 1,
+            MessageLevel::Error => 2,
+        }
+    }
+
+    pub fn get_name(&self) -> &str {
+        match self {
+            MessageLevel::Information => "INFO",
+            MessageLevel::Warning => "WARN",
+            MessageLevel::Error => "ERR",
+        }
+    }
+}
+
+pub fn push_message(value: &str, level: MessageLevel) {
+    println!("{}: {}", level.get_name(), value);
+    let engine = Engine::godot_singleton();
+    unsafe {
+        if let Some(mut lognode) = engine
+            .get_main_loop()
+            .and_then(|mainloop| mainloop.cast::<SceneTree>())
+            .and_then(|scenetree| scenetree.get_root())
+            .and_then(|node| node.get_node("MessageOverlay".into()))
+        {
+            lognode.call(
+                "push".into(),
+                &[value.to_variant(), level.to_i64().to_variant()],
+            );
+        } else {
+            println!("WARN: Could not print information to editor.");
+        }
+    }
+}
+
+#[macro_export]
+macro_rules! display_info {
+    ($($arg:tt)*) => {
+        use $crate::util::{MessageLevel, push_message};
+        push_message(&format!($($arg)*), MessageLevel::Information)
+    };
+}
+
+#[macro_export]
+macro_rules! display_warn {
+    ($($arg:tt)*) => {
+        use $crate::util::{MessageLevel, push_message};
+        push_message(&format!($($arg)*), MessageLevel::Warning)
+    };
+}
+
+#[macro_export]
+macro_rules! display_err {
+    ($($arg:tt)*) => {
+        use $crate::util::{MessageLevel, push_message};
+        push_message(&format!($($arg)*), MessageLevel::Error)
+    };
+}
+
 pub fn quat_to_godot(value: &common::Quaternion) -> Quat {
     Quat::quaternion(value[0], value[1], value[2], value[3])
 }
@@ -34,35 +103,31 @@ pub fn mat3x3_to_transform2d(tx: &common::Mat3x3) -> Transform2D {
 }
 
 pub fn transform_to_mat4x4(value: &Transform) -> common::Mat4x4 {
-    common::Mat4x4::from_row_slice(
-        &[
-            value.basis.elements[0].x,
-            value.basis.elements[0].y,
-            value.basis.elements[0].z,
-            0.0,
-            value.basis.elements[1].x,
-            value.basis.elements[1].y,
-            value.basis.elements[1].z,
-            0.0,
-            value.basis.elements[2].x,
-            value.basis.elements[2].y,
-            value.basis.elements[2].z,
-            0.0,
-            value.origin.x,
-            value.origin.y,
-            value.origin.z,
-            1.0,
-        ]
-    )
+    common::Mat4x4::from_row_slice(&[
+        value.basis.elements[0].x,
+        value.basis.elements[0].y,
+        value.basis.elements[0].z,
+        0.0,
+        value.basis.elements[1].x,
+        value.basis.elements[1].y,
+        value.basis.elements[1].z,
+        0.0,
+        value.basis.elements[2].x,
+        value.basis.elements[2].y,
+        value.basis.elements[2].z,
+        0.0,
+        value.origin.x,
+        value.origin.y,
+        value.origin.z,
+        1.0,
+    ])
 }
 
 pub fn transform2d_to_mat3x3(value: &Transform2D) -> common::Mat3x3 {
     let array = value.to_row_major_array();
-    common::Mat3x3::from_row_slice(
-        &[
-            array[0], array[2], array[4], array[1], array[3], array[5], 0.0, 0.0, 1.0,
-        ]
-    )
+    common::Mat3x3::from_row_slice(&[
+        array[0], array[2], array[4], array[1], array[3], array[5], 0.0, 0.0, 1.0,
+    ])
 }
 
 /// Convert a Godot Dictionary to a ChumStructVariant
@@ -130,9 +195,7 @@ pub fn dict_to_struct(dict: &Dictionary) -> ChumStructVariant {
         }
         "color" => {
             let value = dict.get_ref(&"value".into()).try_to_color().unwrap();
-            ChumStructVariant::Color(common::Color::new(
-                value.r, value.g, value.b, value.a
-            ))
+            ChumStructVariant::Color(common::Color::new(value.r, value.g, value.b, value.a))
         }
         "reference" => {
             let value = dict.get_ref(&"value".into()).try_to_i64().unwrap() as i32;
@@ -328,12 +391,7 @@ pub fn struct_to_dict(value: &ChumStructVariant) -> Dictionary {
             dict.set(&"type".into(), &"color".into());
             dict.set(
                 &"value".into(),
-                &Variant::from_color(&Color::rgba(
-                    color[0],
-                    color[1],
-                    color[2],
-                    color[3]
-                )),
+                &Variant::from_color(&Color::rgba(color[0], color[1], color[2], color[3])),
             );
             dict
         }

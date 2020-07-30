@@ -11,8 +11,8 @@ pub fn read_materialanim(
 ) -> Option<Resource> {
     let matanimdata = match materialanim::MaterialAnimation::read_data(data, fmt) {
         Ok(x) => x,
-        Err(_) => {
-            godot_print!("MATERIALANIM file invalid");
+        Err(err) => {
+            display_err!("Error loading MATERIALANIM: {}\n{}", file.get_name_str(), err);
             return None;
         }
     };
@@ -22,18 +22,33 @@ pub fn read_materialanim(
             if let Some(materialfile) =
                 archive.get_file_from_hash(archiveres.clone(), matanimdata.material_id)
             {
-                let materialdict = reader.read_material_nodeless_nocache(materialfile);
+                let materialdict = reader.read_material_nodeless_nocache(&materialfile);
                 if materialdict.get(&"exists".into()) == true.into() {
                     let res: Resource = materialdict
                         .get(&"material".into())
                         .try_to_object()
                         .unwrap();
-                    reader.add_materialanim(res.clone(), matanimdata, archive, archiveres.new_ref());
+                    reader.add_materialanim(
+                        res.clone(),
+                        matanimdata,
+                        archive,
+                        archiveres.new_ref(),
+                    );
                     Some(res)
                 } else {
+                    display_warn!(
+                        "Could not apply material {} to materialanim {}.",
+                        materialfile.script().map(|x| x.get_name_str().to_owned()).unwrap(),
+                        file.get_name_str()
+                    );
                     None
                 }
             } else {
+                display_warn!(
+                    "No such material with ID {} to apply to material {}.",
+                    matanimdata.material_id,
+                    file.get_name_str()
+                );
                 None
             }
         })

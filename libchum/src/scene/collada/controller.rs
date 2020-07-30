@@ -179,8 +179,17 @@ pub fn skin_to_controller(skin: &scene::SceneSkin, meshname: &str) -> Controller
                         name: None,
                         digits: None,
                         magnitude: None,
-                        data: skin.groups.iter()
-                            .flat_map(|group| group.transform.try_inverse().unwrap_or(common::Mat4x4::identity()).as_slice().to_vec())
+                        data: skin
+                            .groups
+                            .iter()
+                            .flat_map(|group| {
+                                group
+                                    .transform
+                                    .try_inverse()
+                                    .unwrap_or(common::Mat4x4::identity())
+                                    .as_slice()
+                                    .to_vec()
+                            })
                             .collect(),
                     },
                     technique_common: Some(SourceTechnique {

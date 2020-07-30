@@ -21,6 +21,7 @@ pub struct MaterialAnimEntry {
     data: reader::materialanim::MaterialAnimation,
     textures: Vec<Option<Texture>>,
     time: f32,
+    original_transform: Transform,
 }
 
 #[derive(NativeClass)]
@@ -91,14 +92,14 @@ impl ChumReader {
                     })
                     .post_translate(-Vector2::new(0.5, 0.5));
                 let realtx = Transform {
-                    basis: Basis {
+                    basis: entry.original_transform.basis * Basis {
                         elements: [
                             Vector3::new(tx.m11, tx.m12, 0.0),
                             Vector3::new(tx.m21, tx.m22, 0.0),
                             Vector3::new(tx.m31, tx.m32, 1.0),
                         ],
                     },
-                    origin: Vector3::new(0.0, 0.0, 0.0),
+                    origin: entry.original_transform.origin,
                 };
                 material.set_shader_param("arg_texcoord_transform".into(), realtx.to_variant());
             }
@@ -142,11 +143,13 @@ impl ChumReader {
                 },
             });
         }
+        let material: ShaderMaterial = resource.cast().unwrap();
         self.materialanims.push(MaterialAnimEntry {
             time: 0.0,
             data,
             textures,
             resource,
+            original_transform: material.get_shader_param("arg_texcoord_transform".into()).to_transform()
         });
     }
 

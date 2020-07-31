@@ -26,14 +26,13 @@ pub fn read_surface(
     };
     let mut meshes: Vec<Reference> = Vec::new();
     let surfaces = surfaceobj.generate_meshes(surface::SurfaceGenMode::BezierInterp(8));
-    // let mut materials = Vec::new();
     for surface in surfaces {
         let mut mesh = ArrayMesh::new();
         let mut verts = Vector3Array::new();
         let mut texcoords = Vector2Array::new();
+        let mut uv2 = Vector2Array::new();
         let mut normals = Vector3Array::new();
         let mut meshdata = VariantArray::new();
-        // let mut colordata = ColorArray::new();
         for quad in surface.quads.iter() {
             for tri in &quad.tris() {
                 for point in &tri.points {
@@ -48,14 +47,18 @@ pub fn read_surface(
                         point.normal.y,
                         point.normal.z,
                     ));
+                    uv2.push(&Vector2::new(
+                        point.uv2.x,
+                        point.uv2.y
+                    ));
                 }
             }
         }
-        // materials.push(surface.material_index);
         meshdata.resize(ArrayMesh::ARRAY_MAX as i32);
         meshdata.set(ArrayMesh::ARRAY_VERTEX as i32, &Variant::from(&verts));
         meshdata.set(ArrayMesh::ARRAY_NORMAL as i32, &Variant::from(&normals));
         meshdata.set(ArrayMesh::ARRAY_TEX_UV as i32, &Variant::from(&texcoords));
+        meshdata.set(ArrayMesh::ARRAY_TEX_UV2 as i32, &Variant::from(&uv2));
         mesh.add_surface_from_arrays(
             Mesh::PRIMITIVE_TRIANGLES,
             meshdata,

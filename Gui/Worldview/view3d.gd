@@ -41,15 +41,22 @@ func try_add_node(nodedata: Dictionary, file):
 	node_base.transform = nodedata["global_transform"]
 	var ftype := ""
 	var resid = nodedata["resource_id"]
+	var meshes = []
 	if resid != 0:
 		var resfile = archive.get_file_from_hash(resid)
 		if resfile == null:
-			print("Could not load file ", resid, " from archive")
+			var child = MeshData.load_emptymesh(meshes)
+			node_base.add_child(child)
+			MessageOverlay.push_warn(
+				"Could not load file %d from archive" % resid)
 		else:
 			ftype = resfile.type
-			var child = MeshData.try_file_to_spatial(resfile)
+			var child = MeshData.try_file_to_spatial(resfile, meshes)
 			if child != null:
 				node_base.add_child(child)
+	else:
+		var child = MeshData.load_emptymesh(meshes)
+		node_base.add_child(child)
 	node_surfaces.add_child(node_base)
 	tnodes_by_id[file.get_hash_id()] = {
 		"node": node_base,
@@ -58,7 +65,8 @@ func try_add_node(nodedata: Dictionary, file):
 		"parent": nodedata["parent_id"],
 		"id": file.get_hash_id(),
 		"file": file,
-		"children": []
+		"children": [],
+		"meshes": meshes
 	}
 
 func reset_surfaces():
@@ -98,6 +106,8 @@ func _input(event):
 		if Input.is_action_pressed("view_look"):
 			if event is InputEventMouseMotion:
 				node_camera.move_mouse(event.relative)
+		if event.is_action_pressed("view_focus"):
+			camera_focus_to(selected_node)
 		if event.is_action_pressed("view_speed_increase"):
 			speed = clamp(speed * SPEED_MULT, MIN_SPEED, MAX_SPEED)
 			node_speed.text = "Speed: " + str(speed)
@@ -127,10 +137,28 @@ const FONT := preload("res://Font/Base.tres")
 const DIST_MAX := 35.0
 const DIST_MIN := 25.0
 
+func draw_node_label(camera, text: String, position: Vector3, color: Color):
+	if not camera.is_position_behind(position):
+		var size = FONT.get_string_size(text)
+		var screen_pos = camera.unproject_position(position)
+		# draw BG
+		var rect := Rect2(screen_pos - Vector2(size.x/2, 4), size)
+		rect = rect.grow_individual(4.0, 0.0, 4.0, 0.0)
+		var bgcolor := Color(0, 0, 0, 0.6 * color.a)
+		node_draw.draw_rect(rect, bgcolor)
+		# draw FG
+		screen_pos.x -= size.x / 2
+		screen_pos.y += size.y / 2
+		node_draw.draw_string(FONT, screen_pos, text, color)
+
 func _on_Draw_draw():
-	if not show_node_names:
-		return
 	var camera = node_viewport.get_camera()
+	if not show_node_names:
+		if selected_node != null:
+			var color = Color(1.0, 1.0, 1.0, 1.0)
+			var pos = selected_node["node"].global_transform.origin
+			draw_node_label(camera, selected_node["name"], pos, color)
+		return
 	for data in tnodes_by_id.values():
 		var node = data["node"]
 		var distance = node.global_transform.origin.distance_to(camera.global_transform.origin)
@@ -140,9 +168,7 @@ func _on_Draw_draw():
 		if distance > DIST_MIN:
 			alpha = lerp(1.0, 0.0, (distance-DIST_MIN)/(DIST_MAX-DIST_MIN))
 		var color = Color(1.0, 1.0, 1.0, alpha)
-		if not camera.is_position_behind(node.transform.origin):
-			var screen_pos = camera.unproject_position(node.transform.origin)
-			node_draw.draw_string(FONT, screen_pos, data["name"], color)
+		draw_node_label(camera, data["name"], node.global_transform.origin, color)
 
 func _on_CheckButton_toggled(button_pressed):
 	show_node_names = button_pressed
@@ -152,8 +178,21 @@ func _ready():
 
 func _on_Items_node_selected(node):
 	print("SELECTED ", node["name"])
+	if selected_node != null:
+		set_node_focus_material(selected_node, false)
 	selected_node = node
-	camera_focus_to(node)
+	if selected_node != null:
+		set_node_focus_material(selected_node, true)
+	if node != null:
+		camera_focus_to(node)
+
+func set_node_focus_material(node, is_focused: bool):
+	for meshdata in node["meshes"]:
+		var mat = meshdata["original"]
+		if is_focused:
+			mat = meshdata["focus"]
+		meshdata["mesh"].set_surface_material(
+			meshdata["surface"], mat)
 
 func camera_focus_to(node):
 	node_camera.move_look(node["node"].global_transform, 2.0)

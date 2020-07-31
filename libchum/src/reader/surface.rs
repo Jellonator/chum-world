@@ -35,10 +35,66 @@ pub struct Curve {
     pub p2_t: u16,
 }
 
+/// A point
+#[derive(Clone, Debug)]
+#[repr(C)]
+pub struct SurfPoint {
+    pub vertex: Vector3,
+    pub texcoord: Vector2,
+    pub normal: Vector3,
+    pub uv2: Vector2
+}
+
+impl SurfPoint {
+    pub fn with(point: &Point, uv2: Vector2) -> SurfPoint {
+        SurfPoint {
+            uv2,
+            vertex: point.vertex.clone(),
+            texcoord: point.texcoord.clone(),
+            normal: point.normal.clone()
+        }
+    }
+}
+
+/// A triangle (three points)
+#[derive(Clone, Debug)]
+#[repr(C)]
+pub struct SurfTri {
+    pub points: [SurfPoint; 3],
+}
+
+/// A quad (four points)
+#[derive(Clone, Debug)]
+#[repr(C)]
+pub struct SurfQuad {
+    pub points: [SurfPoint; 4],
+}
+
+impl SurfQuad {
+    /// Iterate triangles in this quad
+    pub fn tris(&self) -> [SurfTri; 2] {
+        let a = SurfTri {
+            points: [
+                self.points[0].clone(),
+                self.points[2].clone(),
+                self.points[1].clone(),
+            ],
+        };
+        let b = SurfTri {
+            points: [
+                self.points[0].clone(),
+                self.points[3].clone(),
+                self.points[2].clone(),
+            ],
+        };
+        [a, b]
+    }
+}
+
 /// Output mesh
 pub struct OutMesh {
     pub material_index: i32,
-    pub quads: Vec<Quad>,
+    pub quads: Vec<SurfQuad>,
 }
 
 /// The surface generation mode
@@ -57,29 +113,33 @@ fn generate_surface_singlequad(
     curves: &[[Vector3; 4]; 4],
     normals: &[Vector3; 4],
     texcoords: &[Vector2; 4],
-) -> Vec<Quad> {
+) -> Vec<SurfQuad> {
     let mut quads = Vec::with_capacity(1);
-    quads.push(Quad {
+    quads.push(SurfQuad {
         points: [
-            Point {
+            SurfPoint {
                 vertex: curves[0][0],
                 texcoord: texcoords[0],
                 normal: normals[0],
+                uv2: Vector2::new(0.0, 0.0),
             },
-            Point {
+            SurfPoint {
                 vertex: curves[1][0],
                 texcoord: texcoords[1],
                 normal: normals[1],
+                uv2: Vector2::new(1.0, 0.0),
             },
-            Point {
+            SurfPoint {
                 vertex: curves[2][0],
                 texcoord: texcoords[2],
                 normal: normals[2],
+                uv2: Vector2::new(1.0, 1.0),
             },
-            Point {
+            SurfPoint {
                 vertex: curves[3][0],
                 texcoord: texcoords[3],
                 normal: normals[3],
+                uv2: Vector2::new(0.0, 1.0),
             },
         ],
     });
@@ -91,7 +151,7 @@ fn generate_surface_quad9(
     curves: &[[Vector3; 4]; 4],
     normals: &[Vector3; 4],
     texcoords: &[Vector2; 4],
-) -> Vec<Quad> {
+) -> Vec<SurfQuad> {
     let mut quads = Vec::with_capacity(9);
     let pts_tl = curves[0][1] - curves[0][0] + curves[3][2];
     let pts_tr = curves[0][2] - curves[0][3] + curves[1][1];
@@ -117,27 +177,31 @@ fn generate_surface_quad9(
     }
     for iy in 0..3 {
         for ix in 0..3 {
-            quads.push(Quad {
+            quads.push(SurfQuad {
                 points: [
-                    Point {
+                    SurfPoint {
                         vertex: points[iy][ix],
                         texcoord: ttexc[iy][ix],
                         normal: tnorm[iy][ix],
+                        uv2: Vector2::new((ix as f32 + 0.0) / 3.0, (iy as f32 + 0.0) / 3.0)
                     },
-                    Point {
+                    SurfPoint {
                         vertex: points[iy][ix + 1],
                         texcoord: ttexc[iy][ix + 1],
                         normal: tnorm[iy][ix + 1],
+                        uv2: Vector2::new((ix as f32 + 0.0) / 3.0, (iy as f32 + 1.0) / 3.0)
                     },
-                    Point {
+                    SurfPoint {
                         vertex: points[iy + 1][ix + 1],
                         texcoord: ttexc[iy + 1][ix + 1],
                         normal: tnorm[iy + 1][ix + 1],
+                        uv2: Vector2::new((ix as f32 + 1.0) / 3.0, (iy as f32 + 1.0) / 3.0)
                     },
-                    Point {
+                    SurfPoint {
                         vertex: points[iy + 1][ix],
                         texcoord: ttexc[iy + 1][ix],
                         normal: tnorm[iy + 1][ix],
+                        uv2: Vector2::new((ix as f32 + 1.0) / 3.0, (iy as f32 + 0.0) / 3.0)
                     },
                 ],
             });
@@ -152,7 +216,7 @@ fn generate_surface_bezier(
     normals: &[Vector3; 4],
     texcoords: &[Vector2; 4],
     steps: usize,
-) -> Vec<Quad> {
+) -> Vec<SurfQuad> {
     let pts_tl = curves[0][1] - curves[0][0] + curves[3][2];
     let pts_tr = curves[0][2] - curves[0][3] + curves[1][1];
     let pts_bl = curves[2][2] - curves[2][3] + curves[3][1];
@@ -173,12 +237,24 @@ fn generate_surface_bezier(
     let mut quads = Vec::new();
     for iy in 0..steps {
         for ix in 0..steps {
-            quads.push(Quad {
+            quads.push(SurfQuad {
                 points: [
-                    vertices[iy][ix].clone(),
-                    vertices[iy][ix + 1].clone(),
-                    vertices[iy + 1][ix + 1].clone(),
-                    vertices[iy + 1][ix].clone(),
+                    SurfPoint::with(
+                        &vertices[iy][ix], 
+                        Vector2::new((ix as f32 + 0.0) / (steps as f32), (iy as f32 + 0.0) / (steps as f32))
+                    ),
+                    SurfPoint::with(
+                        &vertices[iy][ix + 1], 
+                        Vector2::new((ix as f32 + 0.0) / (steps as f32), (iy as f32 + 1.0) / (steps as f32))
+                    ),
+                    SurfPoint::with(
+                        &vertices[iy + 1][ix + 1], 
+                        Vector2::new((ix as f32 + 1.0) / (steps as f32), (iy as f32 + 1.0) / (steps as f32))
+                    ),
+                    SurfPoint::with(
+                        &vertices[iy + 1][ix], 
+                        Vector2::new((ix as f32 + 1.0) / (steps as f32), (iy as f32 + 0.0) / (steps as f32))
+                    ),
                 ],
             });
         }
@@ -192,7 +268,7 @@ pub fn generate_surface(
     normals: &[Vector3; 4],
     texcoords: &[Vector2; 4],
     mode: SurfaceGenMode,
-) -> Vec<Quad> {
+) -> Vec<SurfQuad> {
     match mode {
         SurfaceGenMode::SingleQuad => generate_surface_singlequad(curves, normals, texcoords),
         SurfaceGenMode::ControlPointsAsVertices => {

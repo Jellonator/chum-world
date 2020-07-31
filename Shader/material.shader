@@ -8,6 +8,7 @@ uniform sampler2D arg_texture;
 uniform sampler2D arg_reflection;
 uniform bool has_texture = false;
 uniform bool has_reflection = false;
+uniform int do_highlight = 0;
 
 void vertex() {
 	// Small hack: special, mesh-specific rendering information is stored in UV2.
@@ -71,4 +72,15 @@ void fragment() {
 	outcol.rgb += col2.rgb * col2.a;
 	ALBEDO = outcol.rgb;
 	ALPHA = outcol.a;
+	if (do_highlight == 1) {
+		if ((mod(UV.x * 8.0 - 0.025, 1.0) >= 0.95) || (mod(UV.y * 8.0 - 0.025, 1.0) >= 0.95)) {
+			EMISSION = vec3(1.0, 1.0, 1.0);
+			ALPHA = 1.0;
+		}
+	} else if (do_highlight == 2) {
+		if ((mod(UV2.x * 8.0 - 0.025, 1.0) >= 0.95) || (mod(UV2.y * 8.0 - 0.025, 1.0) >= 0.95)) {
+			EMISSION = vec3(1.0, 1.0, 1.0);
+			ALPHA = 1.0;
+		}
+	}
 }

@@ -38,7 +38,6 @@ pub fn read_tmesh(
     };
     let mut mesh = ArrayMesh::new();
     let generated_tris = tmesh.gen_triangles();
-    // let num = generated_tris.len();
     let mesh_materials = tmesh.get_materials();
     let mut materials = Vec::new();
     let mut surfaces = Vec::new();

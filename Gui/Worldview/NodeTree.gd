@@ -1,5 +1,7 @@
 extends Tree
 
+signal node_selected(node)
+
 var added_nodes = {}
 const NODE_TYPE_ICONS = {
 	"SURFACE": preload("res://Gui/Icon/surface.png"),
@@ -9,11 +11,16 @@ const NODE_TYPE_ICONS = {
 	"LOD": preload("res://Gui/Icon/lod.png"),
 	"MESH": preload("res://Gui/Icon/mesh.png"),
 	"CAMERA": preload("res://Gui/Icon/camera.png"),
+	# 8
+	# 9
+	"OCCLUDER": preload("res://Gui/Icon/occluder.png"),
 	"CAMERAZONE": preload("res://Gui/Icon/camerazone.png"),
 	"LIGHT": preload("res://Gui/Icon/light.png"),
 	"HFOG": preload("res://Gui/Icon/hfog.png"),
 	"COLLISIONVOL": preload("res://Gui/Icon/collisionvol.png"),
+	# 15
 	"OMNI": preload("res://Gui/Icon/omni.png"),
+	# 17
 	"PARTICLES": preload("res://Gui/Icon/particles.png"),
 }
 
@@ -61,3 +68,6 @@ func _ready():
 	columns = 1
 	set_column_titles_visible(true)
 	set_column_title(0, "Name")
+
+func _on_Items_item_selected():
+	emit_signal("node_selected", get_selected().get_meta("node"))

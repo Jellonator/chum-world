@@ -37,6 +37,8 @@ transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -13.8483 )
 
 [node name="Draw" type="Sprite" parent="Viewport"]
 
+[node name="Temp" type="Spatial" parent="Viewport"]
+
 [node name="Tree" type="PanelContainer" parent="."]
 margin_right = 174.0
 margin_bottom = 720.0
@@ -93,5 +95,7 @@ margin_bottom = 40.0
 text = "Show Node Names"
 align = 2
 [connection signal="draw" from="Viewport/Draw" to="." method="_on_Draw_draw"]
+[connection signal="item_selected" from="Tree/Items" to="Tree/Items" method="_on_Items_item_selected"]
+[connection signal="node_selected" from="Tree/Items" to="." method="_on_Items_node_selected"]
 [connection signal="item_rect_changed" from="PanelContainer/TextureRect" to="." method="_on_TextureRect_item_rect_changed"]
 [connection signal="toggled" from="PanelContainer/TextureRect/Controls/CheckButton" to="." method="_on_CheckButton_toggled"]

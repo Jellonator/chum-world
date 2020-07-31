@@ -7,6 +7,7 @@ var archive_files = []
 var tnodes_by_id := {}
 #var tnode_children := {}
 var tnode_root = null
+var selected_node = null
 
 onready var node_surfaces := $Viewport/Surfaces
 onready var node_camera := $Viewport/CameraViewer
@@ -15,6 +16,7 @@ onready var node_viewport := $Viewport
 onready var node_speed := $PanelContainer/TextureRect/SpeedLabel
 onready var node_draw := $Viewport/Draw
 onready var node_tree := $Tree/Items
+onready var node_temp := $Viewport/Temp
 
 const MIN_SPEED = 0.0125
 const MAX_SPEED = 128
@@ -62,6 +64,7 @@ func try_add_node(nodedata: Dictionary, file):
 func reset_surfaces():
 	tnodes_by_id.clear()
 	tnode_root = null
+	selected_node = null
 	for child in node_surfaces.get_children():
 		child.queue_free()
 	for file in archive_files:
@@ -80,7 +83,6 @@ func reset_surfaces():
 			tnodes_by_id[parentid]["children"].append(data)
 		else:
 			print("INVALID PARENT ID ", parentid)
-#	if tnode_root != null:
 	node_tree.assemble_tree(tnode_root)
 
 func set_archive(p_archive):
@@ -147,3 +149,11 @@ func _on_CheckButton_toggled(button_pressed):
 
 func _ready():
 	$PanelContainer/TextureRect/Controls/CheckButton.pressed = show_node_names
+
+func _on_Items_node_selected(node):
+	print("SELECTED ", node["name"])
+	selected_node = node
+	camera_focus_to(node)
+
+func camera_focus_to(node):
+	node_camera.move_look(node["node"].global_transform, 2.0)

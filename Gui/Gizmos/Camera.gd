@@ -28,3 +28,11 @@ func get_camera_transform() -> Transform:
 
 func move_strafe(dir: Vector3):
 	transform.origin += dir
+
+func move_to(position: Vector3):
+	transform.origin = position
+
+func move_look(transform: Transform, distance: float):
+	move_to(transform.origin + Vector3(0, 1, 1).normalized() * distance)
+	node_pivotx.rotation_degrees.x = -45
+	node_pivoty.rotation.y = 0

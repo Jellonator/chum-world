@@ -5,7 +5,6 @@ const SCENE_EMPTYNODE = preload("res://Gui/Worldview/EmptyNode.tscn")
 var archive = null
 var archive_files = []
 var tnodes_by_id := {}
-#var tnode_children := {}
 var tnode_root = null
 var selected_node = null
 
@@ -25,49 +24,48 @@ const SPEED_MULT = 1.25
 var speed = 2.0
 var show_node_names := false
 
-func get_simple_name(name: String, ftype: String) -> String:
+func get_simple_name(name: String) -> String:
 	var a = name.find_last(">")
 	if a != -1:
 		name = name.substr(a+1, -1)
 	var b = name.find(".")
 	if b != -1:
 		name = name.substr(0, b)
-	if ftype != "":
-		name = name + ":" + ftype
 	return name
 
 func try_add_node(nodedata: Dictionary, file):
 	var node_base = Spatial.new()
 	node_base.transform = nodedata["global_transform"]
-	var ftype := ""
 	var resid = nodedata["resource_id"]
 	var meshes = []
-	if resid != 0:
-		var resfile = archive.get_file_from_hash(resid)
-		if resfile == null:
-			var child = MeshData.load_emptymesh(meshes)
-			node_base.add_child(child)
-			MessageOverlay.push_warn(
-				"Could not load file %d from archive" % resid)
-		else:
-			ftype = resfile.type
-			var child = MeshData.try_file_to_spatial(resfile, meshes)
-			if child != null:
-				node_base.add_child(child)
-	else:
-		var child = MeshData.load_emptymesh(meshes)
-		node_base.add_child(child)
-	node_surfaces.add_child(node_base)
-	tnodes_by_id[file.get_hash_id()] = {
+	var node_data = {
 		"node": node_base,
-		"name": get_simple_name(file.name, ftype),
-		"type": ftype,
+		"name": get_simple_name(file.name),
+		"type": "",
 		"parent": nodedata["parent_id"],
 		"id": file.get_hash_id(),
 		"file": file,
 		"children": [],
 		"meshes": meshes
 	}
+	if resid != 0:
+		var resfile = archive.get_file_from_hash(resid)
+		if resfile == null:
+			var child = MeshData.load_emptymesh(null, node_data, MeshData.ICON_UNKNOWN)
+			node_base.add_child(child)
+			MessageOverlay.push_warn(
+				"Could not load file %d from archive" % resid)
+		else:
+			node_data["type"] = resfile.type
+			node_data["name"] += ":" + resfile.type
+			var child = MeshData.try_file_to_spatial(resfile, node_data)
+			if child != null:
+				node_base.add_child(child)
+	else:
+		var child = MeshData.load_emptymesh(null, node_data, MeshData.ICON_NODE)
+		node_base.add_child(child)
+	node_surfaces.add_child(node_base)
+	tnodes_by_id[file.get_hash_id()] = node_data
 
 func reset_surfaces():
 	tnodes_by_id.clear()
@@ -134,8 +132,8 @@ func _physics_process(delta: float):
 		node_draw.update()
 
 const FONT := preload("res://Font/Base.tres")
-const DIST_MAX := 35.0
-const DIST_MIN := 25.0
+const DIST_MAX := 45.0
+const DIST_MIN := 30.0
 
 func draw_node_label(camera, text: String, position: Vector3, color: Color):
 	if not camera.is_position_behind(position):
@@ -153,16 +151,19 @@ func draw_node_label(camera, text: String, position: Vector3, color: Color):
 
 func _on_Draw_draw():
 	var camera = node_viewport.get_camera()
-	for data in tnodes_by_id.values():
-		var node = data["node"]
-		var distance = node.global_transform.origin.distance_to(camera.global_transform.origin)
-		if distance >= DIST_MAX or data == selected_node:
-			continue
-		var alpha = 1.0
-		if distance > DIST_MIN:
-			alpha = lerp(1.0, 0.0, (distance-DIST_MIN)/(DIST_MAX-DIST_MIN))
-		var color = Color(1.0, 1.0, 1.0, alpha)
-		draw_node_label(camera, data["name"], node.global_transform.origin, color)
+	if show_node_names:
+		for data in tnodes_by_id.values():
+			var node = data["node"]
+			var pos = node.global_transform.origin
+			var distance = pos.distance_to(camera.global_transform.origin)
+			if distance >= DIST_MAX or data == selected_node:
+				continue
+			var alpha = 1.0
+			if distance > DIST_MIN:
+				alpha = range_lerp(distance, DIST_MIN, DIST_MAX, 1.0, 0.0)
+	#			alpha = lerp(1.0, 0.0, (distance-DIST_MIN)/(DIST_MAX-DIST_MIN))
+			var color = Color(1.0, 1.0, 1.0, alpha)
+			draw_node_label(camera, data["name"], pos, color)
 	if selected_node != null:
 		var color = Color(1.0, 1.0, 1.0, 1.0)
 		var pos = selected_node["node"].global_transform.origin
@@ -176,7 +177,6 @@ func _ready():
 	$PanelContainer/TextureRect/Controls/CheckButton.pressed = show_node_names
 
 func _on_Items_node_selected(node):
-	print("SELECTED ", node["name"])
 	if selected_node != null:
 		set_node_focus_material(selected_node, false)
 	selected_node = node
@@ -190,8 +190,11 @@ func set_node_focus_material(node, is_focused: bool):
 		var mat = meshdata["original"]
 		if is_focused:
 			mat = meshdata["focus"]
-		meshdata["mesh"].set_surface_material(
-			meshdata["surface"], mat)
+		match meshdata["surface"]:
+			"sprite":
+				meshdata["mesh"].material_override = mat
+			var n:
+				meshdata["mesh"].set_surface_material(n, mat)
 
 func camera_focus_to(node):
 	node_camera.move_look(node["node"].global_transform, 2.0)

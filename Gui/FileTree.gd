@@ -17,41 +17,10 @@ var tree_root: TreeItem
 var archive = null
 var archive_files = []
 
-const TYPE_ICONS = {
-	"ANIMATION": preload("res://Gui/Icon/animation.png"),
-	"BITMAP": preload("res://Gui/Icon/bitmap.png"),
-	"CAMERA": preload("res://Gui/Icon/camera.png"),
-	"CAMERAZONE": preload("res://Gui/Icon/camerazone.png"),
-	"COLLISIONVOL": preload("res://Gui/Icon/collisionvol.png"),
-	"GAMEOBJ": preload("res://Gui/Icon/gameobj.png"),
-	"HFOG": preload("res://Gui/Icon/hfog.png"),
-	"LIGHT": preload("res://Gui/Icon/light.png"),
-	"LOD": preload("res://Gui/Icon/lod.png"),
-	"MATERIAL": preload("res://Gui/Icon/material.png"),
-	"MATERIALANIM": preload("res://Gui/Icon/materialanim.png"),
-	"MESH": preload("res://Gui/Icon/mesh.png"),
-	"NODE": preload("res://Gui/Icon/node.png"),
-	"OCCLUDER": preload("res://Gui/Icon/occluder.png"),
-	"OMNI": preload("res://Gui/Icon/omni.png"),
-	"PARTICLES": preload("res://Gui/Icon/particles.png"),
-	"ROTSHAPE": preload("res://Gui/Icon/rotshape.png"),
-	# RTC
-	"SKIN": preload("res://Gui/Icon/skin.png"),
-	"SOUND": preload("res://Gui/Icon/sound.png"),
-	"SPLINE": preload("res://Gui/Icon/spline.png"),
-	"SURFACE": preload("res://Gui/Icon/surface.png"),
-	"TXT": preload("res://Gui/Icon/txt.png"),
-	"USERDEFINE": preload("res://Gui/Icon/userdefine.png"),
-	"WARP": preload("res://Gui/Icon/warp.png"),
-	"WORLD": preload("res://Gui/Icon/world.png"),
-}
-
-const ICON_UNKNOWN := preload("res://Gui/Icon/unknown.png")
-
 func get_type_icon(typename):
-	if typename in TYPE_ICONS:
-		return TYPE_ICONS[typename]
-	return ICON_UNKNOWN
+	if typename in MeshData.TYPE_ICONS:
+		return MeshData.TYPE_ICONS[typename]
+	return MeshData.ICON_UNKNOWN
 
 func split_fname(name: String) -> PoolStringArray:
 	return name.split(">", false)

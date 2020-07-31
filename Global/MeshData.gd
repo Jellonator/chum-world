@@ -4,7 +4,42 @@ const SCENE_EMPTYNODE = preload("res://Gui/Worldview/EmptyNode.tscn")
 var _EMPTYNODE_MESH = null
 var _COLLISIONVOL_MESH = null
 
+const ICON_ROOT := preload("res://Gui/Icon/root.png")
+const ICON_NODE := preload("res://Gui/Icon/node.png")
+const ICON_UNKNOWN := preload("res://Gui/Icon/unknown.png")
+const TYPE_ICONS = {
+	"ANIMATION": preload("res://Gui/Icon/animation.png"),
+	"BITMAP": preload("res://Gui/Icon/bitmap.png"),
+	"CAMERA": preload("res://Gui/Icon/camera.png"),
+	"CAMERAZONE": preload("res://Gui/Icon/camerazone.png"),
+	"COLLISIONVOL": preload("res://Gui/Icon/collisionvol.png"),
+	"GAMEOBJ": preload("res://Gui/Icon/gameobj.png"),
+	"HFOG": preload("res://Gui/Icon/hfog.png"),
+	"LIGHT": preload("res://Gui/Icon/light.png"),
+	"LOD": preload("res://Gui/Icon/lod.png"),
+	"MATERIAL": preload("res://Gui/Icon/material.png"),
+	"MATERIALANIM": preload("res://Gui/Icon/materialanim.png"),
+	"MESH": preload("res://Gui/Icon/mesh.png"),
+	"NODE": preload("res://Gui/Icon/node.png"),
+	"OCCLUDER": preload("res://Gui/Icon/occluder.png"),
+	"OMNI": preload("res://Gui/Icon/omni.png"),
+	"PARTICLES": preload("res://Gui/Icon/particles.png"),
+	"ROTSHAPE": preload("res://Gui/Icon/rotshape.png"),
+	# RTC
+	"SKIN": preload("res://Gui/Icon/skin.png"),
+	"SOUND": preload("res://Gui/Icon/sound.png"),
+	"SPLINE": preload("res://Gui/Icon/spline.png"),
+	"SURFACE": preload("res://Gui/Icon/surface.png"),
+	"TXT": preload("res://Gui/Icon/txt.png"),
+	"USERDEFINE": preload("res://Gui/Icon/userdefine.png"),
+	"WARP": preload("res://Gui/Icon/warp.png"),
+	"WORLD": preload("res://Gui/Icon/world.png"),
+}
+
 func generate_surface_focus_material(shadermaterial: ShaderMaterial) -> Material:
+	if shadermaterial == null:
+		shadermaterial = ShaderMaterial.new()
+		shadermaterial.shader = preload("res://Shader/material.shader")
 	var material := shadermaterial.duplicate() as ShaderMaterial
 	material.set_shader_param("do_highlight", 2)
 	return material
@@ -61,7 +96,7 @@ func get_collisionvol_mesh():
 	_COLLISIONVOL_MESH = st.commit()
 	return _COLLISIONVOL_MESH
 
-func load_mesh_from_file(file, meshes):
+func load_mesh_from_file(file, node_owner):
 	var data = ChumReader.read_tmesh(file)
 	if data == null:
 		print("INVALID DATA ", file.name)
@@ -71,7 +106,7 @@ func load_mesh_from_file(file, meshes):
 		node_mesh.transform = Transform()
 		for surface in range(data["mesh"].get_surface_count()):
 			var mat = data["mesh"].surface_get_material(surface)
-			meshes.append({
+			node_owner["meshes"].append({
 				"mesh": node_mesh,
 				"surface": surface,
 				"original": mat,
@@ -81,7 +116,7 @@ func load_mesh_from_file(file, meshes):
 	else:
 		print("DOES NOT EXIST ", file.name)
 
-func load_surface_from_file(file, meshes):
+func load_surface_from_file(file, node_owner):
 	var data = ChumReader.read_surface(file)
 	if data == null:
 		print("INVALID DATA ", file.name)
@@ -92,7 +127,7 @@ func load_surface_from_file(file, meshes):
 			node_mesh.mesh = surf
 			node_object.add_child(node_mesh)
 			var mat = surf.surface_get_material(0)
-			meshes.append({
+			node_owner["meshes"].append({
 				"mesh": node_mesh,
 				"surface": 0,
 				"original": mat,
@@ -102,7 +137,7 @@ func load_surface_from_file(file, meshes):
 	else:
 		print("DOES NOT EXIST ", file.name)
 
-func load_skin_from_file(file, meshes):
+func load_skin_from_file(file, node_owner):
 	var data = ChumReader.read_skin(file)
 	if data == null:
 		print("INVALID DATA ", file.name)
@@ -112,14 +147,14 @@ func load_skin_from_file(file, meshes):
 		var archive = file.get_archive()
 		for id in skin["meshes"]:
 			var mesh_file = archive.get_file_from_hash(id)
-			var child = try_file_to_spatial(mesh_file, meshes)
+			var child = try_file_to_spatial(mesh_file, node_owner)
 			if child != null:
 				parent.add_child(child)
 		return parent
 	else:
 		print("DOES NOT EXIST ", file.name)
 
-func load_lod_from_file(file, meshes):
+func load_lod_from_file(file, node_owner):
 	var data = ChumReader.read_lod(file)
 	if data == null:
 		print("INVALID DATA ", file.name)
@@ -132,14 +167,14 @@ func load_lod_from_file(file, meshes):
 			if skin_file == null:
 				print("Could not load file ", id, " from archive")
 			else:
-				var child = try_file_to_spatial(skin_file, meshes)
+				var child = try_file_to_spatial(skin_file, node_owner)
 				if child != null:
 					parent.add_child(child)
 		return parent
 	else:
 		print("DOES NOT EXIST ", file.name)
 
-func load_rotshape_from_file(file, meshes):
+func load_rotshape_from_file(file, node_owner):
 	var data = ChumReader.read_rotshape(file)
 	if data == null:
 		print("INVALID DATA ", file.name)
@@ -148,7 +183,7 @@ func load_rotshape_from_file(file, meshes):
 		var node := MeshInstance.new()
 		node.mesh = rotshape["mesh"]
 		var mat = rotshape["mesh"].surface_get_material(0)
-		meshes.append({
+		node_owner["meshes"].append({
 			"mesh": node,
 			"surface": 0,
 			"original": mat,
@@ -161,12 +196,13 @@ func load_rotshape_from_file(file, meshes):
 const SPLINE_COLOR_A := Color.pink
 const SPLINE_COLOR_B := Color.darkred
 
-func load_spline_from_file(file, meshes):
+func load_spline_from_file(file, node_owner):
 	var data = ChumReader.read_spline(file)
 	if data == null:
 		print("INVALID DATA ", file.name)
 	elif data["exists"]:
 		var spline = data["spline"]
+		var parent := Spatial.new()
 		var node := MeshInstance.new()
 		var mesh := ArrayMesh.new()
 		var st := SurfaceTool.new()
@@ -189,44 +225,74 @@ func load_spline_from_file(file, meshes):
 		node.mesh = mesh
 		node.set_surface_material(0, preload("res://Shader/unshaded.tres"))
 		node.set_surface_material(1, preload("res://Shader/unshaded.tres"))
-		meshes.append({
+		node_owner["meshes"].append({
 			"mesh": node,
 			"surface": 0,
 			"original": preload("res://Shader/unshaded.tres"),
 			"focus": preload("res://Shader/unshaded_highlight.tres"),
 		})
-		meshes.append({
+		node_owner["meshes"].append({
 			"mesh": node,
 			"surface": 1,
 			"original": preload("res://Shader/unshaded.tres"),
 			"focus": preload("res://Shader/unshaded_highlight.tres"),
 		})
-		return node
+		var sprite = make_icon_billboard(file, node_owner, ICON_UNKNOWN)
+		parent.add_child(sprite)
+		parent.add_child(node)
+		return parent
 	else:
 		print("DOES NOT EXIST ", file.name)
 
-func load_collisionvol_from_file(file, meshes):
+func load_collisionvol_from_file(file, node_owner):
 	var data = ChumReader.read_collisionvol(file)
 	if data == null:
 		print("INVALID DATA ", file.name)
 	elif data["exists"]:
 		var volume = data["collisionvol"]
-		var mesh = MeshInstance.new()
+		var parent := Spatial.new()
+		var mesh := MeshInstance.new()
 		mesh.mesh = get_collisionvol_mesh()
 		mesh.transform = volume["local_transform"]
-		meshes.append({
+		node_owner["meshes"].append({
 			"mesh": mesh,
 			"surface": 0,
 			"original": preload("res://Shader/unshaded.tres"),
 			"focus": preload("res://Shader/unshaded_highlight.tres"),
 		})
-		return mesh
+		var sprite = make_icon_billboard(file, node_owner, ICON_UNKNOWN)
+		parent.add_child(sprite)
+		parent.add_child(mesh)
+		return parent
 	else:
 		print("DOES NOT EXIST ", file.name)
 
-func load_emptymesh(meshes):
+func make_icon_billboard(file, node_owner, default_icon):
+	var icon = default_icon
+	if file != null:
+		if file.type in MeshData.TYPE_ICONS:
+			icon = MeshData.TYPE_ICONS[file.type]
+		else:
+			icon = ICON_UNKNOWN
+	var sprite := Sprite3D.new()
+	var matn = preload("res://Shader/sprite3d_normal.tres")
+	var matf = preload("res://Shader/sprite3d_focus.tres")
+	sprite.material_override = matn
+	sprite.pixel_size = 0.05
+	sprite.texture = icon
+	node_owner["meshes"].append({
+		"mesh": sprite,
+		"surface": "sprite",
+		"original": matn,
+		"focus": matf,
+	})
+	return sprite
+
+func load_emptymesh(file, node_owner, default_icon):
 	var mesh = SCENE_EMPTYNODE.instance()
-	meshes.append({
+	var sprite = make_icon_billboard(file, node_owner, default_icon)
+	mesh.add_child(sprite)
+	node_owner["meshes"].append({
 		"mesh": mesh,
 		"surface": 0,
 		"original": preload("res://Shader/unshaded.tres"),
@@ -234,24 +300,24 @@ func load_emptymesh(meshes):
 	})
 	return mesh
 
-func try_file_to_spatial(file, meshes=null):
+func try_file_to_spatial(file, node_owner=null):
 	if file == null:
 		push_warning("Attempt to get spatial from NULL file")
 		return
 	match file.type:
 		"SURFACE":
-			return load_surface_from_file(file, meshes)
+			return load_surface_from_file(file, node_owner)
 		"MESH":
-			return load_mesh_from_file(file, meshes)
+			return load_mesh_from_file(file, node_owner)
 		"SKIN":
-			return load_skin_from_file(file, meshes)
+			return load_skin_from_file(file, node_owner)
 		"LOD":
-			return load_lod_from_file(file, meshes)
+			return load_lod_from_file(file, node_owner)
 		"ROTSHAPE":
-			return load_rotshape_from_file(file, meshes)
+			return load_rotshape_from_file(file, node_owner)
 		"SPLINE":
-			return load_spline_from_file(file, meshes)
+			return load_spline_from_file(file, node_owner)
 		"COLLISIONVOL":
-			return load_collisionvol_from_file(file, meshes)
+			return load_collisionvol_from_file(file, node_owner)
 		_:
-			return load_emptymesh(meshes)
+			return load_emptymesh(file, node_owner, ICON_NODE)

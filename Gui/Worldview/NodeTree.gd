@@ -3,29 +3,6 @@ extends Tree
 signal node_selected(node)
 
 var added_nodes = {}
-const NODE_TYPE_ICONS = {
-	"SURFACE": preload("res://Gui/Icon/surface.png"),
-	"SPLINE": preload("res://Gui/Icon/spline.png"),
-	"SKIN": preload("res://Gui/Icon/skin.png"),
-	"ROTSHAPE": preload("res://Gui/Icon/rotshape.png"),
-	"LOD": preload("res://Gui/Icon/lod.png"),
-	"MESH": preload("res://Gui/Icon/mesh.png"),
-	"CAMERA": preload("res://Gui/Icon/camera.png"),
-	# 8
-	# 9
-	"OCCLUDER": preload("res://Gui/Icon/occluder.png"),
-	"CAMERAZONE": preload("res://Gui/Icon/camerazone.png"),
-	"LIGHT": preload("res://Gui/Icon/light.png"),
-	"HFOG": preload("res://Gui/Icon/hfog.png"),
-	"COLLISIONVOL": preload("res://Gui/Icon/collisionvol.png"),
-	# 15
-	"OMNI": preload("res://Gui/Icon/omni.png"),
-	# 17
-	"PARTICLES": preload("res://Gui/Icon/particles.png"),
-}
-
-const ICON_ROOT := preload("res://Gui/Icon/root.png")
-const ICON_NODE := preload("res://Gui/Icon/node.png")
 
 func _sort_nodes(a, b):
 	if len(a["children"]) != len(b["children"]):
@@ -36,10 +13,10 @@ func _sort_nodes(a, b):
 
 func get_node_icon(node):
 	if node["parent"] == 0:
-		return ICON_ROOT
-	if node["type"] in NODE_TYPE_ICONS:
-		return NODE_TYPE_ICONS[node["type"]]
-	return ICON_NODE
+		return MeshData.ICON_ROOT
+	if node["type"] in MeshData.TYPE_ICONS:
+		return MeshData.TYPE_ICONS[node["type"]]
+	return MeshData.ICON_NODE
 
 func add_node(node, item_parent):
 	if node in added_nodes:

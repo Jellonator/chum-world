@@ -33,6 +33,7 @@ func move_to(position: Vector3):
 	transform.origin = position
 
 func move_look(transform: Transform, distance: float):
-	move_to(transform.origin + Vector3(0, 1, 1).normalized() * distance)
-	node_pivotx.rotation_degrees.x = -45
-	node_pivoty.rotation.y = 0
+	var direction = (transform.basis.xform(Vector3(0, 0, 1)) + Vector3(0, 0.1, 0)).normalized()
+	move_to(transform.origin + direction * distance)
+	node_pivotx.rotation.x = asin(-direction.y)
+	node_pivoty.rotation.y = atan2(direction.x, direction.z)

@@ -153,25 +153,24 @@ func draw_node_label(camera, text: String, position: Vector3, color: Color):
 
 func _on_Draw_draw():
 	var camera = node_viewport.get_camera()
-	if not show_node_names:
-		if selected_node != null:
-			var color = Color(1.0, 1.0, 1.0, 1.0)
-			var pos = selected_node["node"].global_transform.origin
-			draw_node_label(camera, selected_node["name"], pos, color)
-		return
 	for data in tnodes_by_id.values():
 		var node = data["node"]
 		var distance = node.global_transform.origin.distance_to(camera.global_transform.origin)
-		if distance >= DIST_MAX:
+		if distance >= DIST_MAX or data == selected_node:
 			continue
 		var alpha = 1.0
 		if distance > DIST_MIN:
 			alpha = lerp(1.0, 0.0, (distance-DIST_MIN)/(DIST_MAX-DIST_MIN))
 		var color = Color(1.0, 1.0, 1.0, alpha)
 		draw_node_label(camera, data["name"], node.global_transform.origin, color)
+	if selected_node != null:
+		var color = Color(1.0, 1.0, 1.0, 1.0)
+		var pos = selected_node["node"].global_transform.origin
+		draw_node_label(camera, selected_node["name"], pos, color)
 
 func _on_CheckButton_toggled(button_pressed):
 	show_node_names = button_pressed
+	node_draw.update()
 
 func _ready():
 	$PanelContainer/TextureRect/Controls/CheckButton.pressed = show_node_names
@@ -196,3 +195,4 @@ func set_node_focus_material(node, is_focused: bool):
 
 func camera_focus_to(node):
 	node_camera.move_look(node["node"].global_transform, 2.0)
+	node_draw.update()

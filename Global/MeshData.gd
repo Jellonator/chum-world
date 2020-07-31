@@ -23,12 +23,12 @@ func get_emptynode_mesh():
 		return _EMPTYNODE_MESH
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_LINES)
-	st.add_color(Color.red)
+	st.add_color(Color(1.0, 0.01, 0.01))
 	st.set_material(preload("res://Shader/unshaded.tres"))
 	_add_line(st, Vector3(0, 0, 0), Vector3(1, 0, 0))
-	st.add_color(Color.blue)
+	st.add_color(Color(0.01, 0.01, 1.0))
 	_add_line(st, Vector3(0, 0, 0), Vector3(0, 0, 1))
-	st.add_color(Color.green)
+	st.add_color(Color(0.01, 1.0, 0.01))
 	_add_line(st, Vector3(0, 0, 0), Vector3(0, 1, 0))
 	st.add_color(Color(0.2, 0.2, 0.2))
 	_add_line(st, Vector3(0, 0, 0), Vector3(-1, 0, 0))
@@ -230,7 +230,7 @@ func load_emptymesh(meshes):
 		"mesh": mesh,
 		"surface": 0,
 		"original": preload("res://Shader/unshaded.tres"),
-		"focus": preload("res://Shader/unshaded_highlight.tres"),
+		"focus": preload("res://Shader/node_highlight.tres"),
 	})
 	return mesh
 

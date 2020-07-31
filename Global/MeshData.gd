@@ -104,14 +104,15 @@ func load_mesh_from_file(file, node_owner):
 		var node_mesh = MeshInstance.new()
 		node_mesh.mesh = data["mesh"]
 		node_mesh.transform = Transform()
-		for surface in range(data["mesh"].get_surface_count()):
-			var mat = data["mesh"].surface_get_material(surface)
-			node_owner["meshes"].append({
-				"mesh": node_mesh,
-				"surface": surface,
-				"original": mat,
-				"focus": generate_mesh_focus_material(mat),
-			})
+		if node_owner != null:
+			for surface in range(data["mesh"].get_surface_count()):
+				var mat = data["mesh"].surface_get_material(surface)
+				node_owner["meshes"].append({
+					"mesh": node_mesh,
+					"surface": surface,
+					"original": mat,
+					"focus": generate_mesh_focus_material(mat),
+				})
 		return node_mesh
 	else:
 		print("DOES NOT EXIST ", file.name)
@@ -127,12 +128,13 @@ func load_surface_from_file(file, node_owner):
 			node_mesh.mesh = surf
 			node_object.add_child(node_mesh)
 			var mat = surf.surface_get_material(0)
-			node_owner["meshes"].append({
-				"mesh": node_mesh,
-				"surface": 0,
-				"original": mat,
-				"focus": generate_surface_focus_material(mat),
-			})
+			if node_owner != null:
+				node_owner["meshes"].append({
+					"mesh": node_mesh,
+					"surface": 0,
+					"original": mat,
+					"focus": generate_surface_focus_material(mat),
+				})
 		return node_object
 	else:
 		print("DOES NOT EXIST ", file.name)
@@ -183,12 +185,13 @@ func load_rotshape_from_file(file, node_owner):
 		var node := MeshInstance.new()
 		node.mesh = rotshape["mesh"]
 		var mat = rotshape["mesh"].surface_get_material(0)
-		node_owner["meshes"].append({
-			"mesh": node,
-			"surface": 0,
-			"original": mat,
-			"focus": generate_mesh_focus_material(mat),
-		})
+		if node_owner != null:
+			node_owner["meshes"].append({
+				"mesh": node,
+				"surface": 0,
+				"original": mat,
+				"focus": generate_mesh_focus_material(mat),
+			})
 		return node
 	else:
 		print("DOES NOT EXIST ", file.name)
@@ -225,18 +228,19 @@ func load_spline_from_file(file, node_owner):
 		node.mesh = mesh
 		node.set_surface_material(0, preload("res://Shader/unshaded.tres"))
 		node.set_surface_material(1, preload("res://Shader/unshaded.tres"))
-		node_owner["meshes"].append({
-			"mesh": node,
-			"surface": 0,
-			"original": preload("res://Shader/unshaded.tres"),
-			"focus": preload("res://Shader/unshaded_highlight.tres"),
-		})
-		node_owner["meshes"].append({
-			"mesh": node,
-			"surface": 1,
-			"original": preload("res://Shader/unshaded.tres"),
-			"focus": preload("res://Shader/unshaded_highlight.tres"),
-		})
+		if node_owner != null:
+			node_owner["meshes"].append({
+				"mesh": node,
+				"surface": 0,
+				"original": preload("res://Shader/unshaded.tres"),
+				"focus": preload("res://Shader/unshaded_highlight.tres"),
+			})
+			node_owner["meshes"].append({
+				"mesh": node,
+				"surface": 1,
+				"original": preload("res://Shader/unshaded.tres"),
+				"focus": preload("res://Shader/unshaded_highlight.tres"),
+			})
 		var sprite = make_icon_billboard(file, node_owner, ICON_UNKNOWN)
 		parent.add_child(sprite)
 		parent.add_child(node)
@@ -254,12 +258,13 @@ func load_collisionvol_from_file(file, node_owner):
 		var mesh := MeshInstance.new()
 		mesh.mesh = get_collisionvol_mesh()
 		mesh.transform = volume["local_transform"]
-		node_owner["meshes"].append({
-			"mesh": mesh,
-			"surface": 0,
-			"original": preload("res://Shader/unshaded.tres"),
-			"focus": preload("res://Shader/unshaded_highlight.tres"),
-		})
+		if node_owner != null:
+			node_owner["meshes"].append({
+				"mesh": mesh,
+				"surface": 0,
+				"original": preload("res://Shader/unshaded.tres"),
+				"focus": preload("res://Shader/unshaded_highlight.tres"),
+			})
 		var sprite = make_icon_billboard(file, node_owner, ICON_UNKNOWN)
 		parent.add_child(sprite)
 		parent.add_child(mesh)
@@ -280,24 +285,26 @@ func make_icon_billboard(file, node_owner, default_icon):
 	sprite.material_override = matn
 	sprite.pixel_size = 0.05
 	sprite.texture = icon
-	node_owner["meshes"].append({
-		"mesh": sprite,
-		"surface": "sprite",
-		"original": matn,
-		"focus": matf,
-	})
+	if node_owner != null:
+		node_owner["meshes"].append({
+			"mesh": sprite,
+			"surface": "sprite",
+			"original": matn,
+			"focus": matf,
+		})
 	return sprite
 
 func load_emptymesh(file, node_owner, default_icon):
 	var mesh = SCENE_EMPTYNODE.instance()
 	var sprite = make_icon_billboard(file, node_owner, default_icon)
 	mesh.add_child(sprite)
-	node_owner["meshes"].append({
-		"mesh": mesh,
-		"surface": 0,
-		"original": preload("res://Shader/unshaded.tres"),
-		"focus": preload("res://Shader/node_highlight.tres"),
-	})
+	if node_owner != null:
+		node_owner["meshes"].append({
+			"mesh": mesh,
+			"surface": 0,
+			"original": preload("res://Shader/unshaded.tres"),
+			"focus": preload("res://Shader/node_highlight.tres"),
+		})
 	return mesh
 
 func try_file_to_spatial(file, node_owner=null):

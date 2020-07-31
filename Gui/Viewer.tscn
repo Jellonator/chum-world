@@ -76,6 +76,7 @@ margin_bottom = 24.0
 margin_right = 128.0
 margin_bottom = 24.0
 size_flags_horizontal = 3
+placeholder_text = "search"
 
 [node name="Tree" type="Tree" parent="VBox/Tabs/Files/VBox"]
 margin_top = 28.0

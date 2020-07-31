@@ -14,7 +14,7 @@ onready var node_rect := $PanelContainer/TextureRect
 onready var node_viewport := $Viewport
 onready var node_speed := $PanelContainer/TextureRect/SpeedLabel
 onready var node_draw := $Viewport/Draw
-onready var node_tree := $Tree/Items
+onready var node_tree := $Tree/VBox/Items
 onready var node_temp := $Viewport/Temp
 
 const MIN_SPEED = 0.0125

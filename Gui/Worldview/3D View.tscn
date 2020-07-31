@@ -43,12 +43,23 @@ transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -13.8483 )
 margin_right = 174.0
 margin_bottom = 720.0
 
-[node name="Items" type="Tree" parent="Tree"]
+[node name="VBox" type="VBoxContainer" parent="Tree"]
 margin_left = 7.0
 margin_top = 7.0
 margin_right = 167.0
 margin_bottom = 713.0
+
+[node name="Search" type="LineEdit" parent="Tree/VBox"]
+margin_right = 160.0
+margin_bottom = 24.0
+placeholder_text = "search"
+
+[node name="Items" type="Tree" parent="Tree/VBox"]
+margin_top = 28.0
+margin_right = 160.0
+margin_bottom = 706.0
 rect_min_size = Vector2( 160, 0 )
+size_flags_vertical = 3
 hide_root = true
 script = ExtResource( 5 )
 
@@ -95,7 +106,8 @@ margin_bottom = 40.0
 text = "Show Node Names"
 align = 2
 [connection signal="draw" from="Viewport/Draw" to="." method="_on_Draw_draw"]
-[connection signal="item_selected" from="Tree/Items" to="Tree/Items" method="_on_Items_item_selected"]
-[connection signal="node_selected" from="Tree/Items" to="." method="_on_Items_node_selected"]
+[connection signal="text_changed" from="Tree/VBox/Search" to="Tree/VBox/Items" method="_on_Search_text_changed"]
+[connection signal="item_selected" from="Tree/VBox/Items" to="Tree/VBox/Items" method="_on_Items_item_selected"]
+[connection signal="node_selected" from="Tree/VBox/Items" to="." method="_on_Items_node_selected"]
 [connection signal="item_rect_changed" from="PanelContainer/TextureRect" to="." method="_on_TextureRect_item_rect_changed"]
 [connection signal="toggled" from="PanelContainer/TextureRect/Controls/CheckButton" to="." method="_on_CheckButton_toggled"]

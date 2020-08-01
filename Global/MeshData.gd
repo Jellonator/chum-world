@@ -1,6 +1,7 @@
 extends Node
 
 const SCENE_EMPTYNODE = preload("res://Gui/Worldview/EmptyNode.tscn")
+const SCENE_SELECT_BODY := preload("res://Gui/Worldview/SelectBody.tscn")
 var _EMPTYNODE_MESH = null
 var _COLLISIONVOL_MESH = null
 
@@ -63,12 +64,6 @@ func generate_wireframe(mesh: Mesh, tx: Transform) -> ArrayMesh:
 		_maybe_add_line(st, a, b, check)
 		_maybe_add_line(st, b, c, check)
 		_maybe_add_line(st, a, c, check)
-#		st.add_vertex(a)
-#		st.add_vertex(b)
-#		st.add_vertex(b)
-#		st.add_vertex(c)
-#		st.add_vertex(c)
-#		st.add_vertex(a)
 	return st.commit()
 
 var _MESH_CYLINDER = null
@@ -178,6 +173,10 @@ func load_mesh_from_file(file, node_owner):
 		node_mesh.mesh = data["mesh"]
 		node_mesh.transform = Transform()
 		if node_owner != null:
+			var shape := SCENE_SELECT_BODY.instance()
+			shape.set_node_data(node_owner)
+			shape.add_shape(data["mesh"].create_convex_shape())
+			node_mesh.add_child(shape)
 			for surface in range(data["mesh"].get_surface_count()):
 				var mat = data["mesh"].surface_get_material(surface)
 				node_owner["meshes"].append({
@@ -186,7 +185,6 @@ func load_mesh_from_file(file, node_owner):
 					"original": mat,
 					"focus": generate_mesh_focus_material(mat),
 				})
-		print("===COL===")
 		for unk in data["unk1"]:
 			var sphere := MeshInstance.new()
 			sphere.mesh = get_sphere_mesh()
@@ -195,7 +193,6 @@ func load_mesh_from_file(file, node_owner):
 			sphere.add_to_group("vis_collision")
 			node_mesh.add_child(sphere)
 		for unk in data["unk2"]:
-			prints("unk2", unk)
 			var cube := MeshInstance.new()
 			cube.mesh = get_cube_mesh()
 			cube.transform = unk["transform"]
@@ -225,13 +222,19 @@ func load_surface_from_file(file, node_owner):
 	if data == null:
 		print("INVALID DATA ", file.name)
 	elif data["exists"]:
+		var shape
 		var node_object = Spatial.new()
+		if node_owner != null:
+			shape = SCENE_SELECT_BODY.instance()
+			shape.set_node_data(node_owner)
+			node_object.add_child(shape)
 		for surf in data["surfaces"]:
 			var node_mesh = MeshInstance.new()
 			node_mesh.mesh = surf
 			node_object.add_child(node_mesh)
 			var mat = surf.surface_get_material(0)
 			if node_owner != null:
+				shape.add_shape(surf.create_convex_shape())
 				node_owner["meshes"].append({
 					"mesh": node_mesh,
 					"surface": 0,
@@ -295,6 +298,15 @@ func load_rotshape_from_file(file, node_owner):
 				"original": mat,
 				"focus": generate_mesh_focus_material(mat),
 			})
+			var shape := SCENE_SELECT_BODY.instance()
+			shape.set_node_data(node_owner)
+			var aabb = rotshape["mesh"].get_aabb()
+			var center = aabb.position + aabb.size/2
+			var radius = aabb.get_longest_axis_size()/2
+			var sphere := SphereShape.new()
+			sphere.radius = radius
+			shape.add_shape(sphere, Transform().translated(center))
+			node.add_child(shape)
 		return node
 	else:
 		print("DOES NOT EXIST ", file.name)
@@ -369,6 +381,12 @@ func load_collisionvol_from_file(file, node_owner):
 				"original": preload("res://Shader/unshaded.tres"),
 				"focus": preload("res://Shader/unshaded_highlight.tres"),
 			})
+			var shape := SCENE_SELECT_BODY.instance()
+			shape.set_node_data(node_owner)
+			var cube := BoxShape.new()
+			cube.extents = Vector3(0.5, 0.5, 0.5)
+			shape.add_shape(cube)
+			mesh.add_child(shape)
 		mesh.add_to_group("vis_volume")
 		var sprite = make_icon_billboard(file, node_owner, ICON_UNKNOWN)
 		parent.add_child(sprite)
@@ -397,6 +415,10 @@ func make_icon_billboard(file, node_owner, default_icon):
 			"original": matn,
 			"focus": matf,
 		})
+		var shape := SCENE_SELECT_BODY.instance()
+		shape.set_node_data(node_owner)
+		shape.add_shape(SphereShape.new())
+		sprite.add_child(shape)
 	sprite.add_to_group("vis_node")
 	return sprite
 

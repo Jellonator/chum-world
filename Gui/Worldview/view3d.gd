@@ -11,11 +11,12 @@ var selected_node = null
 onready var node_surfaces := $Viewport/Surfaces
 onready var node_camera := $Viewport/CameraViewer
 onready var node_rect := $PanelContainer/TextureRect
-onready var node_viewport := $Viewport
+onready var node_viewport := $Viewport as Viewport
 onready var node_speed := $PanelContainer/TextureRect/SpeedLabel
 onready var node_draw := $Viewport/Draw
 onready var node_tree := $Tree/VBox/Items
 onready var node_temp := $Viewport/Temp
+onready var node_popup_select := $PanelContainer/TextureRect/PopupSelector as PopupMenu
 
 const MIN_SPEED = 0.0125
 const MAX_SPEED = 128
@@ -113,6 +114,11 @@ func _input(event):
 		if event.is_action_pressed("view_speed_decrease"):
 			speed = clamp(speed / SPEED_MULT, MIN_SPEED, MAX_SPEED)
 			node_speed.text = "Speed: " + str(speed)
+	if event.is_action_pressed("view_select"):
+		var pos = node_rect.get_local_mouse_position()
+		var rect = Rect2(Vector2(0, 0), node_rect.rect_size)
+		if rect.has_point(pos):
+			node_rect.grab_focus()
 
 func _physics_process(delta: float):
 	if node_rect.has_focus():
@@ -131,6 +137,37 @@ func _physics_process(delta: float):
 			input_dir *= 0.5
 		node_camera.move_strafe(input_dir * delta * speed)
 		node_draw.update()
+		if Input.is_action_just_pressed("view_select"):
+			pick_node()
+
+func pick_node():
+	print("BEGIN PICK")
+#	var space_state = node_viewport.world.direct_space_state
+	var camera := node_viewport.get_camera()
+	var space_state := camera.get_world().direct_space_state
+	var param := PhysicsShapeQueryParameters.new()
+	var shape := RayShape.new()
+	shape.length = 500
+	var mouse_pos = node_rect.get_local_mouse_position()
+	var from = camera.project_ray_origin(mouse_pos)
+	var to = from - camera.project_ray_normal(mouse_pos)
+	param.transform = Transform()\
+		.translated(from)\
+		.looking_at(to, Vector3.UP)
+	param.set_shape(shape)
+	var result := space_state.intersect_shape(param, 16)
+	if result.size() > 0:
+		node_popup_select.clear()
+		for value in result:
+			var data = value["collider"].get_node_data()
+			var name = data["name"]
+			var i := node_popup_select.get_item_count()
+			var icon = node_tree.get_node_icon(data)
+			node_popup_select.add_icon_item(icon, name, i)
+			node_popup_select.set_item_metadata(i, data)
+		node_popup_select.rect_position = node_rect.get_global_mouse_position()
+		node_popup_select.rect_size = Vector2.ZERO
+		node_popup_select.popup()
 
 const FONT := preload("res://Font/Base.tres")
 const DIST_MAX := 45.0
@@ -175,15 +212,16 @@ func _on_CheckButton_toggled(button_pressed):
 	node_draw.update()
 
 func _ready():
-	$PanelContainer/TextureRect/Controls/CheckButton.pressed = show_node_names
+	$PanelContainer/TextureRect/Controls/NodeNames.pressed = show_node_names
 
+var _disable_camera_focus := false
 func _on_Items_node_selected(node):
 	if selected_node != null:
 		set_node_focus_material(selected_node, false)
 	selected_node = node
 	if selected_node != null:
 		set_node_focus_material(selected_node, true)
-	if node != null:
+	if node != null and not _disable_camera_focus:
 		camera_focus_to(node)
 
 func set_node_focus_material(node, is_focused: bool):
@@ -227,3 +265,15 @@ func update_shown_objects():
 	get_tree().set_group("vis_volume", "visible", option_show_volumes)
 	get_tree().set_group("vis_node", "visible", option_show_nodes)
 	get_tree().set_group("vis_spline", "visible", option_show_splines)
+
+func _on_PopupSelector_index_pressed(index):
+	var id = node_popup_select.get_item_id(index)
+	var item = node_popup_select.get_item_metadata(id)
+	if selected_node != null:
+		set_node_focus_material(selected_node, false)
+	selected_node = item
+	if selected_node != null:
+		set_node_focus_material(selected_node, true)
+	_disable_camera_focus = true
+	node_tree.try_select(item)
+	_disable_camera_focus = false

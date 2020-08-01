@@ -25,6 +25,7 @@ __meta__ = {
 size = Vector2( 100, 100 )
 own_world = true
 world = SubResource( 1 )
+physics_object_picking = true
 
 [node name="Surfaces" type="Spatial" parent="Viewport"]
 
@@ -136,6 +137,13 @@ margin_right = 232.0
 margin_bottom = 216.0
 text = "Show Hidden Nodes"
 align = 2
+
+[node name="PopupSelector" type="PopupMenu" parent="PanelContainer/TextureRect"]
+margin_left = 258.0
+margin_top = 130.0
+margin_right = 311.0
+margin_bottom = 182.0
+items = [ "test1", null, 0, false, false, 0, 0, null, "", false, "test2", null, 0, false, false, 1, 0, null, "", false ]
 [connection signal="draw" from="Viewport/Draw" to="." method="_on_Draw_draw"]
 [connection signal="text_changed" from="Tree/VBox/Search" to="Tree/VBox/Items" method="_on_Search_text_changed"]
 [connection signal="item_selected" from="Tree/VBox/Items" to="Tree/VBox/Items" method="_on_Items_item_selected"]
@@ -146,3 +154,4 @@ align = 2
 [connection signal="toggled" from="PanelContainer/TextureRect/Controls/ShowVolumes" to="." method="_on_ShowVolumes_toggled"]
 [connection signal="toggled" from="PanelContainer/TextureRect/Controls/ShowSplines" to="." method="_on_ShowSplines_toggled"]
 [connection signal="toggled" from="PanelContainer/TextureRect/Controls/ShowNodes" to="." method="_on_ShowNodes_toggled"]
+[connection signal="index_pressed" from="PanelContainer/TextureRect/PopupSelector" to="." method="_on_PopupSelector_index_pressed"]

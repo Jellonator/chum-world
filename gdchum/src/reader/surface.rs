@@ -25,7 +25,7 @@ pub fn read_surface(
         }
     };
     let mut meshes: Vec<Reference> = Vec::new();
-    let surfaces = surfaceobj.generate_meshes(surface::SurfaceGenMode::BezierInterp(8));
+    let surfaces = surfaceobj.generate_meshes(surface::SurfaceGenMode::BezierInterp(4));
     for surface in surfaces {
         let mut mesh = ArrayMesh::new();
         let mut verts = Vector3Array::new();

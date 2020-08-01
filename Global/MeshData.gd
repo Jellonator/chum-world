@@ -36,6 +36,77 @@ const TYPE_ICONS = {
 	"WORLD": preload("res://Gui/Icon/world.png"),
 }
 
+func _maybe_add_line(st, a, b, check):
+	if a in check:
+		if b in check[a]:
+			return
+	if b in check:
+		if a in check[b]:
+			return
+	if not a in check:
+		check[a] = {}
+	check[a][b] = true
+	st.add_vertex(a)
+	st.add_vertex(b)
+
+func generate_wireframe(mesh: Mesh, tx: Transform) -> ArrayMesh:
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_LINES)
+	var tris := mesh.get_faces()
+	st.set_material(preload("res://Shader/unshaded.tres"))
+	st.add_color(Color.black)
+	var check = {}
+	for i in range(0, tris.size(), 3):
+		var a = tx.xform(tris[i])
+		var b = tx.xform(tris[i+1])
+		var c = tx.xform(tris[i+2])
+		_maybe_add_line(st, a, b, check)
+		_maybe_add_line(st, b, c, check)
+		_maybe_add_line(st, a, c, check)
+#		st.add_vertex(a)
+#		st.add_vertex(b)
+#		st.add_vertex(b)
+#		st.add_vertex(c)
+#		st.add_vertex(c)
+#		st.add_vertex(a)
+	return st.commit()
+
+var _MESH_CYLINDER = null
+func get_cylinder_mesh():
+	if _MESH_CYLINDER != null:
+		return _MESH_CYLINDER
+	var cylinder := preload("res://Gui/Gizmos/Shapes/Cylinder.tscn").instance()
+	var tx = Transform(
+		Vector3(1, 0, 0),
+		Vector3(0, 0, 1),
+		Vector3(0, -1, 0),
+		Vector3(0, 0, 0.5)
+	)
+	_MESH_CYLINDER = generate_wireframe(cylinder.mesh, tx)
+	return _MESH_CYLINDER
+
+var _MESH_SPHERE = null
+func get_sphere_mesh():
+	if _MESH_SPHERE != null:
+		return _MESH_SPHERE
+	var cylinder := preload("res://Gui/Gizmos/Shapes/Sphere.tscn").instance()
+	_MESH_SPHERE = generate_wireframe(cylinder.mesh, Transform.IDENTITY)
+	return _MESH_SPHERE
+
+var _MESH_CUBE = null
+func get_cube_mesh():
+	if _MESH_CUBE != null:
+		return _MESH_CUBE
+	var cylinder := preload("res://Gui/Gizmos/Shapes/Cube.tscn").instance()
+	var tx = Transform(
+		Vector3(2, 0, 0),
+		Vector3(0, 1, 0),
+		Vector3(0, 0, 2),
+		Vector3(0, 0.5, 0)
+	)
+	_MESH_CUBE = generate_wireframe(cylinder.mesh, tx)
+	return _MESH_CUBE
+
 func generate_surface_focus_material(shadermaterial: ShaderMaterial) -> Material:
 	if shadermaterial == null:
 		shadermaterial = ShaderMaterial.new()
@@ -96,6 +167,8 @@ func get_collisionvol_mesh():
 	_COLLISIONVOL_MESH = st.commit()
 	return _COLLISIONVOL_MESH
 
+var COOL_FORWARD := Vector3(-0.22471, 0.125, 1).normalized()
+
 func load_mesh_from_file(file, node_owner):
 	var data = ChumReader.read_tmesh(file)
 	if data == null:
@@ -113,6 +186,33 @@ func load_mesh_from_file(file, node_owner):
 					"original": mat,
 					"focus": generate_mesh_focus_material(mat),
 				})
+		print("===COL===")
+		for unk in data["unk1"]:
+			var sphere := MeshInstance.new()
+			sphere.mesh = get_sphere_mesh()
+			sphere.translation = unk["pos"]
+			sphere.scale *= unk["radius"]
+			node_mesh.add_child(sphere)
+		for unk in data["unk2"]:
+			prints("unk2", unk)
+			var cube := MeshInstance.new()
+			cube.mesh = get_cube_mesh()
+			cube.transform = unk["transform"]
+			node_mesh.add_child(cube)
+		for unk in data["unk3"]:
+			var radius = unk["unk2"]
+			var pos = Vector3(unk["unk1"][0], unk["unk1"][1], unk["unk1"][2])
+			var height = unk["unk1"][3]
+			var normal = unk["normal"]
+			var sphere := MeshInstance.new()
+			sphere.rotation = Vector3(
+				asin(-normal.y),
+				atan2(normal.x, normal.z),
+				0)
+			sphere.mesh = get_cylinder_mesh()
+			sphere.scale = Vector3(radius, radius, height)
+			sphere.transform.origin = pos
+			node_mesh.add_child(sphere)
 		return node_mesh
 	else:
 		print("DOES NOT EXIST ", file.name)

@@ -148,6 +148,119 @@ impl Quad {
     }
 }
 
+
+#[derive(Clone, Debug)]
+pub enum TriStripOrder {
+    ClockWise,
+    CounterClockWise
+}
+
+#[derive(Clone, Debug)]
+pub struct TriStrip {
+    pub tris: Vec<(u16, u16, u16)>,
+    pub order: TriStripOrder
+}
+
+/// Find the next tri
+/// This triangle must complete [a, b] in clockwise order
+fn get_next_tri(
+    a: &(u16, u16, u16),
+    b: &(u16, u16, u16),
+    tris: &Vec<[(u16, u16, u16); 3]>,
+    ignore: &[usize]
+) -> Option<(usize, (u16, u16, u16))> {
+    for i in 0..tris.len() {
+        if ignore.contains(&i) {
+            continue;
+        }
+        let tri = tris[i].clone();
+        if *a == tri[0] && *b == tri[1] {
+            return Some((i, tri[2].clone()));
+        } else if *a == tri[1] && *b == tri[2] {
+            return Some((i, tri[0].clone()));
+        } else if *a == tri[2] && *b == tri[0] {
+            return Some((i, tri[1].clone()));
+        }
+    }
+    None
+}
+
+/// Get a triangle strip in a single direction
+fn get_tris(
+    a: &(u16, u16, u16),
+    b: &(u16, u16, u16),
+    tris: &Vec<[(u16, u16, u16); 3]>,
+    out: &mut Vec<(u16, u16, u16)>,
+    ignore: &mut Vec<usize>
+) {
+    if let Some(index) = get_next_tri(a, b, tris, ignore) {
+        out.push(index.1.clone());
+        ignore.push(index.0);
+        get_tris(&index.1, b, tris, out, ignore);
+    }
+}
+
+/// Get a triangle strip by searching both directions
+fn get_possible_strip(
+    a: &(u16, u16, u16),
+    b: &(u16, u16, u16),
+    c: &(u16, u16, u16),
+    tris: &Vec<[(u16, u16, u16); 3]>,
+) -> (
+    Vec<(u16, u16, u16)>,
+    Vec<usize>,
+    TriStripOrder
+) {
+    let mut ignore = Vec::new();
+    let mut strip = Vec::new();
+    // get strip before points
+    get_tris(b, a, tris, &mut strip, &mut ignore);
+    strip.reverse(); // reversed here since strip is backwards
+    let order = if strip.len() % 2 == 0 {
+        TriStripOrder::ClockWise
+    } else {
+        TriStripOrder::CounterClockWise
+    };
+    // Push points after previous
+    strip.push(a.clone());
+    strip.push(b.clone());
+    strip.push(c.clone());
+    // Get strip after points
+    get_tris(c, b, tris, &mut strip, &mut ignore);
+    (strip, ignore, order)
+}
+
+impl TriStrip {
+    /// Generate triangle strips from the given list of triangles.
+    /// All triangles are in clockwise order.
+    pub fn from_tris(mut tris: Vec<[(u16, u16, u16); 3]>) -> Vec<TriStrip> {
+        let mut strips = Vec::new();
+        while let Some(tri) = tris.pop() {
+            let a = get_possible_strip(&tri[0], &tri[1], &tri[2], &tris);
+            let b = get_possible_strip(&tri[0], &tri[1], &tri[2], &tris);
+            let c = get_possible_strip(&tri[0], &tri[1], &tri[2], &tris);
+            let mut data = if a.0.len() > b.0.len() && a.0.len() > c.0.len() {
+                a
+            } else if b.0.len() > a.0.len() && b.0.len() > c.0.len() {
+                b
+            } else {
+                c
+            };
+            data.1.sort_by(|a, b| b.cmp(a));
+            for index in data.1.iter() {
+                // Swap remove is faster than just remove.
+                // As a consequence, indices must be removed in reverse-order.
+                tris.swap_remove(*index);
+            }
+            strips.push(TriStrip {
+                tris: data.0,
+                order: data.2
+            });
+        }
+        strips
+    }
+}
+
 /// Read a Mat3x3 from a file (36 bytes)
 pub fn read_mat3<R: Read>(reader: &mut R, fmt: TotemFormat) -> io::Result<Mat3x3> {
     let mut buf = [0.0f32; 9];

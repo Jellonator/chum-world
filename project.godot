@@ -144,4 +144,8 @@ view_select={
 
 [rendering]
 
+quality/driver/fallback_to_gles2=true
+quality/reflections/texture_array_reflections=false
+quality/reflections/high_quality_ggx=false
+quality/shading/force_vertex_shading=true
 environment/default_environment="res://default_env.tres"

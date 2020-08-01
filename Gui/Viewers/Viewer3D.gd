@@ -20,7 +20,8 @@ func _ready():
 	node_rect.connect("item_rect_changed", self, "_on_TextureRect_item_rect_changed")
 
 func _on_TextureRect_item_rect_changed():
-	node_viewport.size = node_rect.rect_size
+	node_viewport.size = node_rect.rect_size * 2
+	node_viewport.set_size_override(true, node_rect.rect_size)
 
 func set_file(file):
 	node_camera.reset_transform()

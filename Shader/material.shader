@@ -8,7 +8,15 @@ uniform sampler2D arg_texture;
 uniform sampler2D arg_reflection;
 uniform bool has_texture = false;
 uniform bool has_reflection = false;
+uniform bool alternative_alpha = true;
 uniform int do_highlight = 0;
+
+// This psuedo-random function is credited to The Book of Shaders by 
+// Patricio Gonzalez Vivo & Jen Lowe.
+// Generates a float between 0 and 1.
+float rand(vec2 co){
+    return fract(sin(dot(co.xy ,vec2(12.9898,78.233))) * 43758.5453);
+}
 
 void vertex() {
 	// Small hack: special, mesh-specific rendering information is stored in UV2.
@@ -82,5 +90,33 @@ void fragment() {
 			EMISSION = vec3(1.0, 1.0, 1.0);
 			ALPHA = 1.0;
 		}
+	}
+	// Joker's trick
+	// (aka workaround to make transparent things look good)
+	if (alternative_alpha) {
+		if (ALPHA < 1.0 && ALPHA > 0.0) {
+			int x = int(FRAGCOORD.x);
+			int y = int(FRAGCOORD.y);
+			// The basic idea here is that there are five ideal outputs:
+			// Four filled  (Alpha == 1.0)
+			// Three filled (Alpha in (0.67, 1.0))
+			// Two filled   (Alpha in (0.33, 0.67)
+			// One filled   (Alpha in (0.0, 0.33))
+			// None filled  (Alpha == 0.0)
+			bool value = false;
+			if (ALPHA < 0.33) {
+				value = ((x % 2) == 0 && (y % 2) == 0);
+			} else if (ALPHA < 0.67) {
+				value = ((x + y) % 2 == 0);
+			} else {
+				value = ((x % 2) == 0 || (y % 2) == 0);
+			}
+			if (value) {
+				ALPHA = 1.0;
+			} else {
+				ALPHA = 0.0;
+			}
+		}
+//		ALPHA_SCISSOR = 0.5;
 	}
 }

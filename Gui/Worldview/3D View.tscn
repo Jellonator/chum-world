@@ -10,6 +10,7 @@
 environment = ExtResource( 1 )
 
 [sub_resource type="ViewportTexture" id=2]
+flags = 4
 viewport_path = NodePath("Viewport")
 
 [node name="3D View" type="HSplitContainer"]
@@ -25,6 +26,8 @@ __meta__ = {
 size = Vector2( 100, 100 )
 own_world = true
 world = SubResource( 1 )
+hdr = false
+debug_draw = 3
 physics_object_picking = true
 
 [node name="Surfaces" type="Spatial" parent="Viewport"]

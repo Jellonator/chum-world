@@ -99,7 +99,8 @@ func set_archive(p_archive):
 	reset_surfaces()
 
 func _on_TextureRect_item_rect_changed():
-	node_viewport.size = node_rect.rect_size
+	node_viewport.size = node_rect.rect_size * 2
+	node_viewport.set_size_override(true, node_rect.rect_size)
 
 func _input(event):
 	if node_rect.has_focus():
@@ -169,14 +170,14 @@ func pick_node():
 		node_popup_select.rect_size = Vector2.ZERO
 		node_popup_select.popup()
 
-const FONT := preload("res://Font/Base.tres")
+const FONT := preload("res://Font/Big.tres")
 const DIST_MAX := 45.0
 const DIST_MIN := 30.0
 
 func draw_node_label(camera, text: String, position: Vector3, color: Color):
 	if not camera.is_position_behind(position):
 		var size = FONT.get_string_size(text)
-		var screen_pos = camera.unproject_position(position)
+		var screen_pos = camera.unproject_position(position) * 2
 		# draw BG
 		var rect := Rect2(screen_pos - Vector2(size.x/2, 4), size)
 		rect = rect.grow_individual(4.0, 0.0, 4.0, 0.0)

@@ -192,12 +192,14 @@ func load_mesh_from_file(file, node_owner):
 			sphere.mesh = get_sphere_mesh()
 			sphere.translation = unk["pos"]
 			sphere.scale *= unk["radius"]
+			sphere.add_to_group("vis_collision")
 			node_mesh.add_child(sphere)
 		for unk in data["unk2"]:
 			prints("unk2", unk)
 			var cube := MeshInstance.new()
 			cube.mesh = get_cube_mesh()
 			cube.transform = unk["transform"]
+			cube.add_to_group("vis_collision")
 			node_mesh.add_child(cube)
 		for unk in data["unk3"]:
 			var radius = unk["unk2"]
@@ -212,6 +214,7 @@ func load_mesh_from_file(file, node_owner):
 			sphere.mesh = get_cylinder_mesh()
 			sphere.scale = Vector3(radius, radius, height)
 			sphere.transform.origin = pos
+			sphere.add_to_group("vis_collision")
 			node_mesh.add_child(sphere)
 		return node_mesh
 	else:
@@ -341,6 +344,7 @@ func load_spline_from_file(file, node_owner):
 				"original": preload("res://Shader/unshaded.tres"),
 				"focus": preload("res://Shader/unshaded_highlight.tres"),
 			})
+		node.add_to_group("vis_spline")
 		var sprite = make_icon_billboard(file, node_owner, ICON_UNKNOWN)
 		parent.add_child(sprite)
 		parent.add_child(node)
@@ -365,6 +369,7 @@ func load_collisionvol_from_file(file, node_owner):
 				"original": preload("res://Shader/unshaded.tres"),
 				"focus": preload("res://Shader/unshaded_highlight.tres"),
 			})
+		mesh.add_to_group("vis_volume")
 		var sprite = make_icon_billboard(file, node_owner, ICON_UNKNOWN)
 		parent.add_child(sprite)
 		parent.add_child(mesh)
@@ -392,6 +397,7 @@ func make_icon_billboard(file, node_owner, default_icon):
 			"original": matn,
 			"focus": matf,
 		})
+	sprite.add_to_group("vis_node")
 	return sprite
 
 func load_emptymesh(file, node_owner, default_icon):
@@ -405,6 +411,7 @@ func load_emptymesh(file, node_owner, default_icon):
 			"original": preload("res://Shader/unshaded.tres"),
 			"focus": preload("res://Shader/node_highlight.tres"),
 		})
+	mesh.add_to_group("vis_node")
 	return mesh
 
 func try_file_to_spatial(file, node_owner=null):

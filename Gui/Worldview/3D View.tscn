@@ -100,14 +100,49 @@ __meta__ = {
 "_edit_use_anchors_": false
 }
 
-[node name="CheckButton" type="CheckButton" parent="PanelContainer/TextureRect/Controls"]
-margin_right = 200.0
+[node name="NodeNames" type="CheckButton" parent="PanelContainer/TextureRect/Controls"]
+margin_right = 232.0
 margin_bottom = 40.0
 text = "Show Node Names"
+align = 2
+
+[node name="ShowShapes" type="CheckButton" parent="PanelContainer/TextureRect/Controls"]
+margin_top = 44.0
+margin_right = 232.0
+margin_bottom = 84.0
+text = "Show Collision Shapes"
+align = 2
+
+[node name="ShowVolumes" type="CheckButton" parent="PanelContainer/TextureRect/Controls"]
+margin_top = 88.0
+margin_right = 232.0
+margin_bottom = 128.0
+text = "Show Collision Volumes"
+align = 2
+
+[node name="ShowSplines" type="CheckButton" parent="PanelContainer/TextureRect/Controls"]
+margin_top = 132.0
+margin_right = 232.0
+margin_bottom = 172.0
+text = "Show Splines"
+align = 2
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="ShowNodes" type="CheckButton" parent="PanelContainer/TextureRect/Controls"]
+margin_top = 176.0
+margin_right = 232.0
+margin_bottom = 216.0
+text = "Show Hidden Nodes"
 align = 2
 [connection signal="draw" from="Viewport/Draw" to="." method="_on_Draw_draw"]
 [connection signal="text_changed" from="Tree/VBox/Search" to="Tree/VBox/Items" method="_on_Search_text_changed"]
 [connection signal="item_selected" from="Tree/VBox/Items" to="Tree/VBox/Items" method="_on_Items_item_selected"]
 [connection signal="node_selected" from="Tree/VBox/Items" to="." method="_on_Items_node_selected"]
 [connection signal="item_rect_changed" from="PanelContainer/TextureRect" to="." method="_on_TextureRect_item_rect_changed"]
-[connection signal="toggled" from="PanelContainer/TextureRect/Controls/CheckButton" to="." method="_on_CheckButton_toggled"]
+[connection signal="toggled" from="PanelContainer/TextureRect/Controls/NodeNames" to="." method="_on_CheckButton_toggled"]
+[connection signal="toggled" from="PanelContainer/TextureRect/Controls/ShowShapes" to="." method="_on_ShowShapes_toggled"]
+[connection signal="toggled" from="PanelContainer/TextureRect/Controls/ShowVolumes" to="." method="_on_ShowVolumes_toggled"]
+[connection signal="toggled" from="PanelContainer/TextureRect/Controls/ShowSplines" to="." method="_on_ShowSplines_toggled"]
+[connection signal="toggled" from="PanelContainer/TextureRect/Controls/ShowNodes" to="." method="_on_ShowNodes_toggled"]

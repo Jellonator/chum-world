@@ -90,6 +90,7 @@ func reset_surfaces():
 		else:
 			print("INVALID PARENT ID ", parentid)
 	node_tree.assemble_tree(tnode_root)
+	update_shown_objects()
 
 func set_archive(p_archive):
 	self.archive = p_archive
@@ -199,3 +200,30 @@ func set_node_focus_material(node, is_focused: bool):
 func camera_focus_to(node):
 	node_camera.move_look(node["node"].global_transform, 2.0)
 	node_draw.update()
+
+var option_show_shapes := false
+var option_show_volumes := false
+var option_show_nodes := false
+var option_show_splines := false
+
+func _on_ShowShapes_toggled(button_pressed):
+	option_show_shapes = button_pressed
+	get_tree().set_group("vis_collision", "visible", option_show_shapes)
+
+func _on_ShowVolumes_toggled(button_pressed):
+	option_show_volumes = button_pressed
+	get_tree().set_group("vis_volume", "visible", option_show_volumes)
+
+func _on_ShowNodes_toggled(button_pressed):
+	option_show_nodes = button_pressed
+	get_tree().set_group("vis_node", "visible", option_show_nodes)
+	
+func _on_ShowSplines_toggled(button_pressed):
+	option_show_splines = button_pressed
+	get_tree().set_group("vis_spline", "visible", option_show_splines)
+
+func update_shown_objects():
+	get_tree().set_group("vis_collision", "visible", option_show_shapes)
+	get_tree().set_group("vis_volume", "visible", option_show_volumes)
+	get_tree().set_group("vis_node", "visible", option_show_nodes)
+	get_tree().set_group("vis_spline", "visible", option_show_splines)

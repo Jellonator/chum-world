@@ -15,6 +15,7 @@ vertex_color_use_as_albedo = true
 params_cull_mode = 2
 
 [sub_resource type="ViewportTexture" id=4]
+flags = 4
 viewport_path = NodePath("Viewport")
 
 [node name="Viewer3D" type="Control"]
@@ -25,7 +26,9 @@ __meta__ = {
 "_edit_use_anchors_": false
 }
 
-[node name="Viewport" type="Viewport" parent="."]
+[node name="Viewport" type="Viewport" parent="." groups=[
+"viewport",
+]]
 size = Vector2( 16, 16 )
 own_world = true
 world = SubResource( 1 )

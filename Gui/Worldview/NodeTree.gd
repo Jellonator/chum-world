@@ -1,5 +1,8 @@
 extends Tree
 
+const ICON_VISIBLE = preload("res://Gui/Icon/visible.png")
+const ICON_HIDDEN = preload("res://Gui/Icon/hidden.png")
+
 signal node_selected(node)
 
 var added_nodes = {}
@@ -28,6 +31,7 @@ func add_node(node, item_parent):
 	item.set_custom_color(0, Color.white)
 	item.set_meta("node", node)
 	item.set_icon(0, get_node_icon(node))
+	item.add_button(1, ICON_VISIBLE, 0)
 	added_nodes[node["id"]] = item
 	node["visible_children"].sort_custom(self, "_sort_nodes")
 	for child in node["visible_children"]:
@@ -38,7 +42,9 @@ func assemble_tree(node_root):
 	do_search(prev_search)
 
 func _ready():
-	columns = 1
+	columns = 2
+	set_column_expand(1, false)
+	set_column_min_width(1, 16)
 	set_column_titles_visible(true)
 	set_column_title(0, "Name")
 
@@ -92,3 +98,13 @@ func _on_Search_text_changed(new_text: String):
 
 func try_select(_item):
 	do_search(prev_search)
+
+func _on_Items_button_pressed(item: TreeItem, column: int, id: int):
+	var node = item.get_meta("node")
+	var node_base := node["node"] as Spatial
+	if node_base.visible:
+		item.set_button(1, 0, ICON_HIDDEN)
+		node_base.visible = false
+	else:
+		item.set_button(1, 0, ICON_VISIBLE)
+		node_base.visible = true

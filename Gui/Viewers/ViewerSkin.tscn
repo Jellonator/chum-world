@@ -9,6 +9,7 @@
 environment = ExtResource( 2 )
 
 [sub_resource type="ViewportTexture" id=2]
+flags = 4
 viewport_path = NodePath("Viewport")
 
 [node name="ViewerSkin" type="Control"]
@@ -43,7 +44,9 @@ __meta__ = {
 "_edit_use_anchors_": false
 }
 
-[node name="TextureRect" type="TextureRect" parent="HSplitContainer"]
+[node name="TextureRect" type="TextureRect" parent="HSplitContainer" groups=[
+"viewport",
+]]
 margin_right = 954.0
 margin_bottom = 720.0
 focus_mode = 1

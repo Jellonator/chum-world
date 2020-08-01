@@ -82,7 +82,7 @@ func set_file(file):
 			print("DOES NOT EXIST")
 
 func _on_TextureRect_item_rect_changed():
-	node_viewport.size = node_rect.rect_size * 2
+	node_viewport.size = node_rect.rect_size * GlobalConfig.viewport_scale
 	node_viewport.set_size_override(true, node_rect.rect_size)
 
 func _physics_process(delta: float):

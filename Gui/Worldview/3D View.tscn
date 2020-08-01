@@ -22,7 +22,9 @@ __meta__ = {
 "_edit_use_anchors_": false
 }
 
-[node name="Viewport" type="Viewport" parent="."]
+[node name="Viewport" type="Viewport" parent="." groups=[
+"viewport",
+]]
 size = Vector2( 100, 100 )
 own_world = true
 world = SubResource( 1 )
@@ -149,6 +151,7 @@ margin_bottom = 182.0
 items = [ "test1", null, 0, false, false, 0, 0, null, "", false, "test2", null, 0, false, false, 1, 0, null, "", false ]
 [connection signal="draw" from="Viewport/Draw" to="." method="_on_Draw_draw"]
 [connection signal="text_changed" from="Tree/VBox/Search" to="Tree/VBox/Items" method="_on_Search_text_changed"]
+[connection signal="button_pressed" from="Tree/VBox/Items" to="Tree/VBox/Items" method="_on_Items_button_pressed"]
 [connection signal="item_selected" from="Tree/VBox/Items" to="Tree/VBox/Items" method="_on_Items_item_selected"]
 [connection signal="node_selected" from="Tree/VBox/Items" to="." method="_on_Items_node_selected"]
 [connection signal="item_rect_changed" from="PanelContainer/TextureRect" to="." method="_on_TextureRect_item_rect_changed"]

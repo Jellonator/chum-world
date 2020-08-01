@@ -16,7 +16,8 @@ func set_file(file):
 			print("INVALID DATA")
 			$TextureRect.hide()
 		elif data["exists"]:
-			var mat = data["material"]
+			var mat = data["material"].duplicate()
+			mat.set_shader_param("alternative_alpha", false)
 			$Viewport/MeshInstance.set_surface_material(0, mat)
 			$TextureRect.show()
 		else:

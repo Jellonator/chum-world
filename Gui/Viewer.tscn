@@ -47,6 +47,15 @@ text = "Archive"
 flat = false
 items = [ "Bulk Export", null, 0, false, false, 0, 0, null, "", false ]
 
+[node name="View" type="MenuButton" parent="VBox/Menu"]
+visible = false
+margin_left = 103.0
+margin_right = 145.0
+margin_bottom = 20.0
+text = "View"
+flat = false
+items = [ "Backface Culling", null, 1, false, false, 0, 0, null, "", false, "High Quality Alpha", null, 1, false, false, 1, 0, null, "", false ]
+
 [node name="Tabs" type="TabContainer" parent="VBox"]
 margin_top = 24.0
 margin_right = 1280.0

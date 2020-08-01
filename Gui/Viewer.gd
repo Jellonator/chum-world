@@ -7,6 +7,9 @@ const MENU_FILE_SAVE_AS := 2
 
 const MENU_ARCHIVE_BULKEXPORT := 0
 
+const MENU_VIEW_CULLING := 0
+const MENU_VIEW_ALPHA := 1
+
 var archive: ChumArchive
 var should_3dview_reload := false
 
@@ -17,26 +20,11 @@ onready var node_view3d := $"VBox/Tabs/3D View"
 onready var node_tabs := $VBox/Tabs
 
 func _ready():
-#	node_editor.set_file(null)
 	archive = ChumArchive.new()
 	$VBox/Menu/File.get_popup().connect(
 		"id_pressed", self, "_on_menu_file_select")
 	$VBox/Menu/Archive.get_popup().connect(
 		"id_pressed", self, "_on_menu_archive_select")
-	var tx = Transform2D()
-	tx.x = Vector2(8.99999976e-1, -3.93402502e-8)
-	tx.y = Vector2(3.93402502e-8, 8.99999976e-1)
-	tx.origin = Vector2(-2.50000000e-1, 5.00000417e-2)
-	print(tx)
-	var tx_off = Transform2D().translated(Vector2(-0.5, -0.5))
-	var tx_off2 = Transform2D().translated(Vector2(0.5, 0.5))
-	print(tx_off * tx * tx_off2)
-	print(Transform2D()\
-		* tx_off2\
-		* Transform2D().translated(Vector2(-0.3, 0.0))\
-		* Transform2D().scaled(Vector2(0.9, 0.9))\
-		* tx_off\
-		)
 
 func _on_menu_file_select(id):
 	match id:

@@ -176,10 +176,8 @@ const DIST_MIN := 30.0
 func draw_node_label(camera, text: String, position: Vector3, color: Color):
 	if not camera.is_position_behind(position):
 		var font = FONT_SMALL
-		if GlobalConfig.viewport_scale >= 2.0:
-			font = FONT_BIG
 		var size = font.get_string_size(text)
-		var screen_pos = camera.unproject_position(position) * GlobalConfig.viewport_scale
+		var screen_pos = camera.unproject_position(position)
 		# draw BG
 		var rect := Rect2(screen_pos - Vector2(size.x/2, 4), size)
 		rect = rect.grow_individual(4.0, 0.0, 4.0, 0.0)
@@ -192,6 +190,7 @@ func draw_node_label(camera, text: String, position: Vector3, color: Color):
 
 func _on_Draw_draw():
 	var camera = node_viewport.get_camera()
+	node_draw.scale = GlobalConfig.viewport_scale
 	if show_node_names:
 		for data in tnodes_by_id.values():
 			var node = data["node"]

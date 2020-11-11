@@ -139,6 +139,10 @@ view_select={
 
 3d_physics/layer_1="3dselect"
 
+[memory]
+
+limits/message_queue/max_size_kb=8192
+
 [physics]
 
 3d/active_soft_world=false

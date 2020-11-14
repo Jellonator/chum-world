@@ -480,6 +480,20 @@ impl ChumFile {
                 let data = material.structure();
                 util::struct_to_dict(&data).into_shared().to_variant()
             }
+            "COLLISIONVOL" => {
+                let voldata: Vec<u8> = self.get_data_as_vec();
+                let vol = match reader::collisionvol::CollisionVol::read_from(
+                    &mut voldata.as_slice(),
+                    self.format
+                ) {
+                    Ok(x) => x,
+                    Err(err) => {
+                        panic!("COLLISIONVOL file invalid: {}", err);
+                    }
+                };
+                let data = vol.structure();
+                util::struct_to_dict(&data).into_shared().to_variant()
+            }
             _ => Variant::new(),
         }
     }
@@ -513,6 +527,12 @@ impl ChumFile {
                 let materialdata = reader::material::Material::destructure(&structure).unwrap();
                 let mut outdata = Vec::new();
                 materialdata.write_to(&mut outdata, self.format).unwrap();
+                self.replace_data_with_vec(outdata);
+            }
+            "COLLISIONVOL" => {
+                let voldata = reader::collisionvol::CollisionVol::destructure(&structure).unwrap();
+                let mut outdata = Vec::new();
+                voldata.write_to(&mut outdata, self.format).unwrap();
                 self.replace_data_with_vec(outdata);
             }
             _ => panic!("Could not import data"),

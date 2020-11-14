@@ -1,0 +1,33 @@
+[gd_scene load_steps=2 format=2]
+
+[ext_resource path="res://Gui/Struct/StructVec2.gd" type="Script" id=1]
+
+[node name="StructVec2" type="HBoxContainer"]
+anchor_right = 1.0
+script = ExtResource( 1 )
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="X" type="SpinBox" parent="."]
+margin_right = 638.0
+margin_bottom = 24.0
+size_flags_horizontal = 3
+step = 0.0
+value = 0.1
+allow_greater = true
+allow_lesser = true
+prefix = "x"
+
+[node name="Y" type="SpinBox" parent="."]
+margin_left = 642.0
+margin_right = 1280.0
+margin_bottom = 24.0
+size_flags_horizontal = 3
+step = 0.0
+value = 0.1
+allow_greater = true
+allow_lesser = true
+prefix = "y"
+[connection signal="value_changed" from="X" to="." method="_on_X_value_changed"]
+[connection signal="value_changed" from="Y" to="." method="_on_Y_value_changed"]

@@ -1,0 +1,161 @@
+[gd_scene load_steps=2 format=2]
+
+[ext_resource path="res://Gui/Struct/StructTransform3D.gd" type="Script" id=1]
+
+[node name="StructTransform3D" type="GridContainer"]
+anchor_right = 1.0
+margin_bottom = 24.0
+columns = 3
+script = ExtResource( 1 )
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="X1" type="SpinBox" parent="."]
+margin_right = 424.0
+margin_bottom = 24.0
+size_flags_horizontal = 3
+step = 0.0
+allow_greater = true
+allow_lesser = true
+editable = false
+prefix = "x1"
+
+[node name="X2" type="SpinBox" parent="."]
+margin_left = 428.0
+margin_right = 852.0
+margin_bottom = 24.0
+size_flags_horizontal = 3
+step = 0.0
+allow_greater = true
+allow_lesser = true
+editable = false
+prefix = "x2"
+
+[node name="X3" type="SpinBox" parent="."]
+margin_left = 856.0
+margin_right = 1280.0
+margin_bottom = 24.0
+size_flags_horizontal = 3
+step = 0.0
+allow_greater = true
+allow_lesser = true
+editable = false
+prefix = "x2"
+
+[node name="Y1" type="SpinBox" parent="."]
+margin_top = 28.0
+margin_right = 424.0
+margin_bottom = 52.0
+size_flags_horizontal = 3
+step = 0.0
+allow_greater = true
+allow_lesser = true
+editable = false
+prefix = "y1"
+
+[node name="Y2" type="SpinBox" parent="."]
+margin_left = 428.0
+margin_top = 28.0
+margin_right = 852.0
+margin_bottom = 52.0
+size_flags_horizontal = 3
+step = 0.0
+allow_greater = true
+allow_lesser = true
+editable = false
+prefix = "y2"
+
+[node name="Y3" type="SpinBox" parent="."]
+margin_left = 856.0
+margin_top = 28.0
+margin_right = 1280.0
+margin_bottom = 52.0
+size_flags_horizontal = 3
+step = 0.0
+allow_greater = true
+allow_lesser = true
+editable = false
+prefix = "y2"
+
+[node name="Z1" type="SpinBox" parent="."]
+margin_top = 56.0
+margin_right = 424.0
+margin_bottom = 80.0
+size_flags_horizontal = 3
+step = 0.0
+allow_greater = true
+allow_lesser = true
+editable = false
+prefix = "y1"
+
+[node name="Z2" type="SpinBox" parent="."]
+margin_left = 428.0
+margin_top = 56.0
+margin_right = 852.0
+margin_bottom = 80.0
+size_flags_horizontal = 3
+step = 0.0
+allow_greater = true
+allow_lesser = true
+editable = false
+prefix = "y1"
+
+[node name="Z3" type="SpinBox" parent="."]
+margin_left = 856.0
+margin_top = 56.0
+margin_right = 1280.0
+margin_bottom = 80.0
+size_flags_horizontal = 3
+step = 0.0
+allow_greater = true
+allow_lesser = true
+editable = false
+prefix = "y1"
+
+[node name="O1" type="SpinBox" parent="."]
+margin_top = 84.0
+margin_right = 424.0
+margin_bottom = 108.0
+size_flags_horizontal = 3
+step = 0.0
+allow_greater = true
+allow_lesser = true
+editable = false
+prefix = "o1"
+
+[node name="O2" type="SpinBox" parent="."]
+margin_left = 428.0
+margin_top = 84.0
+margin_right = 852.0
+margin_bottom = 108.0
+size_flags_horizontal = 3
+step = 0.0
+allow_greater = true
+allow_lesser = true
+editable = false
+prefix = "o2"
+
+[node name="O3" type="SpinBox" parent="."]
+margin_left = 856.0
+margin_top = 84.0
+margin_right = 1280.0
+margin_bottom = 108.0
+size_flags_horizontal = 3
+step = 0.0
+allow_greater = true
+allow_lesser = true
+editable = false
+prefix = "o2"
+[connection signal="value_changed" from="X1" to="." method="_on_X1_value_changed"]
+[connection signal="value_changed" from="X2" to="." method="_on_X2_value_changed"]
+[connection signal="value_changed" from="X3" to="." method="_on_X3_value_changed"]
+[connection signal="value_changed" from="Y1" to="." method="_on_Y1_value_changed"]
+[connection signal="value_changed" from="Y2" to="." method="_on_Y2_value_changed"]
+[connection signal="value_changed" from="Y3" to="." method="_on_Y3_value_changed"]
+[connection signal="value_changed" from="Z1" to="." method="_on_Z1_value_changed"]
+[connection signal="value_changed" from="Z2" to="." method="_on_Z2_value_changed"]
+[connection signal="value_changed" from="Z3" to="." method="_on_Z3_value_changed"]
+[connection signal="value_changed" from="O1" to="." method="_on_O1_value_changed"]
+[connection signal="value_changed" from="O2" to="." method="_on_O2_value_changed"]
+[connection signal="value_changed" from="O3" to="." method="_on_O3_value_changed"]

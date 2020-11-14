@@ -464,7 +464,7 @@ impl ChumFile {
                         panic!("BITMAP file invalid: {}", err);
                     }
                 };
-                let data = bitmap.structure();
+                let data = bitmap.get_struct().structure();
                 util::struct_to_dict(&data).into_shared().to_variant()
             }
             "MATERIAL" => {
@@ -498,8 +498,8 @@ impl ChumFile {
                         panic!("BITMAP file invalid: {}", err);
                     }
                 };
-                let bitmapdata = reader::bitmap::Bitmap::destructure(structure)
-                    .unwrap()
+                let bitmapstruct = reader::bitmap::BitmapStruct::destructure(structure).unwrap();
+                let bitmapdata = reader::bitmap::Bitmap::from_struct(&bitmapstruct)
                     .with_bitmap(
                         bitmap.get_data().clone(),
                         bitmap.get_width(),

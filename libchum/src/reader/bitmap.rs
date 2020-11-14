@@ -496,47 +496,11 @@ pub struct Bitmap {
     unknown: u8,
 }
 
-impl ChumStruct for Bitmap {
-    fn structure(&self) -> ChumStructVariant {
-        use ChumStructVariant::*;
-        use IntType::*;
-        Struct(vec![
-            (
-                "flags".to_owned(),
-                Integer(
-                    self.flags as i64,
-                    Flags(vec!["a".to_owned(), "b".to_owned(), "c".to_owned()]),
-                ),
-            ),
-            (
-                "alpha".to_owned(),
-                Integer(
-                    self.alpha.as_u8() as i64,
-                    Enum(vec![
-                        "Opaque".to_owned(),
-                        "Bit".to_owned(),
-                        "Blend".to_owned(),
-                    ]),
-                ),
-            ),
-            (
-                "unknown".to_owned(),
-                Integer(self.unknown as i64, Custom(1, 5)),
-            ),
-        ])
-    }
-    fn destructure(data: ChumStructVariant) -> Result<Self, Box<dyn std::error::Error>> {
-        let alpha =
-            AlphaLevel::from_u8(data.get_struct_item("alpha").unwrap().get_i64().unwrap() as u8)
-                .unwrap();
-        Ok(Bitmap {
-            data: BitmapFormat::RGBA8888(Vec::new()),
-            alpha,
-            width: 0,
-            height: 0,
-            flags: data.get(chum_path!(flags)).unwrap().get_i64().unwrap() as u8,
-            unknown: data.get(chum_path!(unknown)).unwrap().get_i64().unwrap() as u8,
-        })
+chum_struct! {
+    pub struct BitmapStruct {
+        pub alpha: [enum {Opaque, Bit, Blend}],
+        pub flags: [flags {a, b, c}],
+        pub unknown: [custom 1, 5],
     }
 }
 
@@ -651,6 +615,25 @@ fn read_u32_interleaved<R: Read>(
 }
 
 impl Bitmap {
+    pub fn get_struct(&self) -> BitmapStruct {
+        BitmapStruct {
+            alpha: self.alpha.as_u8() as i64,
+            flags: self.flags as i64,
+            unknown: self.unknown as i64
+        }
+    }
+
+    pub fn from_struct(data: &BitmapStruct) -> Self {
+        Bitmap {
+            data: BitmapFormat::RGBA8888(Vec::new()),
+            alpha: AlphaLevel::from_u8(data.alpha as u8).unwrap(),
+            width: 0,
+            height: 0,
+            flags: data.flags as u8,
+            unknown: data.flags as u8,
+        }
+    }
+
     pub fn get_data_as_vec(&self) -> Vec<Color> {
         self.data.get_colors_as_vec()
     }

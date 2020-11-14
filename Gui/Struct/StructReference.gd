@@ -8,10 +8,12 @@ onready var node_menu := $MenuButton
 onready var menu := node_menu.get_popup() as PopupMenu
 
 func _ready():
-	menu.connect("index_pressed", self, "_on_index_pressed")
+	var err = menu.connect("index_pressed", self, "_on_index_pressed")
+	if err != OK:
+		push_warning("Connect failed")
 
-func set_data(data: Dictionary):
-	self.data = data
+func set_data(p_data: Dictionary):
+	self.data = p_data
 	node_value.value = data["value"]
 	node_value.editable = true
 	node_menu.disabled = false

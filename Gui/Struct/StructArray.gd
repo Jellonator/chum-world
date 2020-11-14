@@ -33,9 +33,15 @@ func push_element(index: int, struct: Dictionary):
 	hbox.set_meta("index", index)
 	hbox.set_meta("btn_up", btn_up)
 	hbox.set_meta("btn_down", btn_down)
-	btn_up.connect("pressed", self, "_on_btnup_pressed", [hbox])
-	btn_down.connect("pressed", self, "_on_btndown_pressed", [hbox])
-	btn_delete.connect("pressed", self, "_on_delete_pressed", [hbox])
+	var err = btn_up.connect("pressed", self, "_on_btnup_pressed", [hbox])
+	if err != OK:
+		push_warning("Connect failed")
+	err = btn_down.connect("pressed", self, "_on_btndown_pressed", [hbox])
+	if err != OK:
+		push_warning("Connect failed")
+	err = btn_delete.connect("pressed", self, "_on_delete_pressed", [hbox])
+	if err != OK:
+		push_warning("Connect failed")
 	node_elements.add_child(hbox)
 	instance.set_data(struct)
 	instance.connect("modified", self, "_on_modified")
@@ -89,8 +95,8 @@ func _on_delete_pressed(hbox):
 	hbox.queue_free()
 	emit_signal("modified", self.data)
 
-func set_data(data: Dictionary):
-	self.data = data
+func set_data(p_data: Dictionary):
+	self.data = p_data
 	self.array = data["value"]
 	self.can_resize = data["can_resize"]
 	self.default_value = data["default"]

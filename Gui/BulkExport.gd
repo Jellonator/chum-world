@@ -57,7 +57,7 @@ func _on_BulkExport_confirmed():
 			path = exportpath + "/" + path + "." + extension
 			file.export_to(exportid, path)
 
-func _on_FileType_item_selected(index: int):
+func _on_FileType_item_selected(_index: int):
 	update_export_type()
 
 func _on_ExportPathSelect_pressed():

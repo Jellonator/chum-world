@@ -429,7 +429,7 @@ func load_warp_from_file(file, _node_owner):
 	var root := Spatial.new()
 	var struct = file.read_structure()
 #	print(JSON.print(struct,"\t"))
-	var size = struct.value.size.value
+	# var size = struct.value.size.value
 	var points = [
 		struct.value.vertices.value[0].value, # BBA -X -Y +Z
 		struct.value.vertices.value[1].value, # BBB -X -Y -Z

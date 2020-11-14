@@ -3,8 +3,8 @@ extends VBoxContainer
 signal modified(data)
 var data: Dictionary
 
-func set_data(data: Dictionary):
-	self.data = data
+func set_data(p_data: Dictionary):
+	self.data = p_data
 	for child in self.get_children():
 		child.queue_free()
 	var names := data["names"] as PoolStringArray
@@ -16,7 +16,9 @@ func set_data(data: Dictionary):
 		if value & i != 0:
 			checkbox.pressed = true
 		add_child(checkbox)
-		checkbox.connect("toggled", self, "_on_checkbox_toggle", [i])
+		var err = checkbox.connect("toggled", self, "_on_checkbox_toggle", [i])
+		if err != OK:
+			push_warning("Connect failed")
 		i = i << 1
 
 func _on_checkbox_toggle(enabled: bool, index: int):

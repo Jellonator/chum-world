@@ -75,7 +75,7 @@ func set_file(file):
 		elif data["exists"]:
 			print("LOADED SKIN")
 			var skin = data["skin"]
-			var archive = file.get_archive()
+			# var archive = file.get_archive()
 			set_meshes(skin["meshes"])
 			set_groups(skin["groups"])
 		else:

@@ -99,7 +99,7 @@ func _on_Search_text_changed(new_text: String):
 func try_select(_item):
 	do_search(prev_search)
 
-func _on_Items_button_pressed(item: TreeItem, column: int, id: int):
+func _on_Items_button_pressed(item: TreeItem, _column: int, _id: int):
 	var node = item.get_meta("node")
 	var node_base := node["node"] as Spatial
 	if node_base.visible:

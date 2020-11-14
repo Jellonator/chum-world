@@ -3,8 +3,8 @@ extends HBoxContainer
 signal modified(data)
 var data: Dictionary
 
-func set_data(data: Dictionary):
-	self.data = data
+func set_data(p_data: Dictionary):
+	self.data = p_data
 	$X.value = data["value"].x
 	$Y.value = data["value"].y
 	$X.editable = true

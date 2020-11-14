@@ -17,7 +17,9 @@ var speed = 2.0
 
 func _ready():
 	node_viewport.size = node_rect.rect_size
-	node_rect.connect("item_rect_changed", self, "_on_TextureRect_item_rect_changed")
+	var err = node_rect.connect("item_rect_changed", self, "_on_TextureRect_item_rect_changed")
+	if err != OK:
+		push_warning("Connect failed")
 
 func _on_TextureRect_item_rect_changed():
 	node_viewport.size = node_rect.rect_size * GlobalConfig.viewport_scale

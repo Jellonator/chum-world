@@ -20,7 +20,9 @@ func refresh_view():
 
 func _ready():
 	node_scroll.max_value = 1
-	connect("item_rect_changed", self, "_on_HexEditor_item_rect_changed")
+	var err = connect("item_rect_changed", self, "_on_HexEditor_item_rect_changed")
+	if err != OK:
+		push_warning("Connect failed")
 
 func get_font_height() -> int:
 	return int(MONOFONT.get_string_size("w").y)

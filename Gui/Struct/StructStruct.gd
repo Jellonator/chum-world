@@ -4,8 +4,8 @@ var data: Dictionary
 
 signal modified(data)
 
-func set_data(data: Dictionary):
-	self.data = data
+func set_data(p_data: Dictionary):
+	self.data = p_data
 	for child in self.get_children():
 		child.queue_free()
 	var names := data["order"] as PoolStringArray

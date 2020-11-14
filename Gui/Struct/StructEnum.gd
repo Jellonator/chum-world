@@ -3,8 +3,8 @@ extends OptionButton
 signal modified(data)
 var data: Dictionary
 
-func set_data(data: Dictionary):
-	self.data = data
+func set_data(p_data: Dictionary):
+	self.data = p_data
 	self.clear()
 	var names := data["names"] as PoolStringArray
 	for i in range(names.size()):

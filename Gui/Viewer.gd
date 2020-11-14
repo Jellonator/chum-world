@@ -70,7 +70,7 @@ var export_file = null
 func _on_SaveDialog_file_selected(path):
 	export_file.export_to(export_mode, path)
 
-func _on_ArchiveFileSaver_files_selected(ngc, dgc, ftype):
+func _on_ArchiveFileSaver_files_selected(ngc, dgc, _ftype):
 	archive.save(ngc, dgc)
 
 func _on_Tabs_tab_changed(tab):

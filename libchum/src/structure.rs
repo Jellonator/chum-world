@@ -41,6 +41,11 @@ pub struct ArrayData {
     pub can_resize: bool,
 }
 
+#[derive(Clone, Copy, Debug)]
+pub struct ColorInfo {
+    pub has_alpha: bool
+}
+
 #[derive(Clone)]
 pub enum ChumStructVariant {
     Integer(i64, IntType),
@@ -49,7 +54,7 @@ pub enum ChumStructVariant {
     Transform2D(common::Mat3x3),
     Vec2(common::Vector2),
     Vec3(common::Vector3),
-    Color(common::Color),
+    Color(common::Color, ColorInfo),
     Reference(i32, Option<String>),
     Array(ArrayData),
     Struct(Vec<(String, ChumStructVariant)>),
@@ -146,7 +151,14 @@ impl ChumStructVariant {
     pub fn get_color(&self) -> Option<&common::Color> {
         use ChumStructVariant::*;
         match *self {
-            Color(ref x) => Some(x),
+            Color(ref x, ref _info) => Some(x),
+            _ => None,
+        }
+    }
+    pub fn get_color_info(&self) -> Option<&ColorInfo> {
+        use ChumStructVariant::*;
+        match *self {
+            Color(ref _x, ref info) => Some(info),
             _ => None,
         }
     }

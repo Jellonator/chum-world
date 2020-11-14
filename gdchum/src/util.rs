@@ -1,7 +1,7 @@
 use gdnative::prelude::*;
 use gdnative::api::Engine;
 use libchum::common;
-use libchum::structure::{ArrayData, ChumStructVariant, IntType};
+use libchum::structure::{ArrayData, ChumStructVariant, IntType, ColorInfo};
 
 #[derive(Copy, Clone, Debug)]
 pub enum MessageLevel {
@@ -193,7 +193,13 @@ pub fn dict_to_struct(dict: &Dictionary) -> ChumStructVariant {
         }
         "color" => {
             let value = dict.get("value").try_to_color().unwrap();
-            ChumStructVariant::Color(common::Color::new(value.r, value.g, value.b, value.a))
+            let alpha = dict.get("has_alpha").try_to_bool().unwrap();
+            ChumStructVariant::Color(
+                common::Color::new(value.r, value.g, value.b, value.a),
+                ColorInfo {
+                    has_alpha: alpha
+                }
+            )
         }
         "reference" => {
             let value = dict.get("value").try_to_i64().unwrap() as i32;
@@ -392,9 +398,10 @@ pub fn struct_to_dict(value: &ChumStructVariant) -> Dictionary<Unique> {
             dict.insert("value", transform);
             dict
         }
-        ChumStructVariant::Color(color) => {
+        ChumStructVariant::Color(color, info) => {
             let dict = Dictionary::new();
             dict.insert("type", "color");
+            dict.insert("has_alpha", info.has_alpha);
             dict.insert(
                 "value",
                 Color::rgba(color[0], color[1], color[2], color[3]),

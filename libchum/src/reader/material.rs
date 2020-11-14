@@ -8,7 +8,7 @@ use std::io::{self, Read, Write};
 chum_struct! {
     pub struct Material {
         pub color: [Color],
-        pub unk1: [Vector3],
+        pub emission: [Vector3 rgb],
         pub unk2: [f32],
         pub transform: [Mat3x3],
         pub unk3: [fixed array [f32] 5],
@@ -32,7 +32,7 @@ impl Material {
     /// Read a TMesh from a file
     pub fn read_from<R: Read>(file: &mut R, fmt: TotemFormat) -> io::Result<Material> {
         let color = common::read_color(file, fmt)?;
-        let unk1 = common::read_vec3(file, fmt)?;
+        let emission = common::read_vec3(file, fmt)?;
         let unk2 = fmt.read_f32(file)?;
         let transform = common::read_mat3(file, fmt)?;
         let mut unk3 = [0.0; 5];
@@ -43,7 +43,7 @@ impl Material {
         let tex_ref = fmt.read_i32(file)?;
         Ok(Material {
             color,
-            unk1,
+            emission,
             unk2,
             transform,
             unk3,
@@ -61,7 +61,7 @@ impl Material {
     /// Write a Material to a file
     pub fn write_to<W: Write>(&self, writer: &mut W, fmt: TotemFormat) -> io::Result<()> {
         common::write_color(&self.color, writer, fmt)?;
-        common::write_vec3(&self.unk1, writer, fmt)?;
+        common::write_vec3(&self.emission, writer, fmt)?;
         fmt.write_f32(writer, self.unk2)?;
         common::write_mat3(&self.transform, writer, fmt)?;
         for value in self.unk3.iter() {

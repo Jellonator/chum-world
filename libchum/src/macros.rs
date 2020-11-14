@@ -196,6 +196,7 @@ macro_rules! chum_struct_get_type {
     (Mat3x3) => {$crate::common::Mat3x3};
     (Vector2) => {$crate::common::Vector2};
     (Vector3) => {$crate::common::Vector3};
+    (Vector3 rgb) => {$crate::common::Vector3};
     (Color) => {$crate::common::Color};
     (reference) => {::std::primitive::i32};
     (reference $typename:ident) => {::std::primitive::i32};
@@ -237,7 +238,17 @@ macro_rules! chum_struct_structure {
     ([Mat3x3],$value:expr) => {Transform2D($value)};
     ([Vector2],$value:expr) => {Vec2($value)};
     ([Vector3],$value:expr) => {Vec3($value)};
-    ([Color],$value:expr) => {Color($value)};
+    ([Vector3 rgb],$value:expr) => {
+        Color(
+            $crate::common::Color::new(
+                $value.x, $value.y, $value.z, 1.0f32
+            ),
+            ColorInfo {
+                has_alpha: false
+            }
+        )
+    };
+    ([Color],$value:expr) => {Color($value, ColorInfo{has_alpha: true})};
     ([reference],$value:expr) => {Reference($value,None)};
     ([reference $typename:ident],$value:expr) => {
         Reference($value,Some(stringify!($typename).to_owned()))
@@ -283,6 +294,14 @@ macro_rules! chum_struct_destructure {
     ([Mat3x3],$value:expr) => {*$value.get_transform2d().unwrap()};
     ([Vector2],$value:expr) => {*$value.get_vec2().unwrap()};
     ([Vector3],$value:expr) => {*$value.get_vec3().unwrap()};
+    ([Vector3 rgb],$value:expr) => {
+        {
+            let col = $value.get_color().unwrap();
+            $crate::common::Vector3::new(
+                col.x, col.y, col.z
+            )
+        }
+    };
     ([Color],$value:expr) => {*$value.get_color().unwrap()};
     ([reference],$value:expr) => {$value.get_reference_id().unwrap()};
     ([reference $typename:ident],$value:expr) => {$value.get_reference_id().unwrap()};
@@ -342,6 +361,7 @@ macro_rules! chum_struct {
                 use $crate::structure::ChumStructVariant::*;
                 use $crate::structure::IntType::*;
                 use $crate::structure::ArrayData;
+                use $crate::structure::ColorInfo;
                 Struct(vec![
                     $(
                         (

@@ -1,4 +1,5 @@
-use gdnative::*;
+use gdnative::prelude::*;
+use gdnative::api::Resource;
 use libchum;
 use std::fs::File;
 
@@ -17,24 +18,24 @@ pub struct ChumArchive {
 
 #[methods]
 impl ChumArchive {
-    fn _init(_owner: Resource) -> Self {
+    fn new(_owner: &Resource) -> Self {
         ChumArchive { archive: None }
     }
 
     #[export]
     fn save(
         &mut self,
-        _owner: Resource,
-        ngcpath: gdnative::GodotString,
-        dgcpath: gdnative::GodotString,
+        _owner: &Resource,
+        ngcpath: GodotString,
+        dgcpath: GodotString,
     ) -> i64 {
         let mut ngcfile = match File::create(ngcpath.to_string()) {
             Ok(x) => x,
-            Err(_) => return gdnative::GodotError::FileCantOpen as i64,
+            Err(_) => return GodotError::FileCantOpen as i64,
         };
         let mut dgcfile = match File::create(dgcpath.to_string()) {
             Ok(x) => x,
-            Err(_) => return gdnative::GodotError::FileCantOpen as i64,
+            Err(_) => return GodotError::FileCantOpen as i64,
         };
         match self
             .archive
@@ -43,17 +44,17 @@ impl ChumArchive {
             .write_chum_archive(&mut ngcfile, &mut dgcfile)
         {
             Ok(_) => 0,
-            Err(_) => gdnative::GodotError::FileCantWrite as i64,
+            Err(_) => GodotError::FileCantWrite as i64,
         }
     }
 
     #[export]
     fn load(
         &mut self,
-        _owner: Resource,
-        ngcpath: gdnative::GodotString,
-        dgcpath: gdnative::GodotString,
-        fmt: gdnative::GodotString,
+        _owner: &Resource,
+        ngcpath: GodotString,
+        dgcpath: GodotString,
+        fmt: GodotString,
     ) -> i64 {
         let format = match fmt.to_string().as_ref() {
             "PS2" => libchum::format::TotemFormat::PS2,
@@ -65,21 +66,21 @@ impl ChumArchive {
                     dgcpath,
                     a
                 );
-                return gdnative::GodotError::InvalidParameter as i64;
+                return GodotError::InvalidParameter as i64;
             }
         };
         let mut ngcfile = match File::open(ngcpath.to_string()) {
             Ok(x) => x,
             Err(e) => {
                 display_err!("Error loading archive: {}, {}\n{}", ngcpath, dgcpath, e);
-                return gdnative::GodotError::FileBadPath as i64;
+                return GodotError::FileBadPath as i64;
             }
         };
         let mut dgcfile = match File::open(dgcpath.to_string()) {
             Ok(x) => x,
             Err(e) => {
                 display_err!("Error loading archive: {}, {}\n{}", ngcpath, dgcpath, e);
-                return gdnative::GodotError::FileBadPath as i64;
+                return GodotError::FileBadPath as i64;
             }
         };
         match libchum::ChumArchive::read_chum_archive(&mut ngcfile, &mut dgcfile, format) {
@@ -89,22 +90,23 @@ impl ChumArchive {
             }
             Err(e) => {
                 display_err!("Error loading archive: {}, {}\n{}", ngcpath, dgcpath, e);
-                gdnative::GodotError::FileCantOpen as i64
+                GodotError::FileCantOpen as i64
             }
         }
     }
 
     #[export]
-    fn get_file_list(&self, owner: Resource) -> gdnative::VariantArray {
-        let mut arr = gdnative::VariantArray::new();
+    fn get_file_list(&self, owner: TRef<Resource, Shared>) -> VariantArray<Unique> {
+        let instance = Instance::from_base(owner.claim()).unwrap();
+        let mut arr = VariantArray::<Unique>::new();
         if let Some(archive) = &self.archive {
             for file in archive.get_files() {
-                let f = Instance::<chumfile::ChumFile>::new();
+                let f = Instance::<chumfile::ChumFile,Unique>::new();
                 f.map_mut(|script, _res| {
-                    script.read_from_chumfile(file, archive.get_format(), owner.new_ref());
+                    script.read_from_chumfile(file, archive.get_format(), instance.clone());
                 })
                 .unwrap();
-                arr.push(&Variant::from(f.base().new_ref()));
+                arr.push(f);
             }
         }
         return arr;
@@ -113,17 +115,18 @@ impl ChumArchive {
     #[export]
     pub fn get_file_from_hash(
         &self,
-        owner: Resource,
+        owner: TRef<Resource, Shared>,
         id: i32,
-    ) -> Option<Instance<chumfile::ChumFile>> {
+    ) -> Option<Instance<chumfile::ChumFile, Shared>> {
+        let instance = Instance::from_base(owner.claim()).unwrap();
         if let Some(archive) = &self.archive {
             if let Some(file) = archive.get_file_from_hash(id) {
-                let f = Instance::<chumfile::ChumFile>::new();
+                let f = Instance::<chumfile::ChumFile, Unique>::new();
                 f.map_mut(|script, _res| {
-                    script.read_from_chumfile(file, archive.get_format(), owner.new_ref());
+                    script.read_from_chumfile(file, archive.get_format(), instance.clone());
                 })
                 .unwrap();
-                Some(f)
+                Some(f.into_shared())
             } else {
                 None
             }
@@ -133,12 +136,12 @@ impl ChumArchive {
     }
 
     #[export]
-    fn do_thing(&self, _owner: Resource) {
+    fn do_thing(&self, _owner: &Resource) {
         godot_print!("Hello, World!");
     }
 
     #[export]
-    pub fn maybe_get_name_from_hash(&self, _owner: Resource, id: i32) -> GodotString {
+    pub fn maybe_get_name_from_hash(&self, _owner: &Resource, id: i32) -> GodotString {
         if let Some(archive) = &self.archive {
             if let Some(name) = archive.get_name_from_id(id) {
                 GodotString::from_str(&name)
@@ -181,7 +184,7 @@ impl ChumArchive {
     }
 }
 
-fn init(handle: gdnative::init::InitHandle) {
+fn init(handle: InitHandle) {
     handle.add_class::<ChumArchive>();
     handle.add_class::<chumfile::ChumFile>();
     handle.add_class::<bytedata::ByteData>();

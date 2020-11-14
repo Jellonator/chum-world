@@ -1,12 +1,12 @@
 use crate::chumfile::ChumFile;
-use gdnative::*;
+use gdnative::prelude::*;
 use libchum::reader::bitmap;
 
 pub fn read_bitmap(
     data: &Vec<u8>,
     fmt: libchum::format::TotemFormat,
     chumfile: &ChumFile,
-) -> Option<(Reference, bool)> {
+) -> Option<(Ref<Image,Unique>, bool)> {
     let bitmap = match bitmap::Bitmap::read_data(data, fmt) {
         Ok(x) => x,
         Err(err) => {
@@ -14,7 +14,7 @@ pub fn read_bitmap(
             return None;
         }
     };
-    let mut image = Image::new();
+    let mut image = Ref::<Image,Unique>::new();
     let mut data = ByteArray::new();
     for color in bitmap.get_data_as_vec().into_iter() {
         data.push(color.r);
@@ -30,23 +30,23 @@ pub fn read_bitmap(
         data,
     );
     Some((
-        image.to_reference(),
+        image,
         bitmap.get_alpha_level() != bitmap::AlphaLevel::Opaque,
     ))
 }
 
-pub fn read_bitmap_from_res(data: &ChumFile) -> Dictionary {
+pub fn read_bitmap_from_res(data: &ChumFile) -> Dictionary<Unique> {
     let fmt = data.get_format();
     let mut dict = Dictionary::new();
     match read_bitmap(&data.get_data_as_vec(), fmt, data) {
         Some((mesh, hasalpha)) => {
-            dict.set(&"exists".into(), &true.into());
-            dict.set(&"bitmap".into(), &mesh.to_variant());
-            dict.set(&"hasalpha".into(), &hasalpha.into());
+            dict.insert("exists", true);
+            dict.insert("bitmap", mesh);
+            dict.insert("hasalpha", hasalpha);
         }
         None => {
             godot_print!("read_tmesh returned None");
-            dict.set(&"exists".into(), &false.into());
+            dict.insert("exists", false);
         }
     }
     dict

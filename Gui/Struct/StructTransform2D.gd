@@ -3,8 +3,8 @@ extends GridContainer
 signal modified(data)
 var data: Dictionary
 
-func set_data(data: Dictionary):
-	self.data = data
+func set_data(p_data: Dictionary):
+	self.data = p_data
 	$X1.value = data["value"].x.x
 	$X2.value = data["value"].x.y
 	$Y1.value = data["value"].y.x

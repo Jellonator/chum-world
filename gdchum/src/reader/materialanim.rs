@@ -1,6 +1,7 @@
 use crate::chumfile::ChumFile;
 use crate::reader::ChumReader;
-use gdnative::*;
+use gdnative::prelude::*;
+use gdnative::api::ShaderMaterial;
 use libchum::reader::materialanim;
 
 pub fn read_materialanim(
@@ -8,7 +9,7 @@ pub fn read_materialanim(
     fmt: libchum::format::TotemFormat,
     reader: &mut ChumReader,
     file: &ChumFile,
-) -> Option<Resource> {
+) -> Option<Ref<ShaderMaterial, Shared>> {
     let matanimdata = match materialanim::MaterialAnimation::read_data(data, fmt) {
         Ok(x) => x,
         Err(err) => {
@@ -16,29 +17,30 @@ pub fn read_materialanim(
             return None;
         }
     };
-    let archiveinstance = file.get_archive_instance();
+    let unsafe_archive_instance = file.get_archive_instance();
+    let archiveinstance = unsafe { unsafe_archive_instance.assume_safe() };
     archiveinstance
         .map(|archive, archiveres| {
             if let Some(materialfile) =
-                archive.get_file_from_hash(archiveres.clone(), matanimdata.material_id)
+                archive.get_file_from_hash(archiveres, matanimdata.material_id)
             {
-                let materialdict = reader.read_material_nodeless_nocache(&materialfile);
-                if materialdict.get(&"exists".into()) == true.into() {
-                    let res: Resource = materialdict
-                        .get(&"material".into())
+                let materialdict = reader.read_material_nodeless_nocache(materialfile.clone());
+                if materialdict.get("exists").to_bool() == true {
+                    let res: Ref<ShaderMaterial, Shared> = materialdict
+                        .get("material")
                         .try_to_object()
                         .unwrap();
                     reader.add_materialanim(
                         res.clone(),
                         matanimdata,
                         archive,
-                        archiveres.new_ref(),
+                        archiveres,
                     );
                     Some(res)
                 } else {
                     display_warn!(
                         "Could not apply material {} to materialanim {}.",
-                        materialfile.script().map(|x| x.get_name_str().to_owned()).unwrap(),
+                        unsafe { materialfile.assume_safe() }.map(|x,_| x.get_name_str().to_owned()).unwrap(),
                         file.get_name_str()
                     );
                     None
@@ -55,18 +57,18 @@ pub fn read_materialanim(
         .unwrap()
 }
 
-pub fn read_materialanim_from_res(data: &ChumFile, reader: &mut ChumReader) -> Dictionary {
+pub fn read_materialanim_from_res(data: &ChumFile, reader: &mut ChumReader) -> Dictionary<Unique> {
     let fmt = data.get_format();
     let mut dict = Dictionary::new();
     match read_materialanim(&data.get_data_as_vec(), fmt, reader, data) {
         Some(mat) => {
-            dict.set(&"exists".into(), &true.into());
-            dict.set(&"material".into(), &mat.to_variant());
+            dict.insert("exists", true);
+            dict.insert("material", mat);
             // dict.set(&"texture_reflection".into(), &mesh.1.to_variant());
         }
         None => {
             godot_print!("read_materialanim returned None");
-            dict.set(&"exists".into(), &false.into());
+            dict.insert("exists", false);
         }
     }
     dict

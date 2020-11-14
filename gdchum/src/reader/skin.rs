@@ -1,9 +1,9 @@
 use crate::chumfile::ChumFile;
 use crate::util;
-use gdnative::*;
+use gdnative::prelude::*;
 use libchum::reader::skin;
 
-pub fn read_skin(data: &Vec<u8>, fmt: libchum::format::TotemFormat, file: &ChumFile) -> Option<Dictionary> {
+pub fn read_skin(data: &Vec<u8>, fmt: libchum::format::TotemFormat, file: &ChumFile) -> Option<Dictionary<Unique>> {
     let skin = match skin::Skin::read_data(data, fmt) {
         Ok(x) => x,
         Err(err) => {
@@ -12,11 +12,11 @@ pub fn read_skin(data: &Vec<u8>, fmt: libchum::format::TotemFormat, file: &ChumF
         }
     };
     let mut data = Dictionary::new();
-    data.set(
-        &"transform".into(),
-        &util::mat4x4_to_transform(&skin.transform.transform).to_variant(),
+    data.insert(
+        "transform",
+        util::mat4x4_to_transform(&skin.transform.transform),
     );
-    data.set(&"meshes".into(), &skin.meshes.to_variant());
+    data.insert("meshes", skin.meshes);
     let mut groups = Dictionary::new();
     for group in skin.vertex_groups.iter() {
         let mut groupdict = Dictionary::new();
@@ -25,13 +25,13 @@ pub fn read_skin(data: &Vec<u8>, fmt: libchum::format::TotemFormat, file: &ChumF
             let mut vertices = Dictionary::new();
             let mut normals = Dictionary::new();
             for vertex in section.vertices.iter() {
-                vertices.set(&vertex.vertex_id.to_variant(), &vertex.weight.to_variant());
+                vertices.insert(vertex.vertex_id, vertex.weight);
             }
             for normal in section.normals.iter() {
-                normals.set(&normal.normal_id.to_variant(), &normal.weight.to_variant());
+                normals.insert(normal.normal_id, normal.weight);
             }
-            sectiondata.set(&"vertices".into(), &vertices.to_variant());
-            sectiondata.set(&"normals".into(), &normals.to_variant());
+            sectiondata.insert("vertices", vertices);
+            sectiondata.insert("normals", normals);
             if groupdict.contains(&section.mesh_index.to_variant()) {
                 display_warn!(
                     "Group {} already contains mesh {}\n{}",
@@ -40,7 +40,7 @@ pub fn read_skin(data: &Vec<u8>, fmt: libchum::format::TotemFormat, file: &ChumF
                     file.get_name_str()
                 );
             }
-            groupdict.set(&section.mesh_index.to_variant(), &sectiondata.to_variant());
+            groupdict.insert(section.mesh_index, sectiondata);
         }
         if groups.contains(&group.group_id.to_variant()) {
             display_warn!(
@@ -49,23 +49,23 @@ pub fn read_skin(data: &Vec<u8>, fmt: libchum::format::TotemFormat, file: &ChumF
                 file.get_name_str()
             );
         }
-        groups.set(&group.group_id.to_variant(), &groupdict.to_variant());
+        groups.insert(group.group_id, groupdict);
     }
-    data.set(&"groups".into(), &groups.to_variant());
+    data.insert("groups", groups);
     Some(data)
 }
 
-pub fn read_skin_from_res(data: &ChumFile) -> Dictionary {
+pub fn read_skin_from_res(data: &ChumFile) -> Dictionary<Unique> {
     let fmt = data.get_format();
     let mut dict = Dictionary::new();
     match read_skin(&data.get_data_as_vec(), fmt, data) {
         Some(mesh) => {
-            dict.set(&"exists".into(), &true.into());
-            dict.set(&"skin".into(), &mesh.to_variant());
+            dict.insert("exists", true);
+            dict.insert("skin", mesh);
         }
         None => {
             godot_print!("read_skin returned None");
-            dict.set(&"exists".into(), &false.into());
+            dict.insert("exists", false);
         }
     }
     dict

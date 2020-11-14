@@ -1,7 +1,8 @@
 use crate::chumfile::ChumFile;
 use crate::reader::ChumReader;
 use crate::util;
-use gdnative::*;
+use gdnative::prelude::*;
+use gdnative::api::{ArrayMesh, Mesh, Material};
 use libchum::common;
 use libchum::reader::tmesh;
 
@@ -12,9 +13,9 @@ pub struct TMeshResultSurface {
     pub normal_ids: Vec<u16>,
 }
 
-#[derive(Clone)]
+// #[derive(Clone)]
 pub struct TMeshResult {
-    pub mesh: Reference,
+    pub mesh: Ref<ArrayMesh,Unique>,
     pub surfaces: Vec<TMeshResultSurface>,
     pub transform: common::Mat4x4,
     pub unk1: Vec<tmesh::Footer1>,
@@ -36,7 +37,7 @@ pub fn read_tmesh(
             return None;
         }
     };
-    let mut mesh = ArrayMesh::new();
+    let mut mesh = Ref::<ArrayMesh,Unique>::new();
     let generated_tris = tmesh.gen_triangles();
     let mesh_materials = tmesh.get_materials();
     let mut materials = Vec::new();
@@ -53,13 +54,13 @@ pub fn read_tmesh(
         };
         for tri in trivec.tris {
             for point in &tri.points {
-                verts.push(&Vector3::new(
+                verts.push(Vector3::new(
                     point.vertex.x,
                     point.vertex.y,
                     point.vertex.z,
                 ));
-                texcoords.push(&Vector2::new(point.texcoord.x, point.texcoord.y));
-                normals.push(&Vector3::new(
+                texcoords.push(Vector2::new(point.texcoord.x, point.texcoord.y));
+                normals.push(Vector3::new(
                     point.normal.x,
                     point.normal.y,
                     point.normal.z,
@@ -73,32 +74,33 @@ pub fn read_tmesh(
         let mat = mesh_materials[trivec.material_index as usize % mesh_materials.len()];
         materials.push(mat);
         meshdata.resize(ArrayMesh::ARRAY_MAX as i32);
-        meshdata.set(ArrayMesh::ARRAY_VERTEX as i32, &Variant::from(&verts));
-        meshdata.set(ArrayMesh::ARRAY_NORMAL as i32, &Variant::from(&normals));
-        meshdata.set(ArrayMesh::ARRAY_TEX_UV as i32, &Variant::from(&texcoords));
+        meshdata.set(ArrayMesh::ARRAY_VERTEX as i32, verts);
+        meshdata.set(ArrayMesh::ARRAY_NORMAL as i32, normals);
+        meshdata.set(ArrayMesh::ARRAY_TEX_UV as i32, texcoords);
         mesh.add_surface_from_arrays(
             Mesh::PRIMITIVE_TRIANGLES,
-            meshdata,
-            VariantArray::new(),
+            meshdata.into_shared(),
+            VariantArray::new().into_shared(),
             97280,
         );
     }
-    let archiveinstance = file.get_archive_instance();
+    let unsafe_archive_instance = file.get_archive_instance();
+    let archiveinstance = unsafe { unsafe_archive_instance.assume_safe() };
     archiveinstance
         .map(|archive, res| {
             for (i, mat) in materials.iter().enumerate() {
-                if let Some(materialfile) = archive.get_file_from_hash(res.new_ref(), *mat) {
-                    let materialdict = reader.read_material_nodeless(&materialfile);
-                    if materialdict.get(&"exists".into()) == true.into() {
-                        let material: Material = materialdict
-                            .get(&"material".into())
+                if let Some(materialfile) = archive.get_file_from_hash(res, *mat) {
+                    let materialdict = reader.read_material_nodeless(materialfile.clone());
+                    if materialdict.get("exists").to_bool() == true {
+                        let material: Ref<Material, Shared> = materialdict
+                            .get("material")
                             .try_to_object()
                             .unwrap();
-                        mesh.surface_set_material(i as i64, Some(material));
+                        mesh.surface_set_material(i as i64, material);
                     } else {
                         display_warn!(
                             "Could not apply material {} to mesh {}.",
-                            materialfile.script().map(|x| x.get_name_str().to_owned()).unwrap(),
+                            unsafe { materialfile.assume_safe() }.map(|x,_| x.get_name_str().to_owned()).unwrap(),
                             file.get_name_str()
                         );
                     }
@@ -113,7 +115,7 @@ pub fn read_tmesh(
         })
         .unwrap();
     Some(TMeshResult {
-        mesh: mesh.to_reference(),
+        mesh: mesh,
         surfaces,
         transform: tmesh.transform.transform.clone(),
         unk1: tmesh.unk1.clone(),
@@ -123,13 +125,13 @@ pub fn read_tmesh(
     })
 }
 
-pub fn read_tmesh_from_res(data: &ChumFile, reader: &mut ChumReader) -> Dictionary {
+pub fn read_tmesh_from_res(data: &ChumFile, reader: &mut ChumReader) -> Dictionary<Unique> {
     let fmt = data.get_format();
     let mut dict = Dictionary::new();
     match read_tmesh(&data.get_data_as_vec(), fmt, reader, data) {
         Some(mesh) => {
-            dict.set(&"exists".into(), &true.into());
-            dict.set(&"mesh".into(), &mesh.mesh.to_variant());
+            dict.insert("exists", true);
+            dict.insert("mesh", mesh.mesh);
             let mut surfaces = VariantArray::new();
             for surface in mesh.surfaces.iter() {
                 let mut vertices = VariantArray::new();
@@ -145,69 +147,66 @@ pub fn read_tmesh_from_res(data: &ChumFile, reader: &mut ChumReader) -> Dictiona
                     normals.push(&Variant::from_i64(*index as i64));
                 }
                 let mut surfacedict = Dictionary::new();
-                surfacedict.set(&"vertices".into(), &Variant::from_array(&vertices));
-                surfacedict.set(&"texcoords".into(), &Variant::from_array(&texcoords));
-                surfacedict.set(&"normals".into(), &Variant::from_array(&normals));
-                surfaces.push(&Variant::from_dictionary(&surfacedict));
+                surfacedict.insert("vertices", vertices);
+                surfacedict.insert("texcoords", texcoords);
+                surfacedict.insert("normals", normals);
+                surfaces.push(surfacedict);
             }
-            dict.set(&"surfaces".into(), &Variant::from_array(&surfaces));
-            dict.set(
-                &"transform".into(),
-                &util::mat4x4_to_transform(&mesh.transform).to_variant(),
+            dict.insert("surfaces", surfaces);
+            dict.insert(
+                "transform",
+                util::mat4x4_to_transform(&mesh.transform),
             );
-            dict.set(
-                &"unk1".into(),
-                &mesh
+            dict.insert(
+                "unk1",
+                mesh
                     .unk1
                     .into_iter()
                     .map(|x| {
                         let mut dict = Dictionary::new();
-                        dict.set(&"pos".into(), &util::vec3_to_godot(&x.pos).to_variant());
-                        dict.set(&"radius".into(), &x.radius.to_variant());
-                        dict.to_variant()
+                        dict.insert("pos", util::vec3_to_godot(&x.pos));
+                        dict.insert("radius", x.radius);
+                        dict.into_shared()
                     })
-                    .collect::<Vec<_>>()
-                    .to_variant(),
+                    .collect::<Vec<_>>(),
             );
-            dict.set(
-                &"unk2".into(),
-                &mesh
+            dict.insert(
+                "unk2",
+                mesh
                     .unk2
                     .into_iter()
                     .map(|x| {
                         let mut dict = Dictionary::new();
-                        dict.set(
-                            &"transform".into(),
-                            &util::mat4x4_to_transform(&x.transform).to_variant(),
+                        dict.insert(
+                            "transform",
+                            util::mat4x4_to_transform(&x.transform),
                         );
-                        dict.to_variant()
+                        dict.into_shared()
                     })
-                    .collect::<Vec<_>>()
-                    .to_variant(),
+                    .collect::<Vec<_>>(),
             );
-            dict.set(
-                &"unk3".into(),
+            dict.insert(
+                "unk3",
                 &mesh
                     .unk3
                     .into_iter()
                     .map(|x| {
                         let mut dict = Dictionary::new();
-                        dict.set(&"unk1".into(), &(&x.unk1[..]).to_owned().to_variant());
-                        dict.set(
-                            &"normal".into(),
-                            &util::vec3_to_godot(&x.normal).to_variant(),
+                        dict.insert("unk1", &(&x.unk1[..]).to_owned());
+                        dict.insert(
+                            "normal",
+                            util::vec3_to_godot(&x.normal),
                         );
-                        dict.set(&"junk".into(), &x.junk.to_variant());
-                        dict.set(&"unk2".into(), &x.unk2.to_variant());
-                        dict.to_variant()
+                        dict.insert("junk", x.junk);
+                        dict.insert("unk2", x.unk2);
+                        dict.into_shared()
                     })
-                    .collect::<Vec<_>>()
-                    .to_variant(),
+                    .collect::<Vec<_>>(),
             );
         }
         None => {
             godot_print!("read_tmesh returned None");
-            dict.set(&"exists".into(), &false.into());
+            dict.insert("exists", false);
         }
     }
     dict

@@ -1,5 +1,5 @@
 use crate::chumfile::ChumFile;
-use gdnative::*;
+use gdnative::prelude::*;
 use std::char;
 
 pub enum TextType {
@@ -33,23 +33,23 @@ pub fn read_text(data: &Vec<u8>) -> TextType {
     }
 }
 
-pub fn read_text_from_res(data: &ChumFile) -> Dictionary {
+pub fn read_text_from_res(data: &ChumFile) -> Dictionary<Unique> {
     let mut dict = Dictionary::new();
     match read_text(&data.get_data_as_vec()) {
         TextType::ErrText => {
-            dict.set(&"exists".into(), &false.into());
-            dict.set(&"readonly".into(), &true.into());
-            dict.set(&"text".into(), &"".into());
+            dict.insert("exists", false);
+            dict.insert("readonly", true);
+            dict.insert("text", "");
         }
         TextType::ReadOnlyText(s) => {
-            dict.set(&"exists".into(), &true.into());
-            dict.set(&"readonly".into(), &true.into());
-            dict.set(&"text".into(), &Variant::from(&s));
+            dict.insert("exists", true);
+            dict.insert("readonly", true);
+            dict.insert("text", s);
         }
         TextType::FullText(s) => {
-            dict.set(&"exists".into(), &true.into());
-            dict.set(&"readonly".into(), &false.into());
-            dict.set(&"text".into(), &Variant::from(&s));
+            dict.insert("exists", true);
+            dict.insert("readonly", false);
+            dict.insert("text", s);
         }
     }
     dict

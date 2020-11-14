@@ -1,7 +1,8 @@
 use crate::chumfile::ChumFile;
 use crate::reader::ChumReader;
 use crate::util;
-use gdnative::*;
+use gdnative::prelude::*;
+use gdnative::api::{ShaderMaterial, ImageTexture};
 use libchum::reader::material;
 
 pub fn read_material(
@@ -9,7 +10,7 @@ pub fn read_material(
     fmt: libchum::format::TotemFormat,
     reader: &mut ChumReader,
     file: &ChumFile,
-) -> Option<Reference> {
+) -> Option<Ref<ShaderMaterial,Unique>> {
     let matdata = match material::Material::read_data(data, fmt) {
         Ok(x) => x,
         Err(err) => {
@@ -17,13 +18,13 @@ pub fn read_material(
             return None;
         }
     };
-    let mut material = ShaderMaterial::new();
-    let shader: Resource = match ResourceLoader::godot_singleton().load(
-        "res://Shader/material.shader".into(),
-        "Shader".into(),
+    let mut material = Ref::<ShaderMaterial,Unique>::new();
+    let shader: Ref::<Shader,Shared> = match ResourceLoader::godot_singleton().load(
+        "res://Shader/material.shader",
+        "Shader",
         false,
     ) {
-        Some(x) => x,
+        Some(x) => x.cast().unwrap(),
         None => {
             display_err!(
                 "Error loading MATERIAL: {}\nCould not read shader.",
@@ -32,26 +33,27 @@ pub fn read_material(
             return None;
         }
     };
-    material.set_shader(Some(shader.cast().unwrap()));
-    let archiveinstance = file.get_archive_instance();
+    material.set_shader(shader);
+    let unsafe_archive_instance = file.get_archive_instance();
+    let archiveinstance = unsafe { unsafe_archive_instance.assume_safe() };
     archiveinstance
         .map(|archive, res| {
             if matdata.get_texture() != 0 {
                 if let Some(texturefile) =
-                    archive.get_file_from_hash(res.clone(), matdata.get_texture())
+                    archive.get_file_from_hash(res, matdata.get_texture())
                 {
-                    let texturedict = reader.read_bitmap_nodeless(&texturefile);
-                    if texturedict.get(&"exists".into()) == true.into() {
-                        let image: Image =
-                            texturedict.get(&"bitmap".into()).try_to_object().unwrap();
-                        let mut texture: ImageTexture = ImageTexture::new();
-                        texture.create_from_image(Some(image), 1 | 2 | 4);
-                        material.set_shader_param("has_texture".into(), true.into());
-                        material.set_shader_param("arg_texture".into(), texture.into());
+                    let texturedict = reader.read_bitmap_nodeless(texturefile.clone());
+                    if texturedict.get("exists").to_bool() == true {
+                        let image: Ref<Image,Shared> =
+                            texturedict.get("bitmap").try_to_object().unwrap();
+                        let mut texture = Ref::<ImageTexture,Unique>::new();
+                        texture.create_from_image(image, 1 | 2 | 4);
+                        material.set_shader_param("has_texture", true);
+                        material.set_shader_param("arg_texture", texture);
                     } else {
                         display_warn!(
                             "Could not apply bitmap {} to material {}.",
-                            texturefile.script().map(|x| x.get_name_str().to_owned()).unwrap(),
+                            unsafe { texturefile.assume_safe() }.map(|x,_| x.get_name_str().to_owned()).unwrap(),
                             file.get_name_str()
                         );
                     }
@@ -67,19 +69,19 @@ pub fn read_material(
                 if let Some(texturefile) =
                     archive.get_file_from_hash(res, matdata.texture_reflection)
                 {
-                    let texturedict = reader.read_bitmap_nodeless(&texturefile);
-                    if texturedict.get(&"exists".into()) == true.into() {
+                    let texturedict = reader.read_bitmap_nodeless(texturefile.clone());
+                    if texturedict.get("exists").to_bool() == true {
                         godot_print!("Found material for {}", matdata.texture_reflection);
-                        let image: Image =
-                            texturedict.get(&"bitmap".into()).try_to_object().unwrap();
-                        let mut texture: ImageTexture = ImageTexture::new();
-                        texture.create_from_image(Some(image), 1 | 2 | 4);
-                        material.set_shader_param("has_reflection".into(), true.into());
-                        material.set_shader_param("arg_reflection".into(), texture.into());
+                        let image: Ref<Image, Shared> =
+                            texturedict.get("bitmap").try_to_object().unwrap();
+                        let mut texture = Ref::<ImageTexture, Unique>::new();
+                        texture.create_from_image(image, 1 | 2 | 4);
+                        material.set_shader_param("has_reflection", true);
+                        material.set_shader_param("arg_reflection", texture);
                     } else {
                         display_warn!(
                             "Could not apply bitmap {} to material {}.",
-                            texturefile.script().map(|x| x.get_name_str().to_owned()).unwrap(),
+                            unsafe {texturefile.assume_safe() }.map(|x,_| x.get_name_str().to_owned()).unwrap(),
                             file.get_name_str()
                         );
                     }
@@ -94,10 +96,10 @@ pub fn read_material(
         })
         .unwrap();
     material.set_shader_param(
-        "arg_color".into(),
-        Vector3::new(matdata.color[0], matdata.color[1], matdata.color[2]).to_variant(),
+        "arg_color",
+        Vector3::new(matdata.color[0], matdata.color[1], matdata.color[2]),
     );
-    material.set_shader_param("arg_alpha".into(), matdata.color[3].to_variant());
+    material.set_shader_param("arg_alpha", matdata.color[3]);
     let tx = util::mat3x3_to_transform2d(&matdata.transform);
     let realtx = Transform {
         basis: Basis {
@@ -109,22 +111,22 @@ pub fn read_material(
         },
         origin: Vector3::new(0.0, 0.0, 0.0),
     };
-    material.set_shader_param("arg_texcoord_transform".into(), realtx.to_variant());
-    Some(material.to_reference())
+    material.set_shader_param("arg_texcoord_transform", realtx);
+    Some(material)
 }
 
-pub fn read_material_from_res(data: &ChumFile, reader: &mut ChumReader) -> Dictionary {
+pub fn read_material_from_res(data: &ChumFile, reader: &mut ChumReader) -> Dictionary<Unique> {
     let fmt = data.get_format();
     let mut dict = Dictionary::new();
     match read_material(&data.get_data_as_vec(), fmt, reader, data) {
         Some(mat) => {
-            dict.set(&"exists".into(), &true.into());
-            dict.set(&"material".into(), &mat.to_variant());
+            dict.insert("exists", true);
+            dict.insert("material", mat);
             // dict.set(&"texture_reflection".into(), &mesh.1.to_variant());
         }
         None => {
             godot_print!("read_tmesh returned None");
-            dict.set(&"exists".into(), &false.into());
+            dict.insert("exists", false);
         }
     }
     dict

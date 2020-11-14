@@ -1,0 +1,59 @@
+[gd_scene load_steps=8 format=2]
+
+[ext_resource path="res://default_env.tres" type="Environment" id=1]
+[ext_resource path="res://Gui/Viewers/WarpViewer.gd" type="Script" id=2]
+[ext_resource path="res://Gui/Gizmos/Camera.tscn" type="PackedScene" id=3]
+[ext_resource path="res://Gui/Gizmos/Grid3D.tscn" type="PackedScene" id=4]
+[ext_resource path="res://Gui/Gizmos/Warp.tscn" type="PackedScene" id=5]
+
+[sub_resource type="World" id=1]
+environment = ExtResource( 1 )
+
+[sub_resource type="ViewportTexture" id=4]
+flags = 4
+viewport_path = NodePath("Viewport")
+
+[node name="WarpViewer" type="Control"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource( 2 )
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="Viewport" type="Viewport" parent="." groups=[
+"viewport",
+]]
+size = Vector2( 16, 16 )
+own_world = true
+world = SubResource( 1 )
+
+[node name="Spatial" type="Spatial" parent="Viewport"]
+
+[node name="Camera" parent="Viewport/Spatial" instance=ExtResource( 3 )]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 4 )
+
+[node name="DirectionalLight" type="DirectionalLight" parent="Viewport/Spatial"]
+transform = Transform( 0.866025, -0.377063, -0.328365, 0.165521, -0.403501, 0.899883, -0.471808, -0.833673, -0.287031, 0, 15.1487, 5.34027 )
+light_energy = 0.5
+light_indirect_energy = 0.5
+
+[node name="Grid3D" parent="Viewport/Spatial" instance=ExtResource( 4 )]
+
+[node name="Spatial" parent="Viewport/Spatial" instance=ExtResource( 5 )]
+
+[node name="TextureRect" type="TextureRect" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+focus_mode = 1
+texture = SubResource( 4 )
+expand = true
+flip_v = true
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="SpeedLabel" type="Label" parent="."]
+margin_right = 40.0
+margin_bottom = 14.0
+text = "Speed: 2.0"

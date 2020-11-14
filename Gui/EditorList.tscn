@@ -102,9 +102,9 @@ margin_top = 24.0
 
 [node name="Margin" type="MarginContainer" parent="Split"]
 visible = false
-margin_left = 688.0
-margin_right = 1024.0
-margin_bottom = 576.0
+margin_left = 859.0
+margin_right = 1280.0
+margin_bottom = 696.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
 custom_constants/margin_right = 0
@@ -113,16 +113,16 @@ custom_constants/margin_left = 0
 
 [node name="Panel" type="PanelContainer" parent="Split/Margin"]
 margin_top = 24.0
-margin_right = 336.0
-margin_bottom = 576.0
+margin_right = 421.0
+margin_bottom = 696.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
 
 [node name="Scroll" type="ScrollContainer" parent="Split/Margin/Panel"]
 margin_left = 7.0
 margin_top = 7.0
-margin_right = 329.0
-margin_bottom = 545.0
+margin_right = 414.0
+margin_bottom = 665.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
 scroll_horizontal_enabled = false
@@ -131,8 +131,8 @@ __meta__ = {
 }
 
 [node name="VBox" type="VBoxContainer" parent="Split/Margin/Panel/Scroll"]
-margin_right = 322.0
-margin_bottom = 538.0
+margin_right = 407.0
+margin_bottom = 658.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
 

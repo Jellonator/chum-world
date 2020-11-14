@@ -395,6 +395,84 @@ func load_collisionvol_from_file(file, node_owner):
 	else:
 		print("DOES NOT EXIST ", file.name)
 
+func _load_material_from_id(archive, id):
+	var file = archive.get_file_from_hash(id)
+	prints("LOADING IMAGE", id, file.name)
+	return ChumReader.read_material(file)
+
+#const _warp_faces = [ 
+#	[0, 1, 2, 3], # -Y (bottom)
+#	[4, 5, 6, 7], # +Y (top)
+#	[6, 5, 1, 2], # -Z (front)
+#	[6, 7, 3, 2], # +X (right)
+#	[5, 4, 0, 1], # -X (left)
+#	[7, 4, 0, 3], # +Z (back)
+#]
+
+# - +
+# - -
+# + -
+# + +
+
+const _warp_faces = [ 
+	[1, 2, 0, 3], # -Y (bottom)
+	[4, 7, 5, 6], # +Y (top)
+	[7, 4, 3, 0], # +Z (back)
+	[6, 7, 2, 3], # +X (right)
+	[4, 5, 0, 1], # -X (left)
+	[5, 6, 1, 2], # -Z (front)
+]
+
+const _warp_texcoord_order = [0, 1, 2, 3]
+
+func load_warp_from_file(file, _node_owner):
+	var root := Spatial.new()
+	var struct = file.read_structure()
+#	print(JSON.print(struct,"\t"))
+	var size = struct.value.size.value
+	var points = [
+		struct.value.vertices.value[0].value, # BBA -X -Y +Z
+		struct.value.vertices.value[1].value, # BBB -X -Y -Z
+		struct.value.vertices.value[2].value, # ABB +X -Y -Z
+		struct.value.vertices.value[3].value, # ABA +X -Y +Z
+		struct.value.vertices.value[4].value, # BAA -X +Y +Z
+		struct.value.vertices.value[5].value, # BAB -X +Y -Z
+		struct.value.vertices.value[6].value, # AAB +X +Y -Z
+		struct.value.vertices.value[7].value, # AAA +X +Y +Z
+	]
+	var texcoords = [
+		struct.value.texcoords.value[0].value,
+		struct.value.texcoords.value[1].value,
+		struct.value.texcoords.value[2].value,
+		struct.value.texcoords.value[3].value
+	]
+	var materials = [
+		struct.value.material_ids.value[0].value,
+		struct.value.material_ids.value[1].value,
+		struct.value.material_ids.value[2].value,
+		struct.value.material_ids.value[3].value,
+		struct.value.material_ids.value[4].value,
+		struct.value.material_ids.value[5].value
+	]
+	var archive = file.get_archive()
+	for i in range(6):
+		var st := SurfaceTool.new()
+		st.begin(Mesh.PRIMITIVE_TRIANGLE_STRIP)
+		st.set_material(_load_material_from_id(archive, materials[i])["material"])
+		st.add_uv(texcoords[_warp_texcoord_order[0]])
+		st.add_vertex(points[_warp_faces[i][0]])
+		st.add_uv(texcoords[_warp_texcoord_order[1]])
+		st.add_vertex(points[_warp_faces[i][1]])
+		st.add_uv(texcoords[_warp_texcoord_order[2]])
+		st.add_vertex(points[_warp_faces[i][2]])
+		st.add_uv(texcoords[_warp_texcoord_order[3]])
+		st.add_vertex(points[_warp_faces[i][3]])
+		var mesh = st.commit()
+		var instance = MeshInstance.new()
+		instance.mesh = mesh
+		root.add_child(instance)
+	return root
+
 func make_icon_billboard(file, node_owner, default_icon):
 	var icon = default_icon
 	if file != null:
@@ -455,5 +533,7 @@ func try_file_to_spatial(file, node_owner=null):
 			return load_spline_from_file(file, node_owner)
 		"COLLISIONVOL":
 			return load_collisionvol_from_file(file, node_owner)
+		"WARP":
+			return load_warp_from_file(file, node_owner)
 		_:
 			return load_emptymesh(file, node_owner, ICON_NODE)

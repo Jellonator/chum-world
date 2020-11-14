@@ -221,7 +221,7 @@ macro_rules! chum_struct_structure {
         ))
     };
     ([flags {$($name:ident),*}],$value:expr) => {
-        Integer($value as ::std::primitive::i64, Enum(
+        Integer($value as ::std::primitive::i64, Flags(
             vec![
                 $(
                     stringify!($name).to_owned(),
@@ -250,7 +250,7 @@ macro_rules! chum_struct_structure {
                 .map(|x| chum_struct_structure!([$($inner)*], *x))
                 .collect(),
             // some random default value that won't be used anyways
-            default_value: ::std::boxed::Box::new(Integer(0,U8)),//<chum_struct_get_type!($($inner:tt)*)>::default()
+            default_value: ::std::boxed::Box::new(Integer(0,U8)),
         })
     };
     ([dynamic array [$($inner:tt)*] $default:expr],$value:expr) => {

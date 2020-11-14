@@ -1,13 +1,15 @@
 use crate::common::*;
 use crate::format::TotemFormat;
-use std::io::Read;
+use std::io::{self, Read, Write};
 use crate::util::error::*;
 
-pub struct Warp {
-    pub size: f32,
-    pub material_ids: [i32; 6],
-    pub vertices: [Vector3; 8],
-    pub texcoords: [Vector2; 4],
+chum_struct! {
+    pub struct Warp {
+        pub size: [f32],
+        pub material_ids: [fixed array [reference MATERIAL] 6],
+        pub vertices: [fixed array [Vector3] 8],
+        pub texcoords: [fixed array [Vector2] 4],
+    }
 }
 
 impl Warp {
@@ -34,5 +36,19 @@ impl Warp {
                 data
             }
         })
+    }
+
+    pub fn write_to<W: Write>(&self, writer: &mut W, fmt: TotemFormat) -> io::Result<()> {
+        fmt.write_f32(writer, self.size)?;
+        for value in self.material_ids.iter() {
+            fmt.write_i32(writer, *value)?;
+        }
+        for value in self.vertices.iter() {
+            write_vec3(value, writer, fmt)?;
+        }
+        for value in self.texcoords.iter() {
+            write_vec2(value, writer, fmt)?;
+        }
+        Ok(())
     }
 }

@@ -494,6 +494,20 @@ impl ChumFile {
                 let data = vol.structure();
                 util::struct_to_dict(&data).into_shared().to_variant()
             }
+            "WARP" => {
+                let warpdata: Vec<u8> = self.get_data_as_vec();
+                let warp = match reader::warp::Warp::read_from(
+                    &mut warpdata.as_slice(),
+                    self.format
+                ) {
+                    Ok(x) => x,
+                    Err(err) => {
+                        panic!("WARP file invalid: {}", err);
+                    }
+                };
+                let data = warp.structure();
+                util::struct_to_dict(&data).into_shared().to_variant()
+            }
             _ => Variant::new(),
         }
     }
@@ -533,6 +547,12 @@ impl ChumFile {
                 let voldata = reader::collisionvol::CollisionVol::destructure(&structure).unwrap();
                 let mut outdata = Vec::new();
                 voldata.write_to(&mut outdata, self.format).unwrap();
+                self.replace_data_with_vec(outdata);
+            }
+            "WARP" => {
+                let warpdata = reader::warp::Warp::destructure(&structure).unwrap();
+                let mut outdata = Vec::new();
+                warpdata.write_to(&mut outdata, self.format).unwrap();
                 self.replace_data_with_vec(outdata);
             }
             _ => panic!("Could not import data"),

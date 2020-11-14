@@ -81,6 +81,9 @@ func reset_surfaces():
 				print("COULD NOT READ ", file.name)
 			else:
 				try_add_node(node_data["node"], file)
+		elif file.type == "WARP":
+			var instance = MeshData.load_warp_from_file(file, null)
+			node_surfaces.add_child(instance)
 	for data in tnodes_by_id.values():
 		var parentid = data["parent"]
 		if parentid == 0:

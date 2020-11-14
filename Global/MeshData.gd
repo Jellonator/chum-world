@@ -469,6 +469,7 @@ func load_warp_from_file(file, _node_owner):
 		st.add_vertex(points[_warp_faces[i][3]])
 		var mesh = st.commit()
 		var instance = MeshInstance.new()
+		instance.cast_shadow = false
 		instance.mesh = mesh
 		root.add_child(instance)
 	return root

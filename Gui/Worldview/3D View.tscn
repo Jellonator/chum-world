@@ -28,8 +28,6 @@ __meta__ = {
 size = Vector2( 100, 100 )
 own_world = true
 world = SubResource( 1 )
-hdr = false
-debug_draw = 3
 render_target_v_flip = true
 physics_object_picking = true
 

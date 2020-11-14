@@ -2,7 +2,6 @@
 
 use crate::common;
 use crate::format::TotemFormat;
-use crate::structure::*;
 use std::io::{self, Read, Write};
 
 // Material data

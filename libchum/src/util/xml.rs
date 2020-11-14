@@ -75,21 +75,6 @@ pub trait XMLTag {
     fn get_child_tags(&self) -> Vec<&dyn XMLTag>;
 }
 
-macro_rules! impl_xml {
-    ($x:ty) => {
-        impl XMLContent for $x {
-            fn serialize_content(&self) -> Result<String, SerializeError> {
-                Ok(self.to_string())
-            }
-        }
-        impl XMLAttribute for $x {
-            fn serialize_attribute(&self) -> Option<String> {
-                Some(self.to_string())
-            }
-        }
-    };
-}
-
 impl_xml!(u8);
 impl_xml!(i8);
 impl_xml!(u16);
@@ -290,26 +275,6 @@ impl XMLTag for ConstTagStruct {
     }
 }
 
-#[macro_export]
-macro_rules! impl_tag_content {
-    ($x:ty, $y:expr, $data: ident) => {
-        impl XMLTag for $x {
-            fn get_name(&self) -> &str {
-                $y
-            }
-            fn get_attributes(&self) -> Vec<(&str, &dyn XMLAttribute)> {
-                vec![]
-            }
-            fn get_contents(&self) -> Option<&dyn XMLContent> {
-                Some(&self.$data)
-            }
-            fn get_child_tags(&self) -> Vec<&dyn XMLTag> {
-                vec![]
-            }
-        }
-    };
-}
-
 pub trait XMLVectorifyTag {
     fn vectorify<'a>(&'a self) -> Vec<&dyn XMLTag>;
 }
@@ -334,133 +299,6 @@ impl<T: XMLTag> XMLVectorifyTag for Vec<T> {
     fn vectorify(&self) -> Vec<&dyn XMLTag> {
         self.iter().map(|x| x as &dyn XMLTag).collect()
     }
-}
-
-#[macro_export]
-macro_rules! impl_tag_tree {
-    (
-        $x:ty,
-        $y:expr,
-        attr => [ $( ($attrstr:expr, $attrdata:ident) ), * ],
-        tags => [ $( $tag:ident ), *]
-    ) => {
-        impl XMLTag for $x {
-            fn get_name(&self) -> &str {
-                $y
-            }
-            fn get_attributes(&self) -> Vec<(&str, &dyn XMLAttribute)> {
-                // some weirdness here to prevent compiler warnings
-                let v = vec![];
-                $(
-                    let mut v = v;
-                    v.push(($attrstr, &self.$attrdata as &dyn XMLAttribute));
-                )*
-                v
-            }
-            fn get_contents(&self) -> Option<&dyn XMLContent> {
-                None
-            }
-            fn get_child_tags<'a>(&self) -> Vec<&dyn XMLTag> {
-                // some weirdness here to prevent compiler warnings
-                let v = vec![];
-                $(
-                    let mut v = v;
-                    {
-                        use crate::util::xml::XMLVectorifyTag;
-                        v.extend(self.$tag.vectorify());
-                    }
-                )*
-                v
-            }
-        }
-    };
-}
-
-#[macro_export]
-macro_rules! impl_tag_enum {
-    ($t:ident,
-        $(
-            $vname:ident => (
-                $y:expr,
-                attr => [ $( ($attrstr:expr, $attrdata:ident) ), * ],
-                tags => [ $( $tag:ident ), *]
-                $( , content => $cval:ident )?
-            )
-        ), *
-    ) => {
-        impl XMLTag for $t {
-            fn get_name(&self) -> &str {
-                match self {
-                    $(
-                        $t::$vname {..}=> $y,
-                    )*
-                }
-            }
-            fn get_attributes(&self) -> Vec<(&str, &dyn XMLAttribute)> {
-                // some weirdness here to prevent compiler warnings
-                match self {
-                    $(
-                        $t::$vname {
-                            $(
-                                $attrdata,
-                            )*
-                            ..
-                        } => {
-                            let v = vec![];
-                            $(
-                                let mut v = v;
-                                v.push(($attrstr, $attrdata as &dyn XMLAttribute));
-                            )*
-                            v
-                        }
-                    )*,
-                }
-            }
-            fn get_contents(&self) -> Option<&dyn XMLContent> {
-                match self {
-                    $(
-                        $t::$vname {
-                            $(
-                                $cval,
-                            )?
-                            ..
-                        } => {
-                            None
-                            $(
-                                .or(Some($cval as &dyn XMLContent))
-                            )?
-                        }
-                    )*,
-                }
-                // None $(
-                //     .or(&self.$cval as &dyn XMLContent)
-                // )?
-            }
-            fn get_child_tags<'a>(&self) -> Vec<&dyn XMLTag> {
-                // some weirdness here to prevent compiler warnings
-                match self {
-                    $(
-                        $t::$vname {
-                            $(
-                                $tag,
-                            )*
-                            ..
-                        } => {
-                            let v = vec![];
-                            $(
-                                let mut v = v;
-                                {
-                                    use crate::util::xml::XMLVectorifyTag;
-                                    v.extend($tag.vectorify());
-                                }
-                            )*
-                            v
-                        }
-                    )*,
-                }
-            }
-        }
-    };
 }
 
 pub fn write_to(

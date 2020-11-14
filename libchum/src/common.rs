@@ -306,15 +306,22 @@ pub fn write_color<W: Write>(col: &Color, writer: &mut W, fmt: TotemFormat) -> i
     Ok(())
 }
 
-/// Common header used by many different structures
-#[derive(Clone, Debug)]
-#[repr(C)]
-pub struct TransformationHeader {
-    pub floats: [f32; 4],
-    pub transform: Mat4x4,
-    pub junk: [u8; 16],
-    pub item_type: u16,
-    pub item_subtype: u16,
+// Common header used by many different structures
+chum_struct! {
+    #[repr(C)]
+    #[derive(Clone, Debug)]
+    pub struct TransformationHeader {
+        pub floats: [fixed array [f32] 4],
+        pub transform: [Mat4x4],
+        pub junk: [fixed array [u8] 16],
+        pub item_type: [u16],
+        pub item_subtype: [u16],
+        // pub floats: [f32; 4],
+        // pub transform: Mat4x4,
+        // pub junk: [u8; 16],
+        // pub item_type: u16,
+        // pub item_subtype: u16,
+    }
 }
 
 impl TransformationHeader {

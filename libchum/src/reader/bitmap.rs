@@ -2,7 +2,6 @@
 //! See https://github.com/Jellonator/chum-world/wiki/BITMAP for more information.
 
 use crate::format::TotemFormat;
-use crate::structure::*;
 use crate::util;
 pub use image;
 use imagequant;
@@ -630,7 +629,7 @@ impl Bitmap {
             width: 0,
             height: 0,
             flags: data.flags as u8,
-            unknown: data.flags as u8,
+            unknown: data.unknown as u8,
         }
     }
 

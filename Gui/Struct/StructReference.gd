@@ -11,7 +11,6 @@ func _ready():
 	menu.connect("index_pressed", self, "_on_index_pressed")
 
 func set_data(data: Dictionary):
-	prints("REFERENCE RECEIVED:", data)
 	self.data = data
 	node_value.value = data["value"]
 	node_value.editable = true

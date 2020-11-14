@@ -1,5 +1,4 @@
 pub mod bezierpatch;
-#[macro_use]
 pub mod xml;
 pub mod error;
 

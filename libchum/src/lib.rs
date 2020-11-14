@@ -1,6 +1,6 @@
 #[macro_use]
+pub mod macros;
 pub mod structure;
-#[macro_use]
 pub mod util;
 pub mod animsymbol;
 pub mod common;

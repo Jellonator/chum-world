@@ -498,7 +498,7 @@ impl ChumFile {
                         panic!("BITMAP file invalid: {}", err);
                     }
                 };
-                let bitmapstruct = reader::bitmap::BitmapStruct::destructure(structure).unwrap();
+                let bitmapstruct = reader::bitmap::BitmapStruct::destructure(&structure).unwrap();
                 let bitmapdata = reader::bitmap::Bitmap::from_struct(&bitmapstruct)
                     .with_bitmap(
                         bitmap.get_data().clone(),
@@ -510,7 +510,7 @@ impl ChumFile {
                 self.replace_data_with_vec(outdata);
             }
             "MATERIAL" => {
-                let materialdata = reader::material::Material::destructure(structure).unwrap();
+                let materialdata = reader::material::Material::destructure(&structure).unwrap();
                 let mut outdata = Vec::new();
                 materialdata.write_to(&mut outdata, self.format).unwrap();
                 self.replace_data_with_vec(outdata);

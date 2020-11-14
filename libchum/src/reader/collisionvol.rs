@@ -3,19 +3,21 @@ use crate::format::TotemFormat;
 use crate::util::error::*;
 use std::io::Read;
 
-pub struct CollisionVol {
-    pub transform: TransformationHeader,
-    pub unk1: u32,
-    pub local_transform: Mat4x4,
-    pub local_transform_inv: Mat4x4,
-    pub unk2: u32,
-    pub unk3: u32,
-    pub node_ids: [i32; 10],
-    pub unk4: [f32; 10],
-    pub unk5: Vec<i32>,
-    pub bitmaps: Vec<i32>,
-    pub volume_type: i32,
-    pub unk6: u32,
+chum_struct! {
+    pub struct CollisionVol {
+        pub transform: [struct TransformationHeader],
+        pub unk1: [u32],
+        pub local_transform: [Mat4x4],
+        pub local_transform_inv: [Mat4x4],
+        pub unk2: [u32],
+        pub unk3: [u32],
+        pub node_ids: [fixed array [i32] 10],
+        pub unk4: [fixed array [f32] 10],
+        pub unk5: [dynamic array [i32] 0],
+        pub bitmaps: [dynamic array [i32] 0],
+        pub volume_type: [i32],
+        pub unk6: [u32],
+    }
 }
 
 impl CollisionVol {

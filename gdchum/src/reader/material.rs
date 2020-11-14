@@ -112,6 +112,7 @@ pub fn read_material(
         origin: Vector3::new(0.0, 0.0, 0.0),
     };
     material.set_shader_param("arg_texcoord_transform", realtx);
+    material.set_shader_param("arg_emission", util::vec3_to_godot(&matdata.emission));
     Some(material)
 }
 

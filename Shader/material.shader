@@ -1,6 +1,7 @@
 shader_type spatial;
 render_mode cull_disabled, depth_draw_alpha_prepass, skip_vertex_transform;
 
+uniform vec3 arg_emission = vec3(0, 0, 0);
 uniform vec3 arg_color = vec3(1, 1, 1);
 uniform float arg_alpha = 1.0;
 uniform mat4 arg_texcoord_transform = mat4(1);
@@ -80,6 +81,7 @@ void fragment() {
 	outcol.rgb += col2.rgb * col2.a;
 	ALBEDO = outcol.rgb;
 	ALPHA = outcol.a;
+	EMISSION = arg_emission;
 	if (do_highlight == 1) {
 		if ((mod(UV.x * 8.0 - 0.025, 1.0) >= 0.95) || (mod(UV.y * 8.0 - 0.025, 1.0) >= 0.95)) {
 			EMISSION = vec3(1.0, 1.0, 1.0);

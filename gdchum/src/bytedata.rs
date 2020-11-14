@@ -64,7 +64,7 @@ impl ByteData {
     #[export]
     pub fn duplicate(&self, _owner: &Resource) -> Instance<ByteData,Unique> {
         let f = Instance::<ByteData,Unique>::new();
-        f.map_mut(|script, res| {
+        f.map_mut(|script, _| {
             script.set_data(self.data.clone());
         })
         .unwrap();
@@ -153,7 +153,7 @@ impl ByteData {
     #[export]
     pub fn slice(&self, _owner: &Resource, from: i64, to: i64) -> Instance<ByteData,Unique> {
         let f = Instance::<ByteData,Unique>::new();
-        f.map_mut(|script, res| {
+        f.map_mut(|script, _| {
             script.set_data(self.data[from as usize..(to + 1) as usize].to_owned());
         })
         .unwrap();

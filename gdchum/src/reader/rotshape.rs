@@ -19,13 +19,13 @@ pub fn read_rotshape(
             return None;
         }
     };
-    let mut data = Dictionary::new();
+    let data = Dictionary::new();
     let pos_tl = rsdata.size[0];
     let pos_br = rsdata.size[1];
     let pos_bl = common::Vector3::new(pos_tl.x, pos_br.y, pos_br.z);
     let pos_tr = common::Vector3::new(pos_br.x, pos_tl.y, pos_tl.z);
     let uv2 = Vector2::new((rsdata.billboard_mode.to_u16() + 2) as f32, 0.0);
-    let mut mesh = ArrayMesh::new();
+    let mesh = ArrayMesh::new();
     let mut verts = Vector3Array::new();
     verts.push(util::vec3_to_godot(&(pos_tl + rsdata.unk5)));
     verts.push(util::vec3_to_godot(&(pos_tr + rsdata.unk5)));
@@ -46,7 +46,7 @@ pub fn read_rotshape(
     normals.push(Vector3::new(0.0, 0.0, 1.0));
     normals.push(Vector3::new(0.0, 0.0, 1.0));
     normals.push(Vector3::new(0.0, 0.0, 1.0));
-    let mut meshdata = VariantArray::new();
+    let meshdata = VariantArray::new();
     meshdata.resize(ArrayMesh::ARRAY_MAX as i32);
     meshdata.set(ArrayMesh::ARRAY_VERTEX as i32, verts);
     meshdata.set(ArrayMesh::ARRAY_NORMAL as i32, normals);
@@ -96,7 +96,7 @@ pub fn read_rotshape(
 
 pub fn read_rotshape_from_res(data: &ChumFile, reader: &mut ChumReader) -> Dictionary<Unique> {
     let fmt = data.get_format();
-    let mut dict = Dictionary::new();
+    let dict = Dictionary::new();
     match read_rotshape(&data.get_data_as_vec(), fmt, reader, data) {
         Some(mesh) => {
             dict.insert("exists", true);

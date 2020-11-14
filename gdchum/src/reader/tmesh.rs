@@ -37,7 +37,7 @@ pub fn read_tmesh(
             return None;
         }
     };
-    let mut mesh = Ref::<ArrayMesh,Unique>::new();
+    let mesh = Ref::<ArrayMesh,Unique>::new();
     let generated_tris = tmesh.gen_triangles();
     let mesh_materials = tmesh.get_materials();
     let mut materials = Vec::new();
@@ -46,7 +46,7 @@ pub fn read_tmesh(
         let mut verts = Vector3Array::new();
         let mut texcoords = Vector2Array::new();
         let mut normals = Vector3Array::new();
-        let mut meshdata = VariantArray::new();
+        let meshdata = VariantArray::new();
         let mut surface = TMeshResultSurface {
             vertex_ids: Vec::new(),
             texcoord_ids: Vec::new(),
@@ -127,16 +127,16 @@ pub fn read_tmesh(
 
 pub fn read_tmesh_from_res(data: &ChumFile, reader: &mut ChumReader) -> Dictionary<Unique> {
     let fmt = data.get_format();
-    let mut dict = Dictionary::new();
+    let dict = Dictionary::new();
     match read_tmesh(&data.get_data_as_vec(), fmt, reader, data) {
         Some(mesh) => {
             dict.insert("exists", true);
             dict.insert("mesh", mesh.mesh);
-            let mut surfaces = VariantArray::new();
+            let surfaces = VariantArray::new();
             for surface in mesh.surfaces.iter() {
-                let mut vertices = VariantArray::new();
-                let mut texcoords = VariantArray::new();
-                let mut normals = VariantArray::new();
+                let vertices = VariantArray::new();
+                let texcoords = VariantArray::new();
+                let normals = VariantArray::new();
                 for index in surface.vertex_ids.iter() {
                     vertices.push(&Variant::from_i64(*index as i64));
                 }
@@ -146,7 +146,7 @@ pub fn read_tmesh_from_res(data: &ChumFile, reader: &mut ChumReader) -> Dictiona
                 for index in surface.normal_ids.iter() {
                     normals.push(&Variant::from_i64(*index as i64));
                 }
-                let mut surfacedict = Dictionary::new();
+                let surfacedict = Dictionary::new();
                 surfacedict.insert("vertices", vertices);
                 surfacedict.insert("texcoords", texcoords);
                 surfacedict.insert("normals", normals);
@@ -163,7 +163,7 @@ pub fn read_tmesh_from_res(data: &ChumFile, reader: &mut ChumReader) -> Dictiona
                     .unk1
                     .into_iter()
                     .map(|x| {
-                        let mut dict = Dictionary::new();
+                        let dict = Dictionary::new();
                         dict.insert("pos", util::vec3_to_godot(&x.pos));
                         dict.insert("radius", x.radius);
                         dict.into_shared()
@@ -176,7 +176,7 @@ pub fn read_tmesh_from_res(data: &ChumFile, reader: &mut ChumReader) -> Dictiona
                     .unk2
                     .into_iter()
                     .map(|x| {
-                        let mut dict = Dictionary::new();
+                        let dict = Dictionary::new();
                         dict.insert(
                             "transform",
                             util::mat4x4_to_transform(&x.transform),
@@ -191,7 +191,7 @@ pub fn read_tmesh_from_res(data: &ChumFile, reader: &mut ChumReader) -> Dictiona
                     .unk3
                     .into_iter()
                     .map(|x| {
-                        let mut dict = Dictionary::new();
+                        let dict = Dictionary::new();
                         dict.insert("unk1", &(&x.unk1[..]).to_owned());
                         dict.insert(
                             "normal",

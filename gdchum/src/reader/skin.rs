@@ -11,19 +11,19 @@ pub fn read_skin(data: &Vec<u8>, fmt: libchum::format::TotemFormat, file: &ChumF
             return None;
         }
     };
-    let mut data = Dictionary::new();
+    let data = Dictionary::new();
     data.insert(
         "transform",
         util::mat4x4_to_transform(&skin.transform.transform),
     );
     data.insert("meshes", skin.meshes);
-    let mut groups = Dictionary::new();
+    let groups = Dictionary::new();
     for group in skin.vertex_groups.iter() {
-        let mut groupdict = Dictionary::new();
+        let groupdict = Dictionary::new();
         for section in group.sections.iter() {
-            let mut sectiondata = Dictionary::new();
-            let mut vertices = Dictionary::new();
-            let mut normals = Dictionary::new();
+            let sectiondata = Dictionary::new();
+            let vertices = Dictionary::new();
+            let normals = Dictionary::new();
             for vertex in section.vertices.iter() {
                 vertices.insert(vertex.vertex_id, vertex.weight);
             }
@@ -57,7 +57,7 @@ pub fn read_skin(data: &Vec<u8>, fmt: libchum::format::TotemFormat, file: &ChumF
 
 pub fn read_skin_from_res(data: &ChumFile) -> Dictionary<Unique> {
     let fmt = data.get_format();
-    let mut dict = Dictionary::new();
+    let dict = Dictionary::new();
     match read_skin(&data.get_data_as_vec(), fmt, data) {
         Some(mesh) => {
             dict.insert("exists", true);

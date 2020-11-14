@@ -18,7 +18,7 @@ pub fn read_material(
             return None;
         }
     };
-    let mut material = Ref::<ShaderMaterial,Unique>::new();
+    let material = Ref::<ShaderMaterial,Unique>::new();
     let shader: Ref::<Shader,Shared> = match ResourceLoader::godot_singleton().load(
         "res://Shader/material.shader",
         "Shader",
@@ -46,7 +46,7 @@ pub fn read_material(
                     if texturedict.get("exists").to_bool() == true {
                         let image: Ref<Image,Shared> =
                             texturedict.get("bitmap").try_to_object().unwrap();
-                        let mut texture = Ref::<ImageTexture,Unique>::new();
+                        let texture = Ref::<ImageTexture,Unique>::new();
                         texture.create_from_image(image, 1 | 2 | 4);
                         material.set_shader_param("has_texture", true);
                         material.set_shader_param("arg_texture", texture);
@@ -74,7 +74,7 @@ pub fn read_material(
                         godot_print!("Found material for {}", matdata.texture_reflection);
                         let image: Ref<Image, Shared> =
                             texturedict.get("bitmap").try_to_object().unwrap();
-                        let mut texture = Ref::<ImageTexture, Unique>::new();
+                        let texture = Ref::<ImageTexture, Unique>::new();
                         texture.create_from_image(image, 1 | 2 | 4);
                         material.set_shader_param("has_reflection", true);
                         material.set_shader_param("arg_reflection", texture);
@@ -117,7 +117,7 @@ pub fn read_material(
 
 pub fn read_material_from_res(data: &ChumFile, reader: &mut ChumReader) -> Dictionary<Unique> {
     let fmt = data.get_format();
-    let mut dict = Dictionary::new();
+    let dict = Dictionary::new();
     match read_material(&data.get_data_as_vec(), fmt, reader, data) {
         Some(mat) => {
             dict.insert("exists", true);

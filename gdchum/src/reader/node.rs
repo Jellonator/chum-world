@@ -11,7 +11,7 @@ pub fn read_node(data: &Vec<u8>, fmt: libchum::format::TotemFormat, file: &ChumF
             return None;
         }
     };
-    let mut data = Dictionary::new();
+    let data = Dictionary::new();
     data.insert("parent_id", node.node_parent_id);
     data.insert("resource_id", node.resource_id);
     data.insert(
@@ -39,7 +39,7 @@ pub fn read_node(data: &Vec<u8>, fmt: libchum::format::TotemFormat, file: &ChumF
 
 pub fn read_node_from_res(data: &ChumFile) -> Dictionary<Unique> {
     let fmt = data.get_format();
-    let mut dict = Dictionary::new();
+    let dict = Dictionary::new();
     match read_node(&data.get_data_as_vec(), fmt, data) {
         Some(node) => {
             dict.insert("exists", true);

@@ -305,7 +305,7 @@ pub fn dict_to_struct(dict: &Dictionary) -> ChumStructVariant {
 pub fn struct_to_dict(value: &ChumStructVariant) -> Dictionary<Unique> {
     match value {
         ChumStructVariant::Integer(value, IntType::Enum(ref names)) => {
-            let mut dict = Dictionary::new();
+            let dict = Dictionary::new();
             let mut namearray: StringArray = StringArray::new();
             namearray.resize(names.len() as i32);
             {
@@ -320,7 +320,7 @@ pub fn struct_to_dict(value: &ChumStructVariant) -> Dictionary<Unique> {
             dict
         }
         ChumStructVariant::Integer(value, IntType::Flags(ref names)) => {
-            let mut dict = Dictionary::new();
+            let dict = Dictionary::new();
             let mut namearray: StringArray = StringArray::new();
             namearray.resize(names.len() as i32);
             {
@@ -335,7 +335,7 @@ pub fn struct_to_dict(value: &ChumStructVariant) -> Dictionary<Unique> {
             dict
         }
         ChumStructVariant::Integer(value, ref t) => {
-            let mut dict = Dictionary::new();
+            let dict = Dictionary::new();
             let (minv, maxv) = t.get_range();
             dict.insert("type", "integer");
             dict.insert("value", *value);
@@ -355,13 +355,13 @@ pub fn struct_to_dict(value: &ChumStructVariant) -> Dictionary<Unique> {
             dict
         }
         ChumStructVariant::Float(value) => {
-            let mut dict = Dictionary::new();
+            let dict = Dictionary::new();
             dict.insert("type", "float");
             dict.insert("value", *value as f64);
             dict
         }
         ChumStructVariant::Vec2(value) => {
-            let mut dict = Dictionary::new();
+            let dict = Dictionary::new();
             dict.insert("type", "vec2");
             dict.insert(
                 "value",
@@ -370,7 +370,7 @@ pub fn struct_to_dict(value: &ChumStructVariant) -> Dictionary<Unique> {
             dict
         }
         ChumStructVariant::Vec3(value) => {
-            let mut dict = Dictionary::new();
+            let dict = Dictionary::new();
             dict.insert("type", "vec3");
             dict.insert(
                 "value",
@@ -379,21 +379,21 @@ pub fn struct_to_dict(value: &ChumStructVariant) -> Dictionary<Unique> {
             dict
         }
         ChumStructVariant::Transform3D(value) => {
-            let mut dict = Dictionary::new();
+            let dict = Dictionary::new();
             let transform = mat4x4_to_transform(value);
             dict.insert("type", "transform3d");
             dict.insert("value", transform);
             dict
         }
         ChumStructVariant::Transform2D(value) => {
-            let mut dict = Dictionary::new();
+            let dict = Dictionary::new();
             let transform = mat3x3_to_transform2d(value);
             dict.insert("type", "transform2d");
             dict.insert("value", transform);
             dict
         }
         ChumStructVariant::Color(color) => {
-            let mut dict = Dictionary::new();
+            let dict = Dictionary::new();
             dict.insert("type", "color");
             dict.insert(
                 "value",
@@ -402,7 +402,7 @@ pub fn struct_to_dict(value: &ChumStructVariant) -> Dictionary<Unique> {
             dict
         }
         ChumStructVariant::Reference(value, ref typename) => {
-            let mut dict = Dictionary::new();
+            let dict = Dictionary::new();
             dict.insert("type", "reference");
             dict.insert("value", *value as i64);
             dict.insert(
@@ -415,9 +415,9 @@ pub fn struct_to_dict(value: &ChumStructVariant) -> Dictionary<Unique> {
             dict
         }
         ChumStructVariant::Array(ref data) => {
-            let mut dict = Dictionary::new();
+            let dict = Dictionary::new();
             let default_value = struct_to_dict(data.default_value.as_ref());
-            let mut array: VariantArray<Unique> = VariantArray::new();
+            let array: VariantArray<Unique> = VariantArray::new();
             for value in data.data.iter() {
                 let valuedict = struct_to_dict(value);
                 array.push(valuedict);
@@ -429,8 +429,8 @@ pub fn struct_to_dict(value: &ChumStructVariant) -> Dictionary<Unique> {
             dict
         }
         ChumStructVariant::Struct(ref vec) => {
-            let mut dict = Dictionary::new();
-            let mut values = Dictionary::new();
+            let dict = Dictionary::new();
+            let values = Dictionary::new();
             let mut order = StringArray::new();
             order.resize(vec.len() as i32);
             {

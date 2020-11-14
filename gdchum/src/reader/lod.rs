@@ -14,14 +14,14 @@ pub fn read_lod(
             return None;
         }
     };
-    let mut data = Dictionary::new();
+    let data = Dictionary::new();
     data.insert("skins", loddata.skin_ids);
     Some(data)
 }
 
 pub fn read_lod_from_res(data: &ChumFile) -> Dictionary<Unique> {
     let fmt = data.get_format();
-    let mut dict = Dictionary::new();
+    let dict = Dictionary::new();
     match read_lod(&data.get_data_as_vec(), fmt, data) {
         Some(mesh) => {
             dict.insert("exists", true);

@@ -11,7 +11,7 @@ pub fn read_spline(data: &Vec<u8>, fmt: libchum::format::TotemFormat, file: &Chu
             return None;
         }
     };
-    let mut data = Dictionary::new();
+    let data = Dictionary::new();
     data.insert("unk4", spline.unk4.to_vec().to_variant());
     data.insert(
         "vertices",
@@ -36,7 +36,7 @@ pub fn read_spline(data: &Vec<u8>, fmt: libchum::format::TotemFormat, file: &Chu
 
 pub fn read_spline_from_res(data: &ChumFile) -> Dictionary<Unique> {
     let fmt = data.get_format();
-    let mut dict = Dictionary::new();
+    let dict = Dictionary::new();
     match read_spline(&data.get_data_as_vec(), fmt, data) {
         Some(mesh) => {
             dict.insert("exists", true);

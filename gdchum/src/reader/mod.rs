@@ -46,7 +46,7 @@ impl ChumReader {
             entry.time = (entry.time + delta) % entry.data.length;
             let frame: u16 = (entry.time * 60.0) as u16;
 
-            let mut material: TRef<ShaderMaterial> = unsafe { entry.resource.assume_safe() };
+            let material: TRef<ShaderMaterial> = unsafe { entry.resource.assume_safe() };
             if let Some(i) = entry.data.track_texture.find_frame_index(frame) {
                 material.set_shader_param("arg_texture", entry.textures[i].clone());
             }
@@ -124,7 +124,7 @@ impl ChumReader {
                         godot_print!("Found material for {}", id);
                         let image: Ref<Image,Shared> =
                             texturedict.get("bitmap").try_to_object().unwrap();
-                        let mut texture = Ref::<ImageTexture,Unique>::new();
+                        let texture = Ref::<ImageTexture,Unique>::new();
                         texture.create_from_image(image, 2);
                         Some(texture.into_shared().upcast::<Texture>())
                     } else {

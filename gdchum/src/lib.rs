@@ -98,7 +98,7 @@ impl ChumArchive {
     #[export]
     fn get_file_list(&self, owner: TRef<Resource, Shared>) -> VariantArray<Unique> {
         let instance = Instance::from_base(owner.claim()).unwrap();
-        let mut arr = VariantArray::<Unique>::new();
+        let arr = VariantArray::<Unique>::new();
         if let Some(archive) = &self.archive {
             for file in archive.get_files() {
                 let f = Instance::<chumfile::ChumFile,Unique>::new();

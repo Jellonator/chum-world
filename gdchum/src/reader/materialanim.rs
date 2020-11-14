@@ -59,7 +59,7 @@ pub fn read_materialanim(
 
 pub fn read_materialanim_from_res(data: &ChumFile, reader: &mut ChumReader) -> Dictionary<Unique> {
     let fmt = data.get_format();
-    let mut dict = Dictionary::new();
+    let dict = Dictionary::new();
     match read_materialanim(&data.get_data_as_vec(), fmt, reader, data) {
         Some(mat) => {
             dict.insert("exists", true);

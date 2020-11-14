@@ -172,7 +172,7 @@ impl ChumFile {
                 .get_file_from_name(&self.namestr)
                 .unwrap();
             let f = Instance::<ByteData, Unique>::new();
-            f.map_mut(|script, res| {
+            f.map_mut(|script, _| {
                 script.set_data(file.get_data().to_vec());
             })
             .unwrap();

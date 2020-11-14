@@ -28,12 +28,12 @@ pub fn read_surface(
     let mut meshes: Vec<Ref<ArrayMesh,Shared>> = Vec::new();
     let surfaces = surfaceobj.generate_meshes(surface::SurfaceGenMode::BezierInterp(4));
     for surface in surfaces {
-        let mut mesh = Ref::<ArrayMesh,Unique>::new();
+        let mesh = Ref::<ArrayMesh,Unique>::new();
         let mut verts = Vector3Array::new();
         let mut texcoords = Vector2Array::new();
         let mut uv2 = Vector2Array::new();
         let mut normals = Vector3Array::new();
-        let mut meshdata = VariantArray::new();
+        let meshdata = VariantArray::new();
         for quad in surface.quads.iter() {
             for tri in &quad.tris() {
                 for point in &tri.points {
@@ -107,7 +107,7 @@ pub fn read_surface(
 
 pub fn read_surface_from_res(data: &ChumFile, reader: &mut ChumReader) -> Dictionary<Unique> {
     let fmt = data.get_format();
-    let mut dict = Dictionary::new();
+    let dict = Dictionary::new();
     match read_surface(&data.get_data_as_vec(), fmt, reader, data) {
         Some(mesh) => {
             dict.insert("exists", true);

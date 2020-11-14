@@ -34,7 +34,7 @@ pub fn read_text(data: &Vec<u8>) -> TextType {
 }
 
 pub fn read_text_from_res(data: &ChumFile) -> Dictionary<Unique> {
-    let mut dict = Dictionary::new();
+    let dict = Dictionary::new();
     match read_text(&data.get_data_as_vec()) {
         TextType::ErrText => {
             dict.insert("exists", false);

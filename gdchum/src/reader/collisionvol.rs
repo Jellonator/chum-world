@@ -19,7 +19,7 @@ pub fn read_collisionvol(
             return None;
         }
     };
-    let mut data = Dictionary::new();
+    let data = Dictionary::new();
     data.insert("local_transform", util::mat4x4_to_transform(&volume.local_transform));
     data.insert("local_transform_inv", util::mat4x4_to_transform(&volume.local_transform_inv));
     Some(data)
@@ -27,7 +27,7 @@ pub fn read_collisionvol(
 
 pub fn read_collisionvol_from_res(data: &ChumFile) -> Dictionary<Unique> {
     let fmt = data.get_format();
-    let mut dict = Dictionary::new();
+    let dict = Dictionary::new();
     match read_collisionvol(&data.get_data_as_vec(), fmt, data) {
         Some(vol) => {
             dict.insert("exists", true);

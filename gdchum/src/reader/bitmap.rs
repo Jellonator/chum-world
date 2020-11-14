@@ -14,7 +14,7 @@ pub fn read_bitmap(
             return None;
         }
     };
-    let mut image = Ref::<Image,Unique>::new();
+    let image = Ref::<Image,Unique>::new();
     let mut data = ByteArray::new();
     for color in bitmap.get_data_as_vec().into_iter() {
         data.push(color.r);
@@ -37,7 +37,7 @@ pub fn read_bitmap(
 
 pub fn read_bitmap_from_res(data: &ChumFile) -> Dictionary<Unique> {
     let fmt = data.get_format();
-    let mut dict = Dictionary::new();
+    let dict = Dictionary::new();
     match read_bitmap(&data.get_data_as_vec(), fmt, data) {
         Some((mesh, hasalpha)) => {
             dict.insert("exists", true);

@@ -98,6 +98,11 @@ columns = 3
 hide_root = true
 script = ExtResource( 7 )
 
+[node name="TreeMenu" type="PopupMenu" parent="VBox/Tabs/Files/VBox/Tree"]
+margin_right = 20.0
+margin_bottom = 20.0
+items = [ "Copy item ID", null, 0, false, false, 0, 0, null, "", false ]
+
 [node name="EditorList" parent="VBox/Tabs/Files" instance=ExtResource( 2 )]
 anchor_right = 0.0
 anchor_bottom = 0.0
@@ -139,6 +144,7 @@ margin_bottom = 397.42
 [connection signal="text_changed" from="VBox/Tabs/Files/VBox/HBox/LineEdit" to="VBox/Tabs/Files/VBox/Tree" method="_on_LineEdit_text_changed"]
 [connection signal="file_selected" from="VBox/Tabs/Files/VBox/Tree" to="." method="_on_Tree_file_selected"]
 [connection signal="item_selected" from="VBox/Tabs/Files/VBox/Tree" to="VBox/Tabs/Files/VBox/Tree" method="_on_Tree_item_selected"]
+[connection signal="id_pressed" from="VBox/Tabs/Files/VBox/Tree/TreeMenu" to="VBox/Tabs/Files/VBox/Tree" method="_on_TreeMenu_id_pressed"]
 [connection signal="files_selected" from="ArchiveFileSelector" to="." method="_on_ArchiveFileSelector_files_selected"]
 [connection signal="files_selected" from="ArchiveFileSaver" to="." method="_on_ArchiveFileSaver_files_selected"]
 [connection signal="file_selected" from="SaveDialog" to="." method="_on_SaveDialog_file_selected"]

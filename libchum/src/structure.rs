@@ -14,10 +14,10 @@ pub trait ChumEnum: Sized {
     fn get_names(&self) -> Vec<String>;
 }
 
-pub trait ChumBinary: Sized {
-    fn read_from<R: Read>(file: &mut R, fmt: TotemFormat) -> error::StructUnpackResult<Self>;
-    fn write_to<W: Write>(&self, writer: &mut W, fmt: TotemFormat) -> io::Result<()>;
-}
+// pub trait ChumBinary: Sized {
+//     fn read_from<R: Read>(file: &mut R, fmt: TotemFormat) -> error::StructUnpackResult<Self>;
+//     fn write_to<W: Write>(&self, writer: &mut W, fmt: TotemFormat) -> io::Result<()>;
+// }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum IntType {

@@ -110,3 +110,19 @@ func _ready():
 
 func _on_LineEdit_text_changed(new_text: String):
 	do_search(new_text)
+
+var _tree_menu_item: TreeItem = null
+func _gui_input(event):
+	if event is InputEventMouseButton:
+		if event.button_index == BUTTON_RIGHT and event.pressed:
+			_tree_menu_item = get_item_at_position(event.position)
+			if _tree_menu_item != null and _tree_menu_item.get_meta("category") == false:
+				var pos = get_global_mouse_position()
+				$TreeMenu.popup(Rect2(pos - Vector2.ONE*4, Vector2.ONE))
+
+const TREE_MENU_COPY_ID := 0
+
+func _on_TreeMenu_id_pressed(id):
+	if id == TREE_MENU_COPY_ID:
+		var file_id = _tree_menu_item.get_meta("file").get_hash_id()
+		OS.clipboard = str(file_id)

@@ -522,6 +522,20 @@ impl ChumFile {
                 let structure = data.structure();
                 util::struct_to_dict(&structure).into_shared().to_variant()
             }
+            "OMNI" => {
+                let vecdata: Vec<u8> = self.get_data_as_vec();
+                let data = match reader::omni::Omni::read_from(
+                    &mut vecdata.as_slice(),
+                    self.format
+                ) {
+                    Ok(x) => x,
+                    Err(err) => {
+                        panic!("OMNI file invalid: {}", err);
+                    }
+                };
+                let structure = data.structure();
+                util::struct_to_dict(&structure).into_shared().to_variant()
+            }
             _ => Variant::new(),
         }
     }
@@ -571,6 +585,12 @@ impl ChumFile {
             }
             "ROTSHAPE" => {
                 let data = reader::rotshape::RotShape::destructure(&structure).unwrap();
+                let mut outdata = Vec::new();
+                data.write_to(&mut outdata, self.format).unwrap();
+                self.replace_data_with_vec(outdata);
+            }
+            "OMNI" => {
+                let data = reader::omni::Omni::destructure(&structure).unwrap();
                 let mut outdata = Vec::new();
                 data.write_to(&mut outdata, self.format).unwrap();
                 self.replace_data_with_vec(outdata);

@@ -1,6 +1,7 @@
-[gd_scene load_steps=2 format=2]
+[gd_scene load_steps=3 format=2]
 
 [ext_resource path="res://Gui/ArchiveFileSelector.gd" type="Script" id=1]
+[ext_resource path="res://Gui/theme.tres" type="Theme" id=2]
 
 [node name="ArchiveFileSelector" type="ConfirmationDialog"]
 anchor_left = 0.5
@@ -12,6 +13,7 @@ margin_top = -87.0
 margin_right = 256.0
 margin_bottom = 357.0
 rect_min_size = Vector2( 320, 0 )
+theme = ExtResource( 2 )
 popup_exclusive = true
 window_title = "Select archive files"
 resizable = true
@@ -26,9 +28,9 @@ __meta__ = {
 anchor_right = 1.0
 anchor_bottom = 1.0
 margin_left = 8.0
-margin_top = 39.0
+margin_top = 47.0
 margin_right = -8.0
-margin_bottom = -36.0
+margin_bottom = -38.0
 custom_constants/vseparation = 32
 custom_constants/hseparation = 16
 columns = 3
@@ -37,53 +39,52 @@ __meta__ = {
 }
 
 [node name="Label" type="Label" parent="Grid"]
-margin_top = 5.0
-margin_right = 38.0
-margin_bottom = 19.0
+margin_right = 46.0
+margin_bottom = 22.0
 text = "Name"
 
 [node name="NGCLine" type="LineEdit" parent="Grid"]
-margin_left = 54.0
+margin_left = 62.0
 margin_right = 333.0
-margin_bottom = 24.0
+margin_bottom = 22.0
 size_flags_horizontal = 3
 
 [node name="NGCButton" type="Button" parent="Grid"]
 margin_left = 349.0
 margin_right = 400.0
-margin_bottom = 24.0
+margin_bottom = 22.0
 text = "Select"
 
 [node name="Label2" type="Label" parent="Grid"]
-margin_top = 61.0
-margin_right = 38.0
-margin_bottom = 75.0
+margin_top = 54.0
+margin_right = 46.0
+margin_bottom = 76.0
 text = "Data"
 
 [node name="DGCLine" type="LineEdit" parent="Grid"]
-margin_left = 54.0
-margin_top = 56.0
+margin_left = 62.0
+margin_top = 54.0
 margin_right = 333.0
-margin_bottom = 80.0
+margin_bottom = 76.0
 
 [node name="DGCButton" type="Button" parent="Grid"]
 margin_left = 349.0
-margin_top = 56.0
+margin_top = 54.0
 margin_right = 400.0
-margin_bottom = 80.0
+margin_bottom = 76.0
 text = "Select"
 
 [node name="Label3" type="Label" parent="Grid"]
-margin_top = 115.0
-margin_right = 38.0
-margin_bottom = 129.0
+margin_top = 108.0
+margin_right = 46.0
+margin_bottom = 130.0
 text = "Type"
 
 [node name="OptionButton" type="OptionButton" parent="Grid"]
-margin_left = 54.0
-margin_top = 112.0
+margin_left = 62.0
+margin_top = 108.0
 margin_right = 333.0
-margin_bottom = 132.0
+margin_bottom = 130.0
 text = "Nintendo Gamecube (NGC/DGC)"
 align = 2
 items = [ "Nintendo Gamecube (NGC/DGC)", null, false, 0, null, "Playstation 2 (NPS/DPS)", null, false, 1, null ]
@@ -91,9 +92,9 @@ selected = 0
 
 [node name="NGCDialog" type="FileDialog" parent="."]
 margin_left = 8.0
-margin_top = 39.0
+margin_top = 47.0
 margin_right = 408.0
-margin_bottom = 439.0
+margin_bottom = 447.0
 rect_min_size = Vector2( 400, 400 )
 popup_exclusive = true
 window_title = "Open a File"
@@ -107,9 +108,9 @@ current_path = "/home/jellonator/Workspace/Rust/ChumWorld/"
 
 [node name="DGCDialog" type="FileDialog" parent="."]
 margin_left = 8.0
-margin_top = 39.0
+margin_top = 47.0
 margin_right = 408.0
-margin_bottom = 439.0
+margin_bottom = 447.0
 rect_min_size = Vector2( 400, 400 )
 popup_exclusive = true
 window_title = "Open a File"

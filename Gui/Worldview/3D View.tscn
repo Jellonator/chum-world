@@ -45,31 +45,31 @@ transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -13.8483 )
 [node name="Temp" type="Spatial" parent="Viewport"]
 
 [node name="Tree" type="PanelContainer" parent="."]
-margin_right = 174.0
+margin_right = 172.0
 margin_bottom = 720.0
 
 [node name="VBox" type="VBoxContainer" parent="Tree"]
-margin_left = 7.0
-margin_top = 7.0
-margin_right = 167.0
-margin_bottom = 713.0
+margin_left = 6.0
+margin_top = 4.0
+margin_right = 166.0
+margin_bottom = 716.0
 
 [node name="Search" type="LineEdit" parent="Tree/VBox"]
 margin_right = 160.0
-margin_bottom = 24.0
+margin_bottom = 22.0
 placeholder_text = "search"
 
 [node name="Items" type="Tree" parent="Tree/VBox"]
-margin_top = 28.0
+margin_top = 26.0
 margin_right = 160.0
-margin_bottom = 706.0
+margin_bottom = 712.0
 rect_min_size = Vector2( 160, 0 )
 size_flags_vertical = 3
 hide_root = true
 script = ExtResource( 5 )
 
 [node name="PanelContainer" type="PanelContainer" parent="."]
-margin_left = 186.0
+margin_left = 180.0
 margin_right = 1280.0
 margin_bottom = 720.0
 __meta__ = {
@@ -77,10 +77,10 @@ __meta__ = {
 }
 
 [node name="TextureRect" type="TextureRect" parent="PanelContainer"]
-margin_left = 7.0
-margin_top = 7.0
-margin_right = 1087.0
-margin_bottom = 713.0
+margin_left = 6.0
+margin_top = 4.0
+margin_right = 1094.0
+margin_bottom = 716.0
 focus_mode = 1
 texture = SubResource( 2 )
 expand = true
@@ -105,29 +105,29 @@ __meta__ = {
 }
 
 [node name="NodeNames" type="CheckButton" parent="PanelContainer/TextureRect/Controls"]
-margin_right = 232.0
-margin_bottom = 40.0
+margin_right = 206.0
+margin_bottom = 24.0
 text = "Show Node Names"
 align = 2
 
 [node name="ShowShapes" type="CheckButton" parent="PanelContainer/TextureRect/Controls"]
-margin_top = 44.0
-margin_right = 232.0
-margin_bottom = 84.0
+margin_top = 28.0
+margin_right = 206.0
+margin_bottom = 52.0
 text = "Show Collision Shapes"
 align = 2
 
 [node name="ShowVolumes" type="CheckButton" parent="PanelContainer/TextureRect/Controls"]
-margin_top = 88.0
-margin_right = 232.0
-margin_bottom = 128.0
+margin_top = 56.0
+margin_right = 206.0
+margin_bottom = 80.0
 text = "Show Collision Volumes"
 align = 2
 
 [node name="ShowSplines" type="CheckButton" parent="PanelContainer/TextureRect/Controls"]
-margin_top = 132.0
-margin_right = 232.0
-margin_bottom = 172.0
+margin_top = 84.0
+margin_right = 206.0
+margin_bottom = 108.0
 text = "Show Splines"
 align = 2
 __meta__ = {
@@ -135,9 +135,9 @@ __meta__ = {
 }
 
 [node name="ShowNodes" type="CheckButton" parent="PanelContainer/TextureRect/Controls"]
-margin_top = 176.0
-margin_right = 232.0
-margin_bottom = 216.0
+margin_top = 112.0
+margin_right = 206.0
+margin_bottom = 136.0
 text = "Show Hidden Nodes"
 align = 2
 
@@ -145,8 +145,11 @@ align = 2
 margin_left = 258.0
 margin_top = 130.0
 margin_right = 311.0
-margin_bottom = 182.0
+margin_bottom = 179.0
 items = [ "test1", null, 0, false, false, 0, 0, null, "", false, "test2", null, 0, false, false, 1, 0, null, "", false ]
+__meta__ = {
+"_edit_use_anchors_": false
+}
 [connection signal="draw" from="Viewport/Draw" to="." method="_on_Draw_draw"]
 [connection signal="text_changed" from="Tree/VBox/Search" to="Tree/VBox/Items" method="_on_Search_text_changed"]
 [connection signal="button_pressed" from="Tree/VBox/Items" to="Tree/VBox/Items" method="_on_Items_button_pressed"]

@@ -1,4 +1,4 @@
-[gd_scene load_steps=11 format=2]
+[gd_scene load_steps=12 format=2]
 
 [ext_resource path="res://Gui/Viewers/HexEditor.tscn" type="PackedScene" id=1]
 [ext_resource path="res://Gui/Viewers/TextEditor.tscn" type="PackedScene" id=2]
@@ -9,6 +9,7 @@
 [ext_resource path="res://Gui/Viewers/TextureViewer.tscn" type="PackedScene" id=7]
 [ext_resource path="res://Gui/Viewers/ViewerMaterial.tscn" type="PackedScene" id=8]
 [ext_resource path="res://Gui/Viewers/ViewerSkin.tscn" type="PackedScene" id=9]
+[ext_resource path="res://Gui/theme.tres" type="Theme" id=10]
 
 [sub_resource type="StyleBoxEmpty" id=1]
 
@@ -22,24 +23,24 @@ __meta__ = {
 
 [node name="HBoxContainer" type="HBoxContainer" parent="."]
 margin_right = 1280.0
-margin_bottom = 20.0
+margin_bottom = 22.0
 
 [node name="ExportButton" type="MenuButton" parent="HBoxContainer"]
 margin_right = 111.0
-margin_bottom = 20.0
+margin_bottom = 22.0
 text = "Export File As..."
 flat = false
 items = [ "Raw Binary (.bin)", null, 0, false, false, 0, 0, null, "", false, "Text (.txt)", null, 0, false, false, 1, 0, null, "", false, "Model (.obj)", null, 0, false, false, 2, 0, null, "", false, "Texture (.png)", null, 0, false, false, 3, 0, null, "", false, "Scene (.dae)", null, 0, false, false, 4, 0, null, "", false ]
 
 [node name="Split" type="HSplitContainer" parent="."]
-margin_top = 24.0
+margin_top = 26.0
 margin_right = 1280.0
 margin_bottom = 720.0
 size_flags_vertical = 3
 
 [node name="TabContainer" type="TabContainer" parent="Split"]
 margin_right = 1280.0
-margin_bottom = 696.0
+margin_bottom = 694.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
 size_flags_stretch_ratio = 2.0
@@ -55,42 +56,46 @@ script = ExtResource( 5 )
 [node name="Default" type="CenterContainer" parent="Split/TabContainer/Viewer"]
 anchor_right = 1.0
 anchor_bottom = 1.0
-margin_left = 4.0
-margin_top = 8.0
-margin_right = -4.0
-margin_bottom = -4.0
+margin_left = 5.0
+margin_top = 5.0
+margin_right = -5.0
+margin_bottom = -5.0
 script = ExtResource( 6 )
 
 [node name="Label" type="Label" parent="Split/TabContainer/Viewer/Default"]
-margin_left = 586.0
-margin_top = 323.0
-margin_right = 686.0
-margin_bottom = 337.0
+margin_left = 581.0
+margin_top = 319.0
+margin_right = 689.0
+margin_bottom = 341.0
 text = "Nothing to view"
 
 [node name="Viewer3D" parent="Split/TabContainer/Viewer" instance=ExtResource( 4 )]
 visible = false
-margin_left = 4.0
-margin_top = 8.0
-margin_right = -4.0
-margin_bottom = -4.0
+margin_left = 5.0
+margin_top = 5.0
+margin_right = -5.0
+margin_bottom = -5.0
 
 [node name="TextureViewer" parent="Split/TabContainer/Viewer" instance=ExtResource( 7 )]
 visible = false
+margin_left = 5.0
+margin_top = 5.0
+margin_right = -5.0
+margin_bottom = -5.0
 
 [node name="ViewerMaterial" parent="Split/TabContainer/Viewer" instance=ExtResource( 8 )]
 visible = false
-margin_left = 4.0
-margin_top = 8.0
-margin_right = -4.0
-margin_bottom = -4.0
+margin_left = 5.0
+margin_top = 5.0
+margin_right = -5.0
+margin_bottom = -5.0
 
 [node name="ViewerSkin" parent="Split/TabContainer/Viewer" instance=ExtResource( 9 )]
 visible = false
-margin_left = 4.0
-margin_top = 8.0
-margin_right = -4.0
-margin_bottom = -4.0
+margin_left = 5.0
+margin_top = 5.0
+margin_right = -5.0
+margin_bottom = -5.0
 
 [node name="Hex" parent="Split/TabContainer" instance=ExtResource( 1 )]
 visible = false
@@ -102,9 +107,9 @@ margin_top = 24.0
 
 [node name="Margin" type="MarginContainer" parent="Split"]
 visible = false
-margin_left = 859.0
+margin_left = 857.0
 margin_right = 1280.0
-margin_bottom = 696.0
+margin_bottom = 694.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
 custom_constants/margin_right = 0
@@ -113,16 +118,16 @@ custom_constants/margin_left = 0
 
 [node name="Panel" type="PanelContainer" parent="Split/Margin"]
 margin_top = 24.0
-margin_right = 421.0
-margin_bottom = 696.0
+margin_right = 423.0
+margin_bottom = 694.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
 
 [node name="Scroll" type="ScrollContainer" parent="Split/Margin/Panel"]
-margin_left = 7.0
-margin_top = 7.0
-margin_right = 414.0
-margin_bottom = 665.0
+margin_left = 6.0
+margin_top = 4.0
+margin_right = 417.0
+margin_bottom = 666.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
 scroll_horizontal_enabled = false
@@ -131,8 +136,8 @@ __meta__ = {
 }
 
 [node name="VBox" type="VBoxContainer" parent="Split/Margin/Panel/Scroll"]
-margin_right = 407.0
-margin_bottom = 658.0
+margin_right = 411.0
+margin_bottom = 662.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
 
@@ -140,5 +145,6 @@ size_flags_vertical = 3
 margin_top = 650.0
 margin_right = 1280.0
 margin_bottom = 720.0
+theme = ExtResource( 10 )
 popup_exclusive = true
 [connection signal="tab_changed" from="Split/TabContainer" to="." method="_on_TabContainer_tab_changed"]

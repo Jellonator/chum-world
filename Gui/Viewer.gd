@@ -13,7 +13,7 @@ const MENU_VIEW_ALPHA := 1
 var archive: ChumArchive
 var should_3dview_reload := false
 
-onready var node_menu_file := $VBox/Menu/File
+onready var node_menu_file := $VBox/Panel/Menu/File
 onready var node_tree := $VBox/Tabs/Files/VBox/Tree
 onready var node_editor := $VBox/Tabs/Files/EditorList
 onready var node_view3d := $"VBox/Tabs/3D View"
@@ -21,9 +21,9 @@ onready var node_tabs := $VBox/Tabs
 
 func _ready():
 	archive = ChumArchive.new()
-	$VBox/Menu/File.get_popup().connect(
+	$VBox/Panel/Menu/File.get_popup().connect(
 		"id_pressed", self, "_on_menu_file_select")
-	$VBox/Menu/Archive.get_popup().connect(
+	$VBox/Panel/Menu/Archive.get_popup().connect(
 		"id_pressed", self, "_on_menu_archive_select")
 
 func _on_menu_file_select(id):

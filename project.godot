@@ -33,6 +33,10 @@ GlobalConfig="*res://Global/GlobalConfig.gd"
 window/size/width=1280
 window/size/height=720
 
+[gui]
+
+theme/custom="res://Gui/theme.tres"
+
 [input]
 
 ui_accept={
@@ -153,4 +157,5 @@ quality/driver/fallback_to_gles2=true
 quality/reflections/texture_array_reflections=false
 quality/reflections/high_quality_ggx=false
 quality/shading/force_vertex_shading=true
+environment/default_clear_color=Color( 0.12549, 0.141176, 0.192157, 1 )
 environment/default_environment="res://default_env.tres"

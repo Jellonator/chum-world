@@ -1,4 +1,4 @@
-[gd_scene load_steps=9 format=2]
+[gd_scene load_steps=11 format=2]
 
 [ext_resource path="res://Gui/Viewer.gd" type="Script" id=1]
 [ext_resource path="res://Gui/EditorList.tscn" type="PackedScene" id=2]
@@ -8,12 +8,23 @@
 [ext_resource path="res://Gui/ArchiveFileSelector.tscn" type="PackedScene" id=6]
 [ext_resource path="res://Gui/FileTree.gd" type="Script" id=7]
 [ext_resource path="res://Gui/ExitDialogue.gd" type="Script" id=8]
+[ext_resource path="res://Gui/theme.tres" type="Theme" id=9]
+
+[sub_resource type="StyleBoxFlat" id=1]
+content_margin_left = 4.0
+content_margin_right = 4.0
+content_margin_top = 4.0
+content_margin_bottom = 4.0
+bg_color = Color( 0.2, 0.227451, 0.309804, 1 )
+border_width_bottom = 1
+border_color = Color( 0.0980392, 0.113725, 0.152941, 1 )
 
 [node name="Viewer" type="Control" groups=[
 "viewer",
 ]]
 anchor_right = 1.0
 anchor_bottom = 1.0
+theme = ExtResource( 9 )
 script = ExtResource( 1 )
 __meta__ = {
 "_edit_use_anchors_": false
@@ -26,39 +37,46 @@ __meta__ = {
 "_edit_use_anchors_": false
 }
 
-[node name="Menu" type="HBoxContainer" parent="VBox"]
+[node name="Panel" type="PanelContainer" parent="VBox"]
 margin_right = 1280.0
-margin_bottom = 20.0
+margin_bottom = 30.0
+custom_styles/panel = SubResource( 1 )
+
+[node name="Menu" type="HBoxContainer" parent="VBox/Panel"]
+margin_left = 4.0
+margin_top = 4.0
+margin_right = 1276.0
+margin_bottom = 26.0
 __meta__ = {
 "_edit_use_anchors_": false
 }
 
-[node name="File" type="MenuButton" parent="VBox/Menu"]
+[node name="File" type="MenuButton" parent="VBox/Panel/Menu"]
 margin_right = 35.0
-margin_bottom = 20.0
+margin_bottom = 22.0
 text = "File"
 flat = false
 items = [ "Open Archive", null, 0, false, false, 0, 0, null, "", false, "Save Archive As", null, 0, false, true, 2, 0, null, "", false, "Exit", null, 0, false, false, 1, 0, null, "", false ]
 
-[node name="Archive" type="MenuButton" parent="VBox/Menu"]
+[node name="Archive" type="MenuButton" parent="VBox/Panel/Menu"]
 margin_left = 39.0
 margin_right = 99.0
-margin_bottom = 20.0
+margin_bottom = 22.0
 text = "Archive"
 flat = false
 items = [ "Bulk Export", null, 0, false, false, 0, 0, null, "", false ]
 
-[node name="View" type="MenuButton" parent="VBox/Menu"]
+[node name="View" type="MenuButton" parent="VBox/Panel/Menu"]
 visible = false
 margin_left = 103.0
 margin_right = 145.0
-margin_bottom = 20.0
+margin_bottom = 22.0
 text = "View"
 flat = false
 items = [ "Backface Culling", null, 1, false, false, 0, 0, null, "", false, "High Quality Alpha", null, 1, false, false, 1, 0, null, "", false ]
 
 [node name="Tabs" type="TabContainer" parent="VBox"]
-margin_top = 24.0
+margin_top = 34.0
 margin_right = 1280.0
 margin_bottom = 720.0
 size_flags_vertical = 3
@@ -69,29 +87,29 @@ __meta__ = {
 [node name="Files" type="HSplitContainer" parent="VBox/Tabs"]
 anchor_right = 1.0
 anchor_bottom = 1.0
-margin_left = 4.0
-margin_top = 32.0
-margin_right = -4.0
-margin_bottom = -4.0
+margin_left = 5.0
+margin_top = 29.0
+margin_right = -5.0
+margin_bottom = -5.0
 
 [node name="VBox" type="VBoxContainer" parent="VBox/Tabs/Files"]
 margin_right = 128.0
-margin_bottom = 660.0
+margin_bottom = 652.0
 
 [node name="HBox" type="HBoxContainer" parent="VBox/Tabs/Files/VBox"]
 margin_right = 128.0
-margin_bottom = 24.0
+margin_bottom = 22.0
 
 [node name="LineEdit" type="LineEdit" parent="VBox/Tabs/Files/VBox/HBox"]
 margin_right = 128.0
-margin_bottom = 24.0
+margin_bottom = 22.0
 size_flags_horizontal = 3
 placeholder_text = "search"
 
 [node name="Tree" type="Tree" parent="VBox/Tabs/Files/VBox"]
-margin_top = 28.0
+margin_top = 26.0
 margin_right = 128.0
-margin_bottom = 660.0
+margin_bottom = 652.0
 rect_min_size = Vector2( 128, 0 )
 size_flags_horizontal = 3
 size_flags_vertical = 3
@@ -107,16 +125,16 @@ items = [ "Copy item ID", null, 0, false, false, 0, 0, null, "", false ]
 [node name="EditorList" parent="VBox/Tabs/Files" instance=ExtResource( 2 )]
 anchor_right = 0.0
 anchor_bottom = 0.0
-margin_left = 140.0
-margin_right = 1272.0
-margin_bottom = 660.0
+margin_left = 136.0
+margin_right = 1270.0
+margin_bottom = 652.0
 
 [node name="3D View" parent="VBox/Tabs" instance=ExtResource( 4 )]
 visible = false
-margin_left = 4.0
-margin_top = 32.0
-margin_right = -4.0
-margin_bottom = -4.0
+margin_left = 5.0
+margin_top = 29.0
+margin_right = -5.0
+margin_bottom = -5.0
 
 [node name="ArchiveFileSelector" parent="." instance=ExtResource( 6 )]
 
@@ -125,6 +143,7 @@ margin_bottom = -4.0
 [node name="ErrDialog" type="AcceptDialog" parent="."]
 margin_right = 83.0
 margin_bottom = 58.0
+theme = ExtResource( 9 )
 popup_exclusive = true
 
 [node name="SaveDialog" type="FileDialog" parent="."]
@@ -132,6 +151,7 @@ margin_left = 59.0
 margin_top = 66.0
 margin_right = 754.0
 margin_bottom = 548.0
+theme = ExtResource( 9 )
 access = 2
 current_dir = "/home/jellonator/Workspace/Rust/ChumWorld"
 current_path = "/home/jellonator/Workspace/Rust/ChumWorld/"
@@ -145,6 +165,7 @@ margin_bottom = 397.42
 [node name="ExitDialogue" type="ConfirmationDialog" parent="."]
 margin_right = 200.0
 margin_bottom = 70.0
+theme = ExtResource( 9 )
 popup_exclusive = true
 dialog_text = "Are you sure you with to exit?"
 script = ExtResource( 8 )

@@ -313,14 +313,9 @@ chum_struct! {
     pub struct TransformationHeader {
         pub floats: [fixed array [f32] 4],
         pub transform: [Mat4x4],
-        pub junk: [fixed array [u8] 16],
+        // pub junk: [fixed array [u8] 16],
         pub item_type: [u16],
         pub item_subtype: [u16],
-        // pub floats: [f32; 4],
-        // pub transform: Mat4x4,
-        // pub junk: [u8; 16],
-        // pub item_type: u16,
-        // pub item_subtype: u16,
     }
 }
 
@@ -340,7 +335,7 @@ impl TransformationHeader {
         Ok(TransformationHeader {
             floats,
             transform,
-            junk,
+            // junk,
             item_type,
             item_subtype,
         })
@@ -352,8 +347,8 @@ impl TransformationHeader {
             fmt.write_f32(writer, *value)?;
         }
         write_mat4(&self.transform, writer, fmt)?;
-        for value in self.junk.iter() {
-            fmt.write_u8(writer, *value)?;
+        for _ in 0..16 {
+            fmt.write_u8(writer, 0)?;
         }
         fmt.write_u16(writer, self.item_type)?;
         fmt.write_u16(writer, self.item_subtype)?;

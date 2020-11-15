@@ -5,6 +5,12 @@ pub trait ChumStruct: Sized {
     fn destructure(data: &ChumStructVariant) -> Result<Self, Box<dyn std::error::Error>>;
 }
 
+pub trait ChumEnum: Sized {
+    fn from_u32(value: u32) -> Option<Self>;
+    fn to_u32(&self) -> u32;
+    fn get_names(&self) -> Vec<String>;
+}
+
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum IntType {
     I8,

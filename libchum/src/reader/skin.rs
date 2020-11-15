@@ -1,5 +1,5 @@
 use crate::common::*;
-// use crate::export::ChumExport;
+use crate::structure::ChumEnum;
 use crate::animsymbol::AnimSymbol;
 use crate::format::TotemFormat;
 // use std::error::Error;

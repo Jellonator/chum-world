@@ -156,15 +156,17 @@ impl Color {
     }
 }
 
-/// The alpha level.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum AlphaLevel {
-    /// alpha is always 255
-    Opaque,
-    /// alpha is always either 0 or 255
-    Bit,
-    /// alpha can be any value
-    Blend,
+// The alpha level.
+chum_enum! {
+    #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+    pub enum AlphaLevel {
+        // alpha is always 255
+        Opaque,
+        // alpha is always either 0 or 255
+        Bit,
+        // alpha can be any value
+        Blend,
+    }
 }
 
 impl AlphaLevel {
@@ -497,7 +499,7 @@ pub struct Bitmap {
 
 chum_struct! {
     pub struct BitmapStruct {
-        pub alpha: [enum {Opaque, Bit, Blend}],
+        pub alpha: [enum AlphaLevel],
         pub flags: [flags {a, b, c}],
         pub unknown: [custom 1, 5],
     }
@@ -616,7 +618,7 @@ fn read_u32_interleaved<R: Read>(
 impl Bitmap {
     pub fn get_struct(&self) -> BitmapStruct {
         BitmapStruct {
-            alpha: self.alpha.as_u8() as i64,
+            alpha: self.alpha,
             flags: self.flags as i64,
             unknown: self.unknown as i64
         }
@@ -625,7 +627,7 @@ impl Bitmap {
     pub fn from_struct(data: &BitmapStruct) -> Self {
         Bitmap {
             data: BitmapFormat::RGBA8888(Vec::new()),
-            alpha: AlphaLevel::from_u8(data.alpha as u8).unwrap(),
+            alpha: data.alpha,
             width: 0,
             height: 0,
             flags: data.flags as u8,

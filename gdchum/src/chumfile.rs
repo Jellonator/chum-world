@@ -508,6 +508,20 @@ impl ChumFile {
                 let data = warp.structure();
                 util::struct_to_dict(&data).into_shared().to_variant()
             }
+            "ROTSHAPE" => {
+                let vecdata: Vec<u8> = self.get_data_as_vec();
+                let data = match reader::rotshape::RotShape::read_from(
+                    &mut vecdata.as_slice(),
+                    self.format
+                ) {
+                    Ok(x) => x,
+                    Err(err) => {
+                        panic!("ROTSHAPE file invalid: {}", err);
+                    }
+                };
+                let structure = data.structure();
+                util::struct_to_dict(&structure).into_shared().to_variant()
+            }
             _ => Variant::new(),
         }
     }
@@ -553,6 +567,12 @@ impl ChumFile {
                 let warpdata = reader::warp::Warp::destructure(&structure).unwrap();
                 let mut outdata = Vec::new();
                 warpdata.write_to(&mut outdata, self.format).unwrap();
+                self.replace_data_with_vec(outdata);
+            }
+            "ROTSHAPE" => {
+                let data = reader::rotshape::RotShape::destructure(&structure).unwrap();
+                let mut outdata = Vec::new();
+                data.write_to(&mut outdata, self.format).unwrap();
                 self.replace_data_with_vec(outdata);
             }
             _ => panic!("Could not import data"),

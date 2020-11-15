@@ -5,6 +5,7 @@ use gdnative::prelude::*;
 use gdnative::api::{ArrayMesh, Material, Mesh};
 use libchum::common;
 use libchum::reader::rotshape;
+use libchum::structure::ChumEnum;
 
 pub fn read_rotshape(
     data: &Vec<u8>,
@@ -24,13 +25,13 @@ pub fn read_rotshape(
     let pos_br = rsdata.size[1];
     let pos_bl = common::Vector3::new(pos_tl.x, pos_br.y, pos_br.z);
     let pos_tr = common::Vector3::new(pos_br.x, pos_tl.y, pos_tl.z);
-    let uv2 = Vector2::new((rsdata.billboard_mode.to_u16() + 2) as f32, 0.0);
+    let uv2 = Vector2::new((rsdata.billboard_mode.to_u32() + 2) as f32, 0.0);
     let mesh = ArrayMesh::new();
     let mut verts = Vector3Array::new();
-    verts.push(util::vec3_to_godot(&(pos_tl + rsdata.unk5)));
-    verts.push(util::vec3_to_godot(&(pos_tr + rsdata.unk5)));
-    verts.push(util::vec3_to_godot(&(pos_br + rsdata.unk5)));
-    verts.push(util::vec3_to_godot(&(pos_bl + rsdata.unk5)));
+    verts.push(util::vec3_to_godot(&(pos_tl + rsdata.offset)));
+    verts.push(util::vec3_to_godot(&(pos_tr + rsdata.offset)));
+    verts.push(util::vec3_to_godot(&(pos_br + rsdata.offset)));
+    verts.push(util::vec3_to_godot(&(pos_bl + rsdata.offset)));
     let mut texcoords = Vector2Array::new();
     texcoords.push(util::vec2_to_godot(&rsdata.texcoords[0]));
     texcoords.push(util::vec2_to_godot(&rsdata.texcoords[1]));

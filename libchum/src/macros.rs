@@ -188,7 +188,7 @@ macro_rules! chum_struct_get_type {
     (i16) => {::std::primitive::i16};
     (u32) => {::std::primitive::u32};
     (i32) => {::std::primitive::i32};
-    (enum {$($_name:ident),*}) => {::std::primitive::i64};
+    (enum $name:ty) => {$name};
     (flags {$($_name:ident),*}) => {::std::primitive::i64};
     (custom $_min:expr, $_max:expr) => {::std::primitive::i64};
     (f32) => {::std::primitive::f32};
@@ -212,13 +212,9 @@ macro_rules! chum_struct_structure {
     ([i16],$value:expr) => {Integer($value as ::std::primitive::i64, I16)};
     ([u32],$value:expr) => {Integer($value as ::std::primitive::i64, U32)};
     ([i32],$value:expr) => {Integer($value as ::std::primitive::i64, I32)};
-    ([enum {$($name:ident),*}],$value:expr) => {
-        Integer($value as ::std::primitive::i64, Enum(
-            vec![
-                $(
-                    stringify!($name).to_owned(),
-                )*
-            ]
+    ([enum $name:ty],$value:expr) => {
+        Integer($crate::structure::ChumEnum::to_u32(&$value) as i64, Enum(
+            $crate::structure::ChumEnum::get_names(&$value)
         ))
     };
     ([flags {$($name:ident),*}],$value:expr) => {
@@ -286,7 +282,12 @@ macro_rules! chum_struct_destructure {
     ([i16],$value:expr) => {$value.get_i64().unwrap() as ::std::primitive::i16};
     ([u32],$value:expr) => {$value.get_i64().unwrap() as ::std::primitive::u32};
     ([i32],$value:expr) => {$value.get_i64().unwrap() as ::std::primitive::i32};
-    ([enum {$($name:ident),*}],$value:expr) => {$value.get_i64().unwrap()};
+    ([enum $name:ty],$value:expr) => {
+        {
+            use $crate::structure::ChumEnum;
+            <$name>::from_u32($value.get_i64().unwrap() as u32).unwrap()
+        }
+    };
     ([flags {$($name:ident),*}],$value:expr) => {$value.get_i64().unwrap()};
     ([custom $min:expr, $max:expr],$value:expr) => {$value.get_i64().unwrap()};
     ([f32],$value:expr) => {$value.get_f32().unwrap()};
@@ -343,10 +344,11 @@ macro_rules! chum_struct {
             #[$a:meta]
         )*
         pub struct $structname:ident {
-        $(
-            pub $name:ident : [$($inner:tt)*]
-        ),* $(,)? // this is just so that the last comma is optional
-    } ) => {
+            $(
+                pub $name:ident : [$($inner:tt)*]
+            ),* $(,)? // this is just so that the last comma is optional
+        } 
+    ) => {
         $(
             #[$a]
         )*
@@ -386,9 +388,79 @@ macro_rules! chum_struct {
     };
 }
 
+macro_rules! one {
+    ($x: ident) => {1u32};
+}
+
+macro_rules! get_index {
+    ($($y:ident),*) => {
+        {
+            let mut x = 0u32;
+            $(
+                x += one!($y);
+            )*
+            x
+        }
+    }
+}
+
+#[macro_export]
+macro_rules! chum_enum {
+    (
+        $(
+            #[$a:meta]
+        )*
+        pub enum $enumname:ident {
+            $(
+                $name:ident
+            ),* $(,)? // this is just so that the last comma is optional
+        }
+    ) => {
+        $(
+            #[$a]
+        )*
+        #[repr(u32)]
+        pub enum $enumname {
+            $(
+                $name,
+            )*
+        }
+        impl $crate::structure::ChumEnum for $enumname {
+            fn to_u32(&self) -> u32 {
+                return *self as u32
+            }
+            fn from_u32(value: u32) -> Option<Self> {
+                if value >= get_index!($($name),*) {
+                    None
+                } else {
+                    unsafe {
+                        ::std::option::Option::Some(::std::mem::transmute::<u32,Self>(value))
+                    }
+                }
+            }
+            fn get_names(&self) -> Vec<String> {
+                vec![
+                    $(
+                        stringify!($name).to_owned()
+                    ),*
+                ]
+            }
+        }
+    };
+}
+
+// chum_enum! {
+//     #[derive(Copy, Clone, Debug)]
+//     pub enum MyEnum {
+//         Zero,
+//         One,
+//         Two
+//     }
+// }
+
 // chum_struct! {
 //     pub struct Foobar {
-//         pub v_i8: [i8]
+//         pub v_enum: [enum MyEnum]
 //     }
 // }
 

@@ -95,7 +95,8 @@ impl Skin {
 
     /// Read a TMesh from a file
     pub fn read_from<R: Read>(file: &mut R, fmt: TotemFormat) -> io::Result<Skin> {
-        let transform = TransformationHeader::read_from(file, fmt)?;
+        use crate::structure::ChumBinary;
+        let transform = TransformationHeader::read_from(file, fmt).unwrap();
         let num_meshes = fmt.read_u32(file)?;
         let mut meshes = Vec::new();
         for _ in 0..num_meshes {

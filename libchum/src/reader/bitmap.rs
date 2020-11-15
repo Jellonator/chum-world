@@ -499,9 +499,9 @@ pub struct Bitmap {
 
 chum_struct! {
     pub struct BitmapStruct {
-        pub alpha: [enum AlphaLevel],
-        pub flags: [flags {a, b, c}],
-        pub unknown: [custom 1, 5],
+        pub alpha: [enum [u8] AlphaLevel],
+        pub flags: [flags [u8] {a, b, c}],
+        pub unknown: [custom [u8] 1, 5],
     }
 }
 
@@ -619,8 +619,8 @@ impl Bitmap {
     pub fn get_struct(&self) -> BitmapStruct {
         BitmapStruct {
             alpha: self.alpha,
-            flags: self.flags as i64,
-            unknown: self.unknown as i64,
+            flags: self.flags,
+            unknown: self.unknown,
         }
     }
 
@@ -630,8 +630,8 @@ impl Bitmap {
             alpha: data.alpha,
             width: 0,
             height: 0,
-            flags: data.flags as u8,
-            unknown: data.unknown as u8,
+            flags: data.flags,
+            unknown: data.unknown,
         }
     }
 

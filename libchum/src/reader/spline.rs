@@ -36,8 +36,9 @@ impl Spline {
     }
 
     pub fn read_from<R: Read>(file: &mut R, fmt: TotemFormat) -> io::Result<Spline> {
+        use crate::structure::ChumBinary;
         Ok(Spline {
-            transform: TransformationHeader::read_from(file, fmt)?,
+            transform: TransformationHeader::read_from(file, fmt).unwrap(),
             vertices: {
                 let num = fmt.read_u32(file)?;
                 let mut vec = Vec::with_capacity(num as usize);

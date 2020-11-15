@@ -13,8 +13,8 @@ chum_struct! {
         pub unk3: [u32],
         pub node_ids: [fixed array [i32] 10],
         pub unk4: [fixed array [f32] 10],
-        pub unk5: [dynamic array [i32] 0],
-        pub bitmaps: [dynamic array [reference BITMAP] 0],
+        pub unk5: [dynamic array [u32] [i32] 0],
+        pub bitmaps: [dynamic array [u32] [reference BITMAP] 0],
         pub volume_type: [i32],
         pub unk6: [u32],
     }
@@ -23,6 +23,7 @@ chum_struct! {
 impl CollisionVol {
     /// Read a CollisionVol from a file
     pub fn read_from<R: Read>(file: &mut R, fmt: TotemFormat) -> StructUnpackResult<CollisionVol> {
+        use crate::structure::ChumBinary;
         Ok(CollisionVol {
             transform: unpack_map(
                 TransformationHeader::read_from(file, fmt),
@@ -74,6 +75,7 @@ impl CollisionVol {
     }
 
     pub fn write_to<W: Write>(&self, writer: &mut W, fmt: TotemFormat) -> io::Result<()> {
+        use crate::structure::ChumBinary;
         self.transform.write_to(writer, fmt)?;
         fmt.write_u32(writer, self.unk1)?;
         write_mat4(&self.local_transform, writer, fmt)?;

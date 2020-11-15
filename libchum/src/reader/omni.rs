@@ -16,6 +16,7 @@ chum_struct! {
 
 impl Omni {
     pub fn read_from<R: Read>(file: &mut R, fmt: TotemFormat) -> StructUnpackResult<Omni> {
+        use crate::structure::ChumBinary;
         Ok(Omni{
             transform: unpack_map(TransformationHeader::read_from(file, fmt), "Omni", "transform")?,
             color: unpack_map(read_vec3(file, fmt), "Omni", "color")?,
@@ -31,6 +32,7 @@ impl Omni {
 
     /// Write a Material to a file
     pub fn write_to<W: Write>(&self, writer: &mut W, fmt: TotemFormat) -> io::Result<()> {
+        use crate::structure::ChumBinary;
         self.transform.write_to(writer, fmt)?;
         write_vec3(&self.color, writer, fmt)?;
         fmt.write_u8(writer, self.unknown1)?;

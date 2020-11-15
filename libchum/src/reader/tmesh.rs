@@ -252,7 +252,8 @@ impl TMesh {
 
     /// Read a TMesh from a file
     pub fn read_from<R: Read>(file: &mut R, fmt: TotemFormat) -> io::Result<TMesh> {
-        let transform = TransformationHeader::read_from(file, fmt)?;
+        use crate::structure::ChumBinary;
+        let transform = TransformationHeader::read_from(file, fmt).unwrap();
         // Read coordinate data
         let num_vertices: u32 = fmt.read_u32(file)?;
         let vertices: Vec<Vector3> = (0..num_vertices)

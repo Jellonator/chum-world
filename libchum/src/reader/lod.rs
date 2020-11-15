@@ -82,6 +82,7 @@ pub struct Lod {
 impl Lod {
     /// Read a Lod from a file
     pub fn read_from<R: Read>(file: &mut R, fmt: TotemFormat) -> StructUnpackResult<Lod> {
+        use crate::structure::ChumBinary;
         let transform = unpack_map(
             TransformationHeader::read_from(file, fmt),
             "Lod",

@@ -325,10 +325,11 @@ impl SurfaceObject {
 
     /// Read a SurfaceObject from a file
     pub fn read_from<R: Read>(file: &mut R, fmt: TotemFormat) -> io::Result<SurfaceObject> {
+        use crate::structure::ChumBinary;
         // fmt.skip_n_bytes(file, 96)?;
         // let _unknown2 = fmt.read_u16(file)?;
         // let _unknown3 = fmt.read_u16(file)?;
-        let transform = TransformationHeader::read_from(file, fmt)?;
+        let transform = TransformationHeader::read_from(file, fmt).unwrap();
         let num_vertices = fmt.read_u32(file)?;
         let mut vertices = Vec::with_capacity(num_vertices as usize);
         for _ in 0..num_vertices {

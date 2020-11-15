@@ -88,6 +88,16 @@ pub struct StructUnpackError {
     pub error: Box<dyn Error>,
 }
 
+impl StructUnpackError {
+    pub fn prepend(self, s: &str) -> StructUnpackError {
+        StructUnpackError {
+            structname: self.structname,
+            structpath: format!("{}{}", s, self.structpath),
+            error: self.error,
+        }
+    }
+}
+
 impl fmt::Display for StructUnpackError {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
         write!(
@@ -153,73 +163,3 @@ where
         error: x.error,
     })
 }
-
-/*
-/// Error that occurs when failing to read a structure
-#[derive(Debug)]
-pub struct UnpackError {
-    pub structname: String,
-    pub structpath: String,
-    pub error: Box<dyn Error + 'static>
-}
-
-impl fmt::Display for UnpackError {
-    fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
-        write!(fmt, "Could not read into {}::{}: {}", self.structname, self.structpath, self.error)
-    }
-}
-
-impl Error for UnpackError {
-    fn source(&self) -> Option<&(dyn Error + 'static)> {
-        Some(self.error.as_ref())
-    }
-}
-
-pub type UnpackResult<T> = Result<T, UnpackError>;
-
-pub trait UnpackTrait<T> {
-    fn unpack_map<A, B>(self, sname: A, spath: B) -> UnpackResult<T>
-    where
-        A: ToString,
-        B: ToString;
-}
-
-impl<T, E> UnpackTrait<T> for Result<T, E>
-where E: Into<Box<dyn Error>>
-{
-    fn unpack_map<A, B>(self, sname: A, spath: B) -> UnpackResult<T>
-    where
-        A: ToString,
-        B: ToString
-    {
-        self.map_err(|y| {
-            UnpackError {
-                structname: sname.to_string(),
-                structpath: spath.to_string(),
-                error: y.into()
-            }
-        })
-    }
-}
-
-pub trait UnpackResultTrait<T> {
-    fn unpack_prepend<A, B>(self, sname: A, spath: B) -> UnpackResult<T>
-    where
-        A: ToString,
-        B: fmt::Display;
-}
-
-impl<T> UnpackResultTrait<T> for UnpackResult<T> {
-    fn unpack_prepend<A, B>(self, sname: A, spath: B) -> UnpackResult<T>
-    where
-        A: ToString,
-        B: fmt::Display
-    {
-        self.map_err(|x| UnpackError {
-            structname: sname.to_string(),
-            structpath: format!("{}.{}", x.structpath, spath),
-            error: x.error
-        })
-    }
-}
-*/

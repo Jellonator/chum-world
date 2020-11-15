@@ -184,7 +184,7 @@ macro_rules! chum_path {
 /// Get the actual data type for the given type information.
 macro_rules! chum_struct_get_type {
     // special override rules
-    (ignore [$($inner:tt)*]) => {()};
+    (ignore [$($inner:tt)*] $default:expr) => {()};
     // regular rules
     (u8) => {::std::primitive::u8};
     (i8) => {::std::primitive::i8};
@@ -346,7 +346,7 @@ macro_rules! chum_struct_destructure {
 /// Process a structure function.
 /// Results in `None` if the value is ignored.
 macro_rules! process_structure {
-    ($name:ident,[ignore[$($inner:tt)*]],$value:expr) => {None};
+    ($name:ident,[ignore [$($inner:tt)*] $default:expr],$value:expr) => {None};
     ($name:ident,[$($inner:tt)*],$value:expr) => {
         Some((
             stringify!($name).to_owned(),
@@ -358,7 +358,7 @@ macro_rules! process_structure {
 /// Process a destructure function.
 /// Results in `()` if the value is ignored.
 macro_rules! process_destructure {
-    ($name:ident,$data:expr,[ignore[$($inner:tt)*]]) => {()};
+    ($name:ident,$data:expr,[ignore [$($inner:tt)*] $default:expr]) => {()};
     ($name:ident,$data:expr,[$($inner:tt)*]) => {
         chum_struct_destructure!(
             [$($inner)*],
@@ -515,7 +515,7 @@ macro_rules! chum_enum {
 
 // welcome to repretition hell
 macro_rules! chum_struct_read {
-    ([ignore [$($inner:tt)*]],$file:expr,$fmt:expr,$struct:expr,$path:expr) => {
+    ([ignore [$($inner:tt)*] $default:expr],$file:expr,$fmt:expr,$struct:expr,$path:expr) => {
         chum_struct_read!([$($inner)*],$file,$fmt,$struct,$path).map(|_| ())
     };
     ([u8],$file:expr,$fmt:expr,$struct:expr,$path:expr) => {
@@ -711,6 +711,92 @@ macro_rules! chum_struct_read {
     }
 }
 
+macro_rules! chum_struct_write {
+    ([ignore [$($inner:tt)*] $default:expr],$file:expr,$fmt:expr,$value:expr) => {
+        chum_struct_write!([$($inner)*],$file,$fmt,&$default)
+    };
+    ([u8],$file:expr,$fmt:expr,$value:expr) => {
+        $fmt.write_u8($file, *$value)
+    };
+    ([i8],$file:expr,$fmt:expr,$value:expr) => {
+        $fmt.write_i8($file, *$value)
+    };
+    ([u16],$file:expr,$fmt:expr,$value:expr) => {
+        $fmt.write_u16($file, *$value)
+    };
+    ([i16],$file:expr,$fmt:expr,$value:expr) => {
+        $fmt.write_i16($file, *$value)
+    };
+    ([u32],$file:expr,$fmt:expr,$value:expr) => {
+        $fmt.write_u32($file, *$value)
+    };
+    ([i32],$file:expr,$fmt:expr,$value:expr) => {
+        $fmt.write_i32($file, *$value)
+    };
+    ([enum [$repr:tt] $name:ty],$file:expr,$fmt:expr,$value:expr) => {
+        {
+            let ivalue = $crate::structure::ChumEnum::to_u32($value) as $repr;
+            chum_struct_write!([$repr],$file,$fmt,&ivalue)
+        }
+    };
+    ([flags [$repr:tt] {$($name:ident),*}],$file:expr,$fmt:expr,$value:expr) => {
+        chum_struct_write!([$repr],$file,$fmt,$value)
+    };
+    ([custom [$repr:tt] $min:expr, $max:expr],$file:expr,$fmt:expr,$value:expr) => {
+        chum_struct_write!([$repr],$file,$fmt,$value)
+    };
+    ([f32],$file:expr,$fmt:expr,$value:expr) => {
+        $fmt.write_f32($file, *$value)
+    };
+    ([Mat4x4],$file:expr,$fmt:expr,$value:expr) => {
+        $crate::common::write_mat4($value, $file, $fmt)
+    };
+    ([Mat3x3],$file:expr,$fmt:expr,$value:expr) => {
+        $crate::common::write_mat3($value, $file, $fmt)
+    };
+    ([Vector2],$file:expr,$fmt:expr,$value:expr) => {
+        $crate::common::write_vec2($value, $file, $fmt)
+    };
+    ([Vector3],$file:expr,$fmt:expr,$value:expr) => {
+        $crate::common::write_vec3($value, $file, $fmt)
+    };
+    ([Vector3 rgb],$file:expr,$fmt:expr,$value:expr) => {
+        $crate::common::write_vec3($value, $file, $fmt)
+    };
+    ([Color],$file:expr,$fmt:expr,$value:expr) => {
+        $crate::common::write_color($value, $file, $fmt)
+    };
+    ([reference],$file:expr,$fmt:expr,$value:expr) => {
+        $fmt.write_i32($file, *$value)
+    };
+    ([reference $typename:ident],$file:expr,$fmt:expr,$value:expr) => {
+        $fmt.write_i32($file, *$value)
+    };
+    ([fixed array [$($inner:tt)*] $len:literal],$file:expr,$fmt:expr,$value:expr) => {
+        {
+            for i in 0..$len {
+                chum_struct_write!([$($inner)*],$file,$fmt,&$value[i])?;
+            }
+            // fun cheat
+            ::std::io::Result::<()>::Ok(())
+        }
+    };
+    ([dynamic array [$lentype:tt] [$($inner:tt)*] $default:expr],$file:expr,$fmt:expr,$value:expr) => {
+        {
+            let lenval = $value.len() as $lentype;
+            chum_struct_write!([$lentype], $file, $fmt, &lenval)?;
+            for value in $value.iter() {
+                chum_struct_write!([$($inner)*], $file, $fmt, value)?;
+            }
+            // fun cheat again
+            ::std::io::Result::<()>::Ok(())
+        }
+    };
+    ([struct $t:ty],$file:expr,$fmt:expr,$value:expr) => {
+        <$t as $crate::structure::ChumBinary>::write_to($value, $file, $fmt)
+    }
+}
+
 /// Generate a ChumStruct with the ability to read from/write to
 /// binary files using the ChumBinary trait.
 #[macro_export]
@@ -749,7 +835,10 @@ macro_rules! chum_struct_generate_readwrite {
                 })
             }
             fn write_to<W: ::std::io::Write>(&self, writer: &mut W, fmt: $crate::format::TotemFormat) -> ::std::io::Result<()> {
-                unimplemented!()
+                $(
+                    chum_struct_write!([$($inner)*], writer, fmt, &self.$name)?;
+                )*
+                Ok(())
             }
         }
     }
@@ -773,7 +862,7 @@ chum_struct_generate_readwrite! {
 chum_struct_generate_readwrite! {
     pub struct Example {
         pub v_u8: [u8],
-        pub v_junk: [ignore [u8]],
+        pub v_junk: [ignore [u8] 0],
         pub v_i8: [i8],
         pub v_custom: [custom [i32] 0, 100],
         pub b: [enum [u8] MyEnum],

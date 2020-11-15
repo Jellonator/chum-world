@@ -1,19 +1,18 @@
 use crate::common::*;
 
 chum_struct_generate_readwrite! {
-// chum_struct! {
     /// Rotation shape
     pub struct RotShape {
         pub transform: [struct TransformationHeader],
-        pub junk1: [ignore [u32]],
+        pub junk1: [ignore [u32] 1],
         pub offset: [Vector3],
-        pub junk2: [ignore [u32]],
+        pub junk2: [ignore [u32] 1],
         pub unk7: [reference],
-        pub junk3: [ignore [u32]],
+        pub junk3: [ignore [u32] 2],
         pub size: [fixed array [Vector3] 2],
-        pub junk4: [ignore [u32]],
+        pub junk4: [ignore [u32] 4],
         pub texcoords: [fixed array [Vector2] 4],
-        pub junk5: [ignore [u32]],
+        pub junk5: [ignore [u32] 1],
         pub materialanim_id: [reference MATERIALANIM],
         pub billboard_mode: [enum [u16] BillBoardMode],
     }

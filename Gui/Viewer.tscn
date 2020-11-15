@@ -1,4 +1,4 @@
-[gd_scene load_steps=8 format=2]
+[gd_scene load_steps=9 format=2]
 
 [ext_resource path="res://Gui/Viewer.gd" type="Script" id=1]
 [ext_resource path="res://Gui/EditorList.tscn" type="PackedScene" id=2]
@@ -7,6 +7,7 @@
 [ext_resource path="res://Gui/BulkExport.tscn" type="PackedScene" id=5]
 [ext_resource path="res://Gui/ArchiveFileSelector.tscn" type="PackedScene" id=6]
 [ext_resource path="res://Gui/FileTree.gd" type="Script" id=7]
+[ext_resource path="res://Gui/ExitDialogue.gd" type="Script" id=8]
 
 [node name="Viewer" type="Control" groups=[
 "viewer",
@@ -140,6 +141,13 @@ margin_left = 339.408
 margin_top = 297.42
 margin_right = 990.408
 margin_bottom = 397.42
+
+[node name="ExitDialogue" type="ConfirmationDialog" parent="."]
+margin_right = 200.0
+margin_bottom = 70.0
+popup_exclusive = true
+dialog_text = "Are you sure you with to exit?"
+script = ExtResource( 8 )
 [connection signal="tab_changed" from="VBox/Tabs" to="." method="_on_Tabs_tab_changed"]
 [connection signal="text_changed" from="VBox/Tabs/Files/VBox/HBox/LineEdit" to="VBox/Tabs/Files/VBox/Tree" method="_on_LineEdit_text_changed"]
 [connection signal="file_selected" from="VBox/Tabs/Files/VBox/Tree" to="." method="_on_Tree_file_selected"]
@@ -148,3 +156,4 @@ margin_bottom = 397.42
 [connection signal="files_selected" from="ArchiveFileSelector" to="." method="_on_ArchiveFileSelector_files_selected"]
 [connection signal="files_selected" from="ArchiveFileSaver" to="." method="_on_ArchiveFileSaver_files_selected"]
 [connection signal="file_selected" from="SaveDialog" to="." method="_on_SaveDialog_file_selected"]
+[connection signal="confirmed" from="ExitDialogue" to="ExitDialogue" method="_on_ExitDialogue_confirmed"]

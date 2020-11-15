@@ -469,8 +469,9 @@ impl ChumFile {
                 util::struct_to_dict(&data).into_shared().to_variant()
             }
             "MATERIAL" => {
-                let material = match reader::material::Material::read_data(
-                    &self.get_data_as_vec(),
+                let matdata: Vec<u8> = self.get_data_as_vec();
+                let material = match reader::material::Material::read_from(
+                    &mut matdata.as_slice(),
                     self.format,
                 ) {
                     Ok(x) => x,

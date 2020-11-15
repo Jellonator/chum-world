@@ -31,7 +31,7 @@ func _on_menu_file_select(id):
 		MENU_FILE_OPEN:
 			$ArchiveFileSelector.popup_centered()
 		MENU_FILE_EXIT:
-			get_tree().quit(0)
+			$ExitDialogue.popup_centered()
 		MENU_FILE_SAVE_AS:
 			$ArchiveFileSaver.popup_centered()
 

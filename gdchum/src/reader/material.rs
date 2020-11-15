@@ -11,7 +11,8 @@ pub fn read_material(
     reader: &mut ChumReader,
     file: &ChumFile,
 ) -> Option<Ref<ShaderMaterial,Unique>> {
-    let matdata = match material::Material::read_data(data, fmt) {
+    use libchum::structure::ChumBinary;
+    let matdata = match material::Material::read_from(&mut data.as_slice(), fmt) {
         Ok(x) => x,
         Err(err) => {
             display_err!("Error loading MATERIAL: {}\n{}", file.get_name_str(), err);

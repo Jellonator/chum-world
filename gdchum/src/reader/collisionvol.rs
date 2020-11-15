@@ -8,6 +8,7 @@ pub fn read_collisionvol(
     fmt: libchum::format::TotemFormat,
     chumfile: &ChumFile,
 ) -> Option<Dictionary<Unique>> {
+    use libchum::structure::ChumBinary;
     let volume = match collisionvol::CollisionVol::read_from(&mut data.as_slice(), fmt) {
         Ok(x) => x,
         Err(e) => {

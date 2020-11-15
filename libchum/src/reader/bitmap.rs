@@ -620,7 +620,7 @@ impl Bitmap {
         BitmapStruct {
             alpha: self.alpha,
             flags: self.flags as i64,
-            unknown: self.unknown as i64
+            unknown: self.unknown as i64,
         }
     }
 

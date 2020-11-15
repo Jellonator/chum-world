@@ -148,17 +148,16 @@ impl Quad {
     }
 }
 
-
 #[derive(Clone, Debug)]
 pub enum TriStripOrder {
     ClockWise,
-    CounterClockWise
+    CounterClockWise,
 }
 
 #[derive(Clone, Debug)]
 pub struct TriStrip {
     pub tris: Vec<(u16, u16, u16)>,
-    pub order: TriStripOrder
+    pub order: TriStripOrder,
 }
 
 /// Find the next tri
@@ -167,7 +166,7 @@ fn get_next_tri(
     a: &(u16, u16, u16),
     b: &(u16, u16, u16),
     tris: &Vec<[(u16, u16, u16); 3]>,
-    ignore: &[usize]
+    ignore: &[usize],
 ) -> Option<(usize, (u16, u16, u16))> {
     for i in 0..tris.len() {
         if ignore.contains(&i) {
@@ -191,7 +190,7 @@ fn get_tris(
     b: &(u16, u16, u16),
     tris: &Vec<[(u16, u16, u16); 3]>,
     out: &mut Vec<(u16, u16, u16)>,
-    ignore: &mut Vec<usize>
+    ignore: &mut Vec<usize>,
 ) {
     if let Some(index) = get_next_tri(a, b, tris, ignore) {
         out.push(index.1.clone());
@@ -206,11 +205,7 @@ fn get_possible_strip(
     b: &(u16, u16, u16),
     c: &(u16, u16, u16),
     tris: &Vec<[(u16, u16, u16); 3]>,
-) -> (
-    Vec<(u16, u16, u16)>,
-    Vec<usize>,
-    TriStripOrder
-) {
+) -> (Vec<(u16, u16, u16)>, Vec<usize>, TriStripOrder) {
     let mut ignore = Vec::new();
     let mut strip = Vec::new();
     // get strip before points
@@ -254,7 +249,7 @@ impl TriStrip {
             }
             strips.push(TriStrip {
                 tris: data.0,
-                order: data.2
+                order: data.2,
             });
         }
         strips

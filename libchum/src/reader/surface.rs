@@ -42,7 +42,7 @@ pub struct SurfPoint {
     pub vertex: Vector3,
     pub texcoord: Vector2,
     pub normal: Vector3,
-    pub uv2: Vector2
+    pub uv2: Vector2,
 }
 
 impl SurfPoint {
@@ -51,7 +51,7 @@ impl SurfPoint {
             uv2,
             vertex: point.vertex.clone(),
             texcoord: point.texcoord.clone(),
-            normal: point.normal.clone()
+            normal: point.normal.clone(),
         }
     }
 }
@@ -183,25 +183,25 @@ fn generate_surface_quad9(
                         vertex: points[iy][ix],
                         texcoord: ttexc[iy][ix],
                         normal: tnorm[iy][ix],
-                        uv2: Vector2::new((ix as f32 + 0.0) / 3.0, (iy as f32 + 0.0) / 3.0)
+                        uv2: Vector2::new((ix as f32 + 0.0) / 3.0, (iy as f32 + 0.0) / 3.0),
                     },
                     SurfPoint {
                         vertex: points[iy][ix + 1],
                         texcoord: ttexc[iy][ix + 1],
                         normal: tnorm[iy][ix + 1],
-                        uv2: Vector2::new((ix as f32 + 0.0) / 3.0, (iy as f32 + 1.0) / 3.0)
+                        uv2: Vector2::new((ix as f32 + 0.0) / 3.0, (iy as f32 + 1.0) / 3.0),
                     },
                     SurfPoint {
                         vertex: points[iy + 1][ix + 1],
                         texcoord: ttexc[iy + 1][ix + 1],
                         normal: tnorm[iy + 1][ix + 1],
-                        uv2: Vector2::new((ix as f32 + 1.0) / 3.0, (iy as f32 + 1.0) / 3.0)
+                        uv2: Vector2::new((ix as f32 + 1.0) / 3.0, (iy as f32 + 1.0) / 3.0),
                     },
                     SurfPoint {
                         vertex: points[iy + 1][ix],
                         texcoord: ttexc[iy + 1][ix],
                         normal: tnorm[iy + 1][ix],
-                        uv2: Vector2::new((ix as f32 + 1.0) / 3.0, (iy as f32 + 0.0) / 3.0)
+                        uv2: Vector2::new((ix as f32 + 1.0) / 3.0, (iy as f32 + 0.0) / 3.0),
                     },
                 ],
             });
@@ -240,20 +240,32 @@ fn generate_surface_bezier(
             quads.push(SurfQuad {
                 points: [
                     SurfPoint::with(
-                        &vertices[iy][ix], 
-                        Vector2::new((ix as f32 + 0.0) / (steps as f32), (iy as f32 + 0.0) / (steps as f32))
+                        &vertices[iy][ix],
+                        Vector2::new(
+                            (ix as f32 + 0.0) / (steps as f32),
+                            (iy as f32 + 0.0) / (steps as f32),
+                        ),
                     ),
                     SurfPoint::with(
-                        &vertices[iy][ix + 1], 
-                        Vector2::new((ix as f32 + 0.0) / (steps as f32), (iy as f32 + 1.0) / (steps as f32))
+                        &vertices[iy][ix + 1],
+                        Vector2::new(
+                            (ix as f32 + 0.0) / (steps as f32),
+                            (iy as f32 + 1.0) / (steps as f32),
+                        ),
                     ),
                     SurfPoint::with(
-                        &vertices[iy + 1][ix + 1], 
-                        Vector2::new((ix as f32 + 1.0) / (steps as f32), (iy as f32 + 1.0) / (steps as f32))
+                        &vertices[iy + 1][ix + 1],
+                        Vector2::new(
+                            (ix as f32 + 1.0) / (steps as f32),
+                            (iy as f32 + 1.0) / (steps as f32),
+                        ),
                     ),
                     SurfPoint::with(
-                        &vertices[iy + 1][ix], 
-                        Vector2::new((ix as f32 + 1.0) / (steps as f32), (iy as f32 + 0.0) / (steps as f32))
+                        &vertices[iy + 1][ix],
+                        Vector2::new(
+                            (ix as f32 + 1.0) / (steps as f32),
+                            (iy as f32 + 0.0) / (steps as f32),
+                        ),
                     ),
                 ],
             });

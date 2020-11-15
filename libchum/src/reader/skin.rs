@@ -1,7 +1,7 @@
-use crate::common::*;
-use crate::structure::ChumEnum;
 use crate::animsymbol::AnimSymbol;
+use crate::common::*;
 use crate::format::TotemFormat;
+use crate::structure::ChumEnum;
 // use std::error::Error;
 use crate::scene;
 use std::io::{self, Read};

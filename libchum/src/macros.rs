@@ -347,7 +347,7 @@ macro_rules! chum_struct {
             $(
                 pub $name:ident : [$($inner:tt)*]
             ),* $(,)? // this is just so that the last comma is optional
-        } 
+        }
     ) => {
         $(
             #[$a]
@@ -389,7 +389,9 @@ macro_rules! chum_struct {
 }
 
 macro_rules! one {
-    ($x: ident) => {1u32};
+    ($x: ident) => {
+        1u32
+    };
 }
 
 macro_rules! get_index {
@@ -449,20 +451,52 @@ macro_rules! chum_enum {
     };
 }
 
-// chum_enum! {
-//     #[derive(Copy, Clone, Debug)]
-//     pub enum MyEnum {
-//         Zero,
-//         One,
-//         Two
-//     }
-// }
+macro_rules! chum_struct_generate_readwrite {
+    (
+        $(
+            #[$a:meta]
+        )*
+        pub struct $structname:ident {
+            $(
+                pub $name:ident : [$($inner:tt)*]
+            ),* $(,)? // this is just so that the last comma is optional
+        }
+    ) => {
+        chum_struct! {
+            $(
+                #[$a]
+            )*
+            pub struct $structname {
+                $(
+                    pub $name : [$($inner)*]
+                ),*
+            }
+        }
+        impl $crate::structure::ChumBinary for $structname {
+            fn read_from<R: ::std::io::Read>(file: &mut R, fmt: $crate::format::TotemFormat) -> $crate::util::error::StructUnpackResult<Self> {
+                unimplemented!()
+            }
+            fn write_to<W: ::std::io::Write>(&self, writer: &mut W, fmt: $crate::format::TotemFormat) -> ::std::io::Result<()> {
+                unimplemented!()
+            }
+        }
+    }
+}
 
-// chum_struct! {
-//     pub struct Foobar {
-//         pub v_enum: [enum MyEnum]
-//     }
-// }
+chum_enum! {
+    #[derive(Copy, Clone, Debug)]
+    pub enum MyEnum {
+        Zero,
+        One,
+        Two
+    }
+}
+
+chum_struct_generate_readwrite! {
+    pub struct Foobar {
+        pub v_enum: [enum MyEnum]
+    }
+}
 
 // chum_struct! {
 //     pub struct Example {

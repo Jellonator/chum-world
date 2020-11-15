@@ -1,7 +1,7 @@
 use crate::common::*;
 use crate::format::TotemFormat;
-use std::io::{self, Read, Write};
 use crate::util::error::*;
+use std::io::{self, Read, Write};
 
 chum_struct! {
     pub struct Warp {
@@ -34,7 +34,7 @@ impl Warp {
                     *value = unpack_map(read_vec2(file, fmt), "Warp", "texcoords")?;
                 }
                 data
-            }
+            },
         })
     }
 

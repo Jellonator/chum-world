@@ -1,7 +1,5 @@
 #[macro_use]
 pub mod macros;
-pub mod structure;
-pub mod util;
 pub mod animsymbol;
 pub mod common;
 pub mod dgc;
@@ -9,6 +7,8 @@ pub mod format;
 pub mod ngc;
 pub mod reader;
 pub mod scene;
+pub mod structure;
+pub mod util;
 
 use crc::crc32;
 use std::collections::{HashMap, HashSet};

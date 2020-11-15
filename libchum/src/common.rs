@@ -308,7 +308,7 @@ chum_struct_generate_readwrite! {
     pub struct TransformationHeader {
         pub floats: [fixed array [f32] 4],
         pub transform: [Mat4x4],
-        // pub junk: [fixed array [u8] 16],
+        pub junk: [ignore [fixed array [u8] 16]],
         pub item_type: [u16],
         pub item_subtype: [u16],
     }

@@ -538,6 +538,20 @@ impl ChumFile {
                 let structure = data.structure();
                 util::struct_to_dict(&structure).into_shared().to_variant()
             }
+            "LIGHT" => {
+                let vecdata: Vec<u8> = self.get_data_as_vec();
+                let data = match reader::light::Light::read_from(
+                    &mut vecdata.as_slice(),
+                    self.format
+                ) {
+                    Ok(x) => x,
+                    Err(err) => {
+                        panic!("LIGHT file invalid: {}", err);
+                    }
+                };
+                let structure = data.structure();
+                util::struct_to_dict(&structure).into_shared().to_variant()
+            }
             _ => Variant::new(),
         }
     }
@@ -594,6 +608,12 @@ impl ChumFile {
             }
             "OMNI" => {
                 let data = reader::omni::Omni::destructure(&structure).unwrap();
+                let mut outdata = Vec::new();
+                data.write_to(&mut outdata, self.format).unwrap();
+                self.replace_data_with_vec(outdata);
+            }
+            "LIGHT" => {
+                let data = reader::light::Light::destructure(&structure).unwrap();
                 let mut outdata = Vec::new();
                 data.write_to(&mut outdata, self.format).unwrap();
                 self.replace_data_with_vec(outdata);

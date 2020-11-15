@@ -14,3 +14,4 @@ pub mod surface;
 pub mod tmesh;
 pub mod warp;
 pub mod omni;
+pub mod light;

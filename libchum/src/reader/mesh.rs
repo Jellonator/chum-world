@@ -50,8 +50,8 @@ pub struct StripData {
 
 /// A full triangle mesh
 #[derive(Clone, Debug)]
-pub struct TMesh {
-    pub transform: TransformationHeader,
+pub struct Mesh {
+    pub transform: THeaderTyped,
     pub vertices: Vec<Vector3>,
     pub texcoords: Vec<Vector2>,
     pub normals: Vec<Vector3>,
@@ -194,7 +194,7 @@ fn strip_gen_triangles(
         .collect()
 }
 
-impl TMesh {
+impl Mesh {
     /// Get the materials that this mesh uses
     pub fn get_materials(&self) -> &[i32] {
         &self.materials
@@ -208,7 +208,7 @@ impl TMesh {
             .collect()
     }
 
-    /// Generate triangle surfaces from a TMesh
+    /// Generate triangle surfaces from a Mesh
     pub fn gen_triangles(&self) -> Vec<TriangleSurface> {
         let mut values: Vec<(u32, Vec<MeshTri>)> = self
             .strips
@@ -250,10 +250,10 @@ impl TMesh {
         }
     }
 
-    /// Read a TMesh from a file
-    pub fn read_from<R: Read>(file: &mut R, fmt: TotemFormat) -> io::Result<TMesh> {
+    /// Read a Mesh from a file
+    pub fn read_from<R: Read>(file: &mut R, fmt: TotemFormat) -> io::Result<Mesh> {
         use crate::structure::ChumBinary;
-        let transform = TransformationHeader::read_from(file, fmt).unwrap();
+        let transform = THeaderTyped::read_from(file, fmt).unwrap();
         // Read coordinate data
         let num_vertices: u32 = fmt.read_u32(file)?;
         let vertices: Vec<Vector3> = (0..num_vertices)
@@ -358,7 +358,7 @@ impl TMesh {
                 }
             })
             .collect();
-        Ok(TMesh {
+        Ok(Mesh {
             transform,
             vertices,
             texcoords,
@@ -372,12 +372,12 @@ impl TMesh {
         })
     }
 
-    /// Read a TMesh from data
-    pub fn read_data(data: &[u8], fmt: TotemFormat) -> io::Result<TMesh> {
-        TMesh::read_from(&mut data.as_ref(), fmt)
+    /// Read a Mesh from data
+    pub fn read_data(data: &[u8], fmt: TotemFormat) -> io::Result<Mesh> {
+        Mesh::read_from(&mut data.as_ref(), fmt)
     }
 
-    /// Write a TMesh to an OBJ
+    /// Write a Mesh to an OBJ
     pub fn export_obj<W: Write>(&self, obj: &mut W) -> io::Result<()> {
         for vert in &self.vertices {
             writeln!(obj, "v {} {} {}", vert.x, vert.y, vert.z)?;
@@ -403,7 +403,7 @@ impl TMesh {
     pub fn create_scene_mesh(&self, name: String) -> scene::SceneTriMesh {
         scene::SceneTriMesh {
             name,
-            // TMesh.transform.transform is NOT actually applied to this mesh
+            // Mesh.transform.transform is NOT actually applied to this mesh
             transform: Mat4x4::identity(),
             vertices: self.vertices.clone(),
             normals: self.normals.clone(),

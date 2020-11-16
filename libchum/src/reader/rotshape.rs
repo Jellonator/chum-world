@@ -3,7 +3,9 @@ use crate::common::*;
 chum_struct_generate_readwrite! {
     /// Rotation shape
     pub struct RotShape {
-        pub transform: [struct TransformationHeader],
+        pub transform: [struct THeaderNoType],
+        pub item_type: [ignore [u16] 4u16],
+        pub item_subtype: [ignore [u16] 0u16],
         pub junk1: [ignore [u32] 1],
         pub offset: [Vector3],
         pub junk2: [ignore [u32] 1],

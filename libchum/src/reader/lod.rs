@@ -54,7 +54,7 @@ fn load_unkstruct<R: Read>(file: &mut R, fmt: TotemFormat) -> io::Result<LodUnkS
 }
 
 pub struct Lod {
-    pub transform: TransformationHeader,
+    pub transform: THeaderTyped,
     pub unk1: Option<[f32; 4]>,
     pub unk2: Option<[f32; 4]>,
     pub unk3: Option<[f32; 9]>,
@@ -84,7 +84,7 @@ impl Lod {
     pub fn read_from<R: Read>(file: &mut R, fmt: TotemFormat) -> StructUnpackResult<Lod> {
         use crate::structure::ChumBinary;
         let transform = unpack_map(
-            TransformationHeader::read_from(file, fmt),
+            THeaderTyped::read_from(file, fmt),
             "Lod",
             "transform",
         )?;

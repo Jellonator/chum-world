@@ -9,7 +9,7 @@ use std::io::{self, Read, Write};
 
 /// A surface object; contains entire surface object information
 pub struct SurfaceObject {
-    pub transform: TransformationHeader,
+    pub transform: THeaderTyped,
     pub vertices: Vec<Vector3>,
     pub surfaces: Vec<Surface>,
     pub curves: Vec<Curve>,
@@ -329,7 +329,7 @@ impl SurfaceObject {
         // fmt.skip_n_bytes(file, 96)?;
         // let _unknown2 = fmt.read_u16(file)?;
         // let _unknown3 = fmt.read_u16(file)?;
-        let transform = TransformationHeader::read_from(file, fmt).unwrap();
+        let transform = THeaderTyped::read_from(file, fmt).unwrap();
         let num_vertices = fmt.read_u32(file)?;
         let mut vertices = Vec::with_capacity(num_vertices as usize);
         for _ in 0..num_vertices {

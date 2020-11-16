@@ -3,7 +3,7 @@ use crate::format::TotemFormat;
 use std::io::{self, Read};
 
 pub struct Spline {
-    pub transform: TransformationHeader,
+    pub transform: THeaderTyped,
     pub vertices: Vec<Vector3>,
     pub sections: Vec<SplineSection>,
     pub unk4: [f32; 4],
@@ -38,7 +38,7 @@ impl Spline {
     pub fn read_from<R: Read>(file: &mut R, fmt: TotemFormat) -> io::Result<Spline> {
         use crate::structure::ChumBinary;
         Ok(Spline {
-            transform: TransformationHeader::read_from(file, fmt).unwrap(),
+            transform: THeaderTyped::read_from(file, fmt).unwrap(),
             vertices: {
                 let num = fmt.read_u32(file)?;
                 let mut vec = Vec::with_capacity(num as usize);

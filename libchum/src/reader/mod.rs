@@ -11,7 +11,7 @@ pub mod rotshape;
 pub mod skin;
 pub mod spline;
 pub mod surface;
-pub mod tmesh;
+pub mod mesh;
 pub mod warp;
 pub mod omni;
 pub mod light;

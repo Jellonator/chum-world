@@ -305,7 +305,7 @@ pub fn write_color<W: Write>(col: &Color, writer: &mut W, fmt: TotemFormat) -> i
 chum_struct_generate_readwrite! {
     #[repr(C)]
     #[derive(Clone, Debug)]
-    pub struct TransformationHeader {
+    pub struct THeaderTyped {
         pub floats: [fixed array [f32] 4],
         pub transform: [Mat4x4],
         pub junk: [ignore [fixed array [u8] 16] [0;16]],
@@ -314,39 +314,13 @@ chum_struct_generate_readwrite! {
     }
 }
 
-// impl TransformationHeader {
-//     /// Read a transformation header from a file (100 bytes)
-//     pub fn read_from<R: Read>(
-//         reader: &mut R,
-//         fmt: TotemFormat,
-//     ) -> io::Result<TransformationHeader> {
-//         let mut floats = [0.0f32; 4];
-//         fmt.read_f32_into(reader, &mut floats)?;
-//         let transform = read_mat4(reader, fmt)?;
-//         let mut junk = [0u8; 16];
-//         fmt.read_u8_into(reader, &mut junk)?;
-//         let item_type = fmt.read_u16(reader)?;
-//         let item_subtype = fmt.read_u16(reader)?;
-//         Ok(TransformationHeader {
-//             floats,
-//             transform,
-//             // junk,
-//             item_type,
-//             item_subtype,
-//         })
-//     }
-
-//     /// Write a transformation header to a file (100 bytes)
-//     pub fn write_to<W: Write>(&self, writer: &mut W, fmt: TotemFormat) -> io::Result<()> {
-//         for value in self.floats.iter() {
-//             fmt.write_f32(writer, *value)?;
-//         }
-//         write_mat4(&self.transform, writer, fmt)?;
-//         for _ in 0..16 {
-//             fmt.write_u8(writer, 0)?;
-//         }
-//         fmt.write_u16(writer, self.item_type)?;
-//         fmt.write_u16(writer, self.item_subtype)?;
-//         Ok(())
-//     }
-// }
+// Common header used by many different structures
+chum_struct_generate_readwrite! {
+    #[repr(C)]
+    #[derive(Clone, Debug)]
+    pub struct THeaderNoType {
+        pub floats: [fixed array [f32] 4],
+        pub transform: [Mat4x4],
+        pub junk: [ignore [fixed array [u8] 16] [0;16]],
+    }
+}

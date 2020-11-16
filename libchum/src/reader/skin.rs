@@ -8,7 +8,7 @@ use std::io::{self, Read};
 
 #[derive(Clone, Debug)]
 pub struct Skin {
-    pub transform: TransformationHeader,
+    pub transform: THeaderTyped,
     pub meshes: Vec<i32>,
     pub vertex_groups: Vec<VertexGroup>,
     pub anims: Option<AnimSection>,
@@ -96,7 +96,7 @@ impl Skin {
     /// Read a TMesh from a file
     pub fn read_from<R: Read>(file: &mut R, fmt: TotemFormat) -> io::Result<Skin> {
         use crate::structure::ChumBinary;
-        let transform = TransformationHeader::read_from(file, fmt).unwrap();
+        let transform = THeaderTyped::read_from(file, fmt).unwrap();
         let num_meshes = fmt.read_u32(file)?;
         let mut meshes = Vec::new();
         for _ in 0..num_meshes {

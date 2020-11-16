@@ -2,7 +2,9 @@ use crate::common::*;
 
 chum_struct_generate_readwrite! {
     pub struct CollisionVol {
-        pub transform: [struct TransformationHeader],
+        pub header: [struct THeaderNoType],
+        pub item_type: [ignore [u16] 14u16],
+        pub item_subtype: [ignore [u16] 16u16],
         pub unk1: [u32],
         pub local_transform: [Mat4x4],
         pub local_transform_inv: [Mat4x4],

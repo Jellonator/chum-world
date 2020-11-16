@@ -4,42 +4,42 @@ use crate::util;
 use gdnative::prelude::*;
 use gdnative::api::{ArrayMesh, Mesh, Material};
 use libchum::common;
-use libchum::reader::tmesh;
+use libchum::reader::mesh;
 
 #[derive(Clone, Debug)]
-pub struct TMeshResultSurface {
+pub struct MeshResultSurface {
     pub vertex_ids: Vec<u16>,
     pub texcoord_ids: Vec<u16>,
     pub normal_ids: Vec<u16>,
 }
 
 // #[derive(Clone)]
-pub struct TMeshResult {
+pub struct MeshResult {
     pub mesh: Ref<ArrayMesh,Unique>,
-    pub surfaces: Vec<TMeshResultSurface>,
+    pub surfaces: Vec<MeshResultSurface>,
     pub transform: common::Mat4x4,
-    pub unk1: Vec<tmesh::Footer1>,
-    pub unk2: Vec<tmesh::Footer2>,
-    pub unk3: Vec<tmesh::Footer3>,
+    pub unk1: Vec<mesh::Footer1>,
+    pub unk2: Vec<mesh::Footer2>,
+    pub unk3: Vec<mesh::Footer3>,
     pub strip_order: Vec<u32>,
 }
 
-pub fn read_tmesh(
+pub fn read_mesh(
     data: &Vec<u8>,
     fmt: libchum::format::TotemFormat,
     reader: &mut ChumReader,
     file: &ChumFile,
-) -> Option<TMeshResult> {
-    let tmesh = match tmesh::TMesh::read_data(data, fmt) {
+) -> Option<MeshResult> {
+    let mesh = match mesh::Mesh::read_data(data, fmt) {
         Ok(x) => x,
         Err(err) => {
             display_err!("Error loading MESH: {}\n{}", file.get_name_str(), err);
             return None;
         }
     };
-    let mesh = Ref::<ArrayMesh,Unique>::new();
-    let generated_tris = tmesh.gen_triangles();
-    let mesh_materials = tmesh.get_materials();
+    let array_mesh = Ref::<ArrayMesh,Unique>::new();
+    let generated_tris = mesh.gen_triangles();
+    let mesh_materials = mesh.get_materials();
     let mut materials = Vec::new();
     let mut surfaces = Vec::new();
     for trivec in generated_tris.into_iter() {
@@ -47,7 +47,7 @@ pub fn read_tmesh(
         let mut texcoords = Vector2Array::new();
         let mut normals = Vector3Array::new();
         let meshdata = VariantArray::new();
-        let mut surface = TMeshResultSurface {
+        let mut surface = MeshResultSurface {
             vertex_ids: Vec::new(),
             texcoord_ids: Vec::new(),
             normal_ids: Vec::new(),
@@ -77,7 +77,7 @@ pub fn read_tmesh(
         meshdata.set(ArrayMesh::ARRAY_VERTEX as i32, verts);
         meshdata.set(ArrayMesh::ARRAY_NORMAL as i32, normals);
         meshdata.set(ArrayMesh::ARRAY_TEX_UV as i32, texcoords);
-        mesh.add_surface_from_arrays(
+        array_mesh.add_surface_from_arrays(
             Mesh::PRIMITIVE_TRIANGLES,
             meshdata.into_shared(),
             VariantArray::new().into_shared(),
@@ -96,7 +96,7 @@ pub fn read_tmesh(
                             .get("material")
                             .try_to_object()
                             .unwrap();
-                        mesh.surface_set_material(i as i64, material);
+                        array_mesh.surface_set_material(i as i64, material);
                     } else {
                         display_warn!(
                             "Could not apply material {} to mesh {}.",
@@ -114,21 +114,21 @@ pub fn read_tmesh(
             }
         })
         .unwrap();
-    Some(TMeshResult {
-        mesh: mesh,
+    Some(MeshResult {
+        mesh: array_mesh,
         surfaces,
-        transform: tmesh.transform.transform.clone(),
-        unk1: tmesh.unk1.clone(),
-        unk2: tmesh.unk2.clone(),
-        unk3: tmesh.unk3.clone(),
-        strip_order: tmesh.strip_order.clone(),
+        transform: mesh.transform.transform.clone(),
+        unk1: mesh.unk1.clone(),
+        unk2: mesh.unk2.clone(),
+        unk3: mesh.unk3.clone(),
+        strip_order: mesh.strip_order.clone(),
     })
 }
 
-pub fn read_tmesh_from_res(data: &ChumFile, reader: &mut ChumReader) -> Dictionary<Unique> {
+pub fn read_mesh_from_res(data: &ChumFile, reader: &mut ChumReader) -> Dictionary<Unique> {
     let fmt = data.get_format();
     let dict = Dictionary::new();
-    match read_tmesh(&data.get_data_as_vec(), fmt, reader, data) {
+    match read_mesh(&data.get_data_as_vec(), fmt, reader, data) {
         Some(mesh) => {
             dict.insert("exists", true);
             dict.insert("mesh", mesh.mesh);
@@ -205,7 +205,7 @@ pub fn read_tmesh_from_res(data: &ChumFile, reader: &mut ChumReader) -> Dictiona
             );
         }
         None => {
-            godot_print!("read_tmesh returned None");
+            godot_print!("read_mesh returned None");
             dict.insert("exists", false);
         }
     }

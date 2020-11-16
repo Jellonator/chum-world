@@ -243,6 +243,20 @@ pub fn dict_to_struct(dict: &Dictionary) -> ChumStructVariant {
             }
             ChumStructVariant::Struct(values)
         }
+        "option" => {
+            let value = if dict.contains("value") {
+                let value_dict = dict.get("value").try_to_dictionary().unwrap();
+                Some(Box::new(dict_to_struct(&value_dict)))
+            } else {
+                None
+            };
+            let default_dict = dict.get("default").try_to_dictionary().unwrap();
+            let default_value = dict_to_struct(&default_dict);
+            ChumStructVariant::Optional {
+                value,
+                default_value: Box::new(default_value)
+            }
+        }
         other => panic!("Invalid variant type {}", other),
     }
 }
@@ -451,6 +465,20 @@ pub fn struct_to_dict(value: &ChumStructVariant) -> Dictionary<Unique> {
             dict.insert("type", "struct");
             dict.insert("value", values);
             dict.insert("order", order);
+            dict
+        }
+        ChumStructVariant::Optional {
+            ref value,
+            ref default_value
+        } => {
+            let dict = Dictionary::new();
+            let default_value = struct_to_dict(default_value.as_ref());
+            dict.insert("type", "option");
+            dict.insert("default", default_value);
+            if let Some(ref inner) = value {
+                let inner_dict = struct_to_dict(inner);
+                dict.insert("value", inner_dict);
+            }
             dict
         }
     }

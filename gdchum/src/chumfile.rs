@@ -238,19 +238,19 @@ impl ChumFile {
     /// Export a MESH file as a .obj
     fn export_mesh_to_obj(&mut self, path: &str) {
         let mut buffer = File::create(path).unwrap();
-        let tmesh = match reader::tmesh::TMesh::read_data(&mut self.get_data_as_vec(), self.format)
+        let mesh = match reader::mesh::Mesh::read_data(&mut self.get_data_as_vec(), self.format)
         {
             Ok(x) => x,
             Err(err) => {
                 panic!("MESH file invalid: {}", err);
             }
         };
-        tmesh.export_obj(&mut buffer).unwrap();
+        mesh.export_obj(&mut buffer).unwrap();
     }
 
     fn export_mesh_to_collada(&mut self, path: &str) {
         let mut buffer = File::create(path).unwrap();
-        let tmesh = match reader::tmesh::TMesh::read_data(&mut self.get_data_as_vec(), self.format)
+        let mesh = match reader::mesh::Mesh::read_data(&mut self.get_data_as_vec(), self.format)
         {
             Ok(x) => x,
             Err(err) => {
@@ -258,7 +258,7 @@ impl ChumFile {
             }
         };
         let mut scene = scene::Scene::new_empty();
-        scene.add_trimesh(tmesh.create_scene_mesh(get_basename(&self.namestr).to_owned()));
+        scene.add_trimesh(mesh.create_scene_mesh(get_basename(&self.namestr).to_owned()));
         collada::scene_to_writer_dae(&scene, &mut buffer).unwrap();
     }
 
@@ -282,7 +282,7 @@ impl ChumFile {
                 if let Some(meshfile) = archive.get_file_from_hash(res, *meshid) {
                     unsafe { meshfile.assume_safe() }.map(|meshscript,_| match meshscript.typestr.as_str() {
                         "MESH" => {
-                            let mesh = match reader::tmesh::TMesh::read_data(
+                            let mesh = match reader::mesh::Mesh::read_data(
                                 &mut meshscript.get_data_as_vec(),
                                 self.format,
                             ) {
@@ -552,6 +552,20 @@ impl ChumFile {
                 let structure = data.structure();
                 util::struct_to_dict(&structure).into_shared().to_variant()
             }
+            "LOD" => {
+                let vecdata: Vec<u8> = self.get_data_as_vec();
+                let data = match reader::lod::Lod::read_from(
+                    &mut vecdata.as_slice(),
+                    self.format
+                ) {
+                    Ok(x) => x,
+                    Err(err) => {
+                        panic!("LOD file invalid: {}", err);
+                    }
+                };
+                let structure = data.structure();
+                util::struct_to_dict(&structure).into_shared().to_variant()
+            }
             _ => Variant::new(),
         }
     }
@@ -614,6 +628,12 @@ impl ChumFile {
             }
             "LIGHT" => {
                 let data = reader::light::Light::destructure(&structure).unwrap();
+                let mut outdata = Vec::new();
+                data.write_to(&mut outdata, self.format).unwrap();
+                self.replace_data_with_vec(outdata);
+            }
+            "LOD" => {
+                let data = reader::lod::Lod::destructure(&structure).unwrap();
                 let mut outdata = Vec::new();
                 data.write_to(&mut outdata, self.format).unwrap();
                 self.replace_data_with_vec(outdata);

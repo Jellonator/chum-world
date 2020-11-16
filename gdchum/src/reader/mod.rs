@@ -15,7 +15,7 @@ pub mod skin;
 pub mod spline;
 pub mod surface;
 pub mod text;
-pub mod tmesh;
+pub mod mesh;
 
 pub struct MaterialAnimEntry {
     resource: Ref<ShaderMaterial, Shared>,
@@ -173,17 +173,17 @@ impl ChumReader {
     }
 
     #[export]
-    pub fn read_tmesh(&mut self, _owner: &Node, data: Instance<ChumFile,Shared>) -> Dictionary<Shared> {
-        self.read_tmesh_nodeless(data)
+    pub fn read_mesh(&mut self, _owner: &Node, data: Instance<ChumFile,Shared>) -> Dictionary<Shared> {
+        self.read_mesh_nodeless(data)
     }
-    pub fn read_tmesh_nodeless(&mut self, data: Instance<ChumFile,Shared>) -> Dictionary<Shared> {
+    pub fn read_mesh_nodeless(&mut self, data: Instance<ChumFile,Shared>) -> Dictionary<Shared> {
         unsafe{data.assume_safe()}
             .map(|x,_| {
                 let hash = x.get_hash_id_ownerless();
                 if let Some(data) = self.cache.get(&hash) {
                     data.new_ref()
                 } else {
-                    let value = tmesh::read_tmesh_from_res(x, self).into_shared();
+                    let value = mesh::read_mesh_from_res(x, self).into_shared();
                     self.cache.insert(hash, value.new_ref());
                     value
                 }

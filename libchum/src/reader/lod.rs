@@ -1,84 +1,71 @@
 // use crate::animsymbol::AnimSymbol;
 use crate::common::*;
-use crate::format::TotemFormat;
-use crate::util::error::*;
-use std::error::Error;
-use std::io::{self, Read};
 
-fn load_option<T, F, R>(
-    file: &mut R,
-    fmt: TotemFormat,
-    func: F,
-) -> Result<Option<T>, Box<dyn Error>>
-where
-    F: Fn(&mut R, TotemFormat) -> io::Result<T>,
-    R: Read,
-{
-    let value = fmt.read_u8(file)?;
-    match value {
-        0 => Ok(None),
-        1 => Ok(Some(func(file, fmt)?)),
-        v => Err(Box::new(BooleanError::new(v))),
+chum_struct_generate_readwrite! {
+    pub struct Lod {
+        pub transform: [struct THeaderNoType],
+        pub item_type: [ignore [u16] 5u16],
+        pub item_subtype: [binary_ignore [u16]
+            write => |this: &Lod| {
+                match this.sounds {
+                    Some(_) => 2u16,
+                    None => 0u16
+                }
+            }
+        ],
+        // no subtype, it will be handled by `sounds`
+        pub unk1: [option [fixed array [f32] 4] [0f32; 4]],
+        pub unk2: [option [fixed array [f32] 4] [0f32; 4]],
+        pub unk3: [option [fixed array [f32] 9] [0f32; 9]],
+        pub unk4: [option [struct LodTransform] LodTransform::default()],
+        pub unk5: [option [fixed array [f32] 4] [0f32; 4]],
+        pub unk6: [ignore [u8] 0u8],
+        pub unk7: [option [struct LodTransform] LodTransform::default()],
+        pub unk8: [option [fixed array [f32] 4] [0f32; 4]],
+        pub unk9: [ignore [u8] 0u8],
+        pub unk10: [option [struct LodTransform] LodTransform::default()],
+        pub unk11: [option [fixed array [f32] 4] [0f32; 4]],
+        pub unk12: [ignore [u8] 0u8],
+        pub unk13: [ignore [u8] 0u8],
+        pub unk14: [option [fixed array [f32] 4] [0f32; 4]],
+        pub unk15: [option [struct LodUnkStruct] LodUnkStruct::default()],
+        pub unk16: [option [fixed array [f32] 4] [0f32; 4]],
+        pub unk17: [option [fixed array [f32] 4] [0f32; 4]],
+        pub unk18: [fixed array [f32] 2],
+        pub unk19: [u16],
+        pub skin_ids: [dynamic array [u32] [reference SKIN] 0i32],
+        pub anims: [dynamic array [u32] [struct LodAnimEntry] LodAnimEntry::default()],
+        pub sounds: [option [struct LodSoundData] LodSoundData::default()]
     }
 }
 
-fn load_f32_4<R: Read>(file: &mut R, fmt: TotemFormat) -> io::Result<[f32; 4]> {
-    let mut buf = [0.0f32; 4];
-    fmt.read_f32_into(file, &mut buf)?;
-    Ok(buf)
-}
+// pub struct Lod {
+//     pub transform: THeaderTyped,
+//     pub unk1: Option<[f32; 4]>,
+//     pub unk2: Option<[f32; 4]>,
+//     pub unk3: Option<[f32; 9]>,
+//     pub unk4: Option<Mat4x4>,
+//     pub unk5: Option<[f32; 4]>,
+//     pub unk6: Option<()>,
+//     pub unk7: Option<Mat4x4>,
+//     pub unk8: Option<[f32; 4]>,
+//     pub unk9: Option<()>,
+//     pub unk10: Option<Mat4x4>,
+//     pub unk11: Option<[f32; 4]>,
+//     pub unk12: Option<()>,
+//     pub unk13: Option<()>,
+//     pub unk14: Option<[f32; 4]>,
+//     pub unk15: Option<LodUnkStruct>,
+//     pub unk16: Option<[f32; 4]>,
+//     pub unk17: Option<[f32; 4]>,
+//     pub unk18: [f32; 2],
+//     pub unk19: u16,
+//     pub skin_ids: Vec<i32>,
+//     pub anims: Vec<LodAnimEntry>,
+//     pub sounds: Option<LodSoundData>, // Only exists if transform.subtype == 2
+// }
 
-fn load_f32_9<R: Read>(file: &mut R, fmt: TotemFormat) -> io::Result<[f32; 9]> {
-    let mut buf = [0.0f32; 9];
-    fmt.read_f32_into(file, &mut buf)?;
-    Ok(buf)
-}
-
-fn load_transform<R: Read>(file: &mut R, fmt: TotemFormat) -> io::Result<Mat4x4> {
-    let data = read_mat4(file, fmt)?;
-    fmt.skip_n_bytes(file, 16)?; // JUNK
-    Ok(data)
-}
-
-fn load_empty<R: Read>(_file: &mut R, _fmt: TotemFormat) -> io::Result<()> {
-    Ok(())
-}
-
-fn load_unkstruct<R: Read>(file: &mut R, fmt: TotemFormat) -> io::Result<LodUnkStruct> {
-    let mut buf = [0.0f32; 4];
-    fmt.read_f32_into(file, &mut buf)?;
-    Ok(LodUnkStruct {
-        unk1: buf,
-        unk2: fmt.read_u32(file)?,
-    })
-}
-
-pub struct Lod {
-    pub transform: THeaderTyped,
-    pub unk1: Option<[f32; 4]>,
-    pub unk2: Option<[f32; 4]>,
-    pub unk3: Option<[f32; 9]>,
-    pub unk4: Option<Mat4x4>,
-    pub unk5: Option<[f32; 4]>,
-    pub unk6: Option<()>,
-    pub unk7: Option<Mat4x4>,
-    pub unk8: Option<[f32; 4]>,
-    pub unk9: Option<()>,
-    pub unk10: Option<Mat4x4>,
-    pub unk11: Option<[f32; 4]>,
-    pub unk12: Option<()>,
-    pub unk13: Option<()>,
-    pub unk14: Option<[f32; 4]>,
-    pub unk15: Option<LodUnkStruct>,
-    pub unk16: Option<[f32; 4]>,
-    pub unk17: Option<[f32; 4]>,
-    pub unk18: [f32; 2],
-    pub unk19: u16,
-    pub skin_ids: Vec<i32>,
-    pub anims: Vec<LodAnimEntry>,
-    pub sounds: Option<LodSoundData>, // Only exists if transform.subtype == 2
-}
-
+/*
 impl Lod {
     /// Read a Lod from a file
     pub fn read_from<R: Read>(file: &mut R, fmt: TotemFormat) -> StructUnpackResult<Lod> {
@@ -167,23 +154,77 @@ impl Lod {
         })
     }
 }
+*/
 
-pub struct LodUnkStruct {
-    pub unk1: [f32; 4],
-    pub unk2: u32,
+chum_struct_generate_readwrite! {
+    pub struct LodTransform {
+        pub transform: [Mat4x4],
+        pub junk: [ignore [fixed array [u8] 16] [0u8; 16]]
+    }
 }
 
-pub struct LodAnimEntry {
-    // pub symbol: AnimSymbol, Jimmy files differ on animsymbols, so this is disabled for now
-    pub symbol: u32,
-    pub animation_id: i32,
+impl Default for LodTransform {
+    fn default() -> Self {
+        LodTransform {
+            transform: Mat4x4::default(),
+            junk: ()
+        }
+    }
 }
 
-pub struct LodSoundData {
-    pub data: Vec<LodSoundEntry>,
+chum_struct_generate_readwrite! {
+    pub struct LodUnkStruct {
+        pub unk1: [fixed array[f32] 4],
+        pub unk2: [u32],
+    }
 }
 
-pub struct LodSoundEntry {
-    pub symbol: u32,
-    pub sound_id: i32,
+impl Default for LodUnkStruct {
+    fn default() -> Self {
+        LodUnkStruct {
+            unk1: [0f32; 4],
+            unk2: 0u32,
+        }
+    }
+}
+
+chum_struct_generate_readwrite! {
+    pub struct LodAnimEntry {
+        // pub symbol: AnimSymbol, Jimmy files differ on animsymbols, so this is disabled for now
+        pub symbol: [u32],
+        pub animation_id: [reference ANIMATION],
+    }
+}
+
+impl Default for LodAnimEntry {
+    fn default() -> Self {
+        LodAnimEntry {
+            symbol: 0,
+            animation_id: 0
+        }
+    }
+}
+
+chum_struct_generate_readwrite! {
+    pub struct LodSoundData {
+        pub data: [
+            dynamic array [u32] [struct LodSoundEntry]
+            LodSoundEntry {symbol: 0u32, sound_id: 0i32}
+        ],
+    }
+}
+
+impl Default for LodSoundData {
+    fn default() -> Self {
+        LodSoundData {
+            data: Vec::new()
+        }
+    }
+}
+
+chum_struct_generate_readwrite! {
+    pub struct LodSoundEntry {
+        pub symbol: [u32],
+        pub sound_id: [reference SOUND],
+    }
 }

@@ -72,6 +72,10 @@ pub enum ChumStructVariant {
     Reference(i32, Option<String>),
     Array(ArrayData),
     Struct(Vec<(String, ChumStructVariant)>),
+    Optional {
+        value: Option<Box<ChumStructVariant>>,
+        default_value: Box<ChumStructVariant>
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -235,6 +239,34 @@ impl ChumStructVariant {
                     }
                 }
                 None
+            }
+            _ => None,
+        }
+    }
+    pub fn get_optional_value(&self) -> Option<Option<&ChumStructVariant>> {
+        use ChumStructVariant::*;
+        use std::borrow::Borrow;
+        match self {
+            Optional {
+                ref value,
+                default_value: _,
+            } => {
+                Some(
+                    value.as_ref().map(|x|x.borrow())
+                )
+            }
+            _ => None,
+        }
+    }
+    pub fn get_optional_default_value(&self) -> Option<&ChumStructVariant> {
+        use ChumStructVariant::*;
+        use std::borrow::Borrow;
+        match self {
+            Optional {
+                value: _,
+                ref default_value,
+            } => {
+                Some(default_value.borrow())
             }
             _ => None,
         }

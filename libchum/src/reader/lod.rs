@@ -3,7 +3,7 @@ use crate::common::*;
 // use crate::format::TotemFormat;
 // use crate::util::error;
 use std::io::{self};
-use crate::util::error::StructUnpackResult;
+use crate::util::error::*;
 
 chum_struct_generate_readwrite! {
     pub struct Lod {
@@ -51,18 +51,17 @@ chum_struct_generate_readwrite! {
                 match lod.item_subtype.unwrap() {
                     2 => match LodSoundData::read_from(file, fmt) {
                         Ok(value) => Ok(Some(value)),
-                        Err(crate::util::error::StructUnpackError {
-                            structname: _,
-                            structpath,
-                            error
-                        }) => Err(crate::util::error::StructUnpackError {
-                            structname: "Lod".to_owned(),
-                            structpath: format!("{}.{}", "sounds", structpath),
-                            error
-                        })
+                        Err(e) => Err(e.structuralize("Lod", "sounds"))
                     },
                     0 => Ok(None),
-                    _ => panic!()
+                    o => Err(StructUnpackError {
+                        structname: "Lod".to_owned(),
+                        structpath: "sounds".to_owned(),
+                        error: Box::new(EnumerationError {
+                            enum_name: "item_subtype".to_owned(),
+                            value: o as i64
+                        })
+                    })
                 }
             };
             // Only write to file if not None

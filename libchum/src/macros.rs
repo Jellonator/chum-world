@@ -783,15 +783,7 @@ macro_rules! chum_struct_binary_read {
     ([struct $t:ty],$file:expr,$fmt:expr,$struct:expr,$path:expr,$self:expr) => {
         match <$t>::read_from($file,$fmt) {
             Ok(value) => Ok(value),
-            Err($crate::util::error::StructUnpackError {
-                structname: _,
-                structpath,
-                error
-            }) => Err($crate::util::error::StructUnpackError {
-                structname: $struct.to_owned(),
-                structpath: format!("{}.{}", $path, structpath),
-                error
-            })
+            Err(e) => Err(e.structuralize($struct,&$path))
         }
     };
     ([option $type:tt $default:expr],$file:expr,$fmt:expr,$struct:expr,$path:expr,$self:expr) => {

@@ -96,6 +96,15 @@ impl StructUnpackError {
             error: self.error,
         }
     }
+
+    pub fn structuralize<S>(self, structname: S, pathname: &str) -> StructUnpackError 
+    where S: Into<String> {
+        StructUnpackError {
+            structname: structname.into(),
+            structpath: format!("{}.{}", pathname, self.structpath),
+            error: self.error,
+        }
+    }
 }
 
 impl fmt::Display for StructUnpackError {

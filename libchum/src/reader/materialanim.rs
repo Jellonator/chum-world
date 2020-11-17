@@ -1,26 +1,85 @@
 //! See https://github.com/Jellonator/chum-world/wiki/MATERIALANIM for more information
 
 use crate::common::*;
-use crate::format::TotemFormat;
-use std::io::{self, Read};
 
-/// Interpolation method
-#[derive(Clone, Copy)]
-pub enum Interpolation {
-    /// Discrete interpolation (1)
-    Discrete,
-    /// Linear interpolation (2)
-    Linear,
-    /// Unknown interpolation (3)
-    Unknown,
-    /// Invalid interpolation (error)
-    Invalid,
+// /// Interpolation method
+// #[derive(Clone, Copy)]
+// pub enum Interpolation {
+//     /// Discrete interpolation (1)
+//     Discrete,
+//     /// Linear interpolation (2)
+//     Linear,
+//     /// Unknown interpolation (3)
+//     Unknown,
+//     /// Invalid interpolation (error)
+//     Invalid,
+// }
+
+chum_enum! {
+    #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+    pub enum Interpolation {
+        Invalid,
+        Discrete,
+        Linear,
+        Unknown
+    }
 }
 
 /// A single frame in a track
 pub struct TrackFrame<T> {
     pub frame: u16,
+    pub junk: (),
     pub data: T,
+}
+
+impl<T> Default for TrackFrame<T>
+where T: Default {
+    fn default() -> Self {
+        TrackFrame::<T> {
+            frame: 0,
+            junk: (),
+            data: T::default()
+        }
+    }
+}
+
+// Implement ChumBinary for all TrackFrame types
+chum_struct_binary_impl! {
+    impl ChumBinary for TrackFrame<i32> {
+        // IMPORTANT: bitmap_id comes BEFORE frame for TextureFrame.
+        data: [i32],
+        // TextureFrame is also the only Track with no junk data.
+        junk: [ignore [void] ()],
+        frame: [u16],
+    }
+}
+chum_struct_binary_impl! {
+    impl ChumBinary for TrackFrame<Vector2> {
+        frame: [u16],
+        junk: [ignore [u16] 0u16],
+        data: [Vector2]
+    }
+}
+chum_struct_binary_impl! {
+    impl ChumBinary for TrackFrame<f32> {
+        frame: [u16],
+        junk: [ignore [u16] 0u16],
+        data: [f32]
+    }
+}
+chum_struct_binary_impl! {
+    impl ChumBinary for TrackFrame<Vector3> {
+        frame: [u16],
+        junk: [ignore [u16] 0u16],
+        data: [Vector3 rgb]
+    }
+}
+chum_struct_binary_impl! {
+    impl ChumBinary for TrackFrame<[u8; 4]> {
+        frame: [u16],
+        junk: [ignore [u16] 0u16],
+        data: [fixed array [u8] 4]
+    }
 }
 
 /// A full track, including a list of frames and interpolation method
@@ -81,99 +140,53 @@ impl<T> Track<T> {
     }
 }
 
-/// Material animation file
-pub struct MaterialAnimation {
-    pub length: f32,
-    pub material_id: i32,
-    pub track_texture: Track<i32>,
-    pub track_scroll: Track<Vector2>,
-    pub track_stretch: Track<Vector2>,
-    pub track_rotation: Track<f32>,
-    pub track_color: Track<[f32; 3]>,
-    // pub track_unk:   Track<Vector3>,
-    pub track_alpha: Track<f32>,
-    // pub track_unk1:  Track<[u8; 4]>,
-    // pub track_unk2:  Track<[u8; 4]>,
-    // pub track_unk3:  Track<[u8; 4]>,
+// Implement ChumBinary for all Track types
+chum_struct_binary_impl! {
+    impl ChumBinary for Track<i32> {
+        interp: [enum [u16] Interpolation],
+        frames: [dynamic array [u32] [struct TrackFrame<i32>] TrackFrame::<i32>::default()]
+    }
 }
-
-/// Match a u16 to an interpolation value
-fn u16_to_interp(value: u16) -> Interpolation {
-    match value {
-        1 => Interpolation::Discrete,
-        2 => Interpolation::Linear,
-        3 => Interpolation::Unknown,
-        _ => Interpolation::Invalid,
+chum_struct_binary_impl! {
+    impl ChumBinary for Track<Vector2> {
+        interp: [enum [u16] Interpolation],
+        frames: [dynamic array [u32] [struct TrackFrame<Vector2>] TrackFrame::<Vector2>::default()]
+    }
+}
+chum_struct_binary_impl! {
+    impl ChumBinary for Track<f32> {
+        interp: [enum [u16] Interpolation],
+        frames: [dynamic array [u32] [struct TrackFrame<f32>] TrackFrame::<f32>::default()]
+    }
+}
+chum_struct_binary_impl! {
+    impl ChumBinary for Track<Vector3> {
+        interp: [enum [u16] Interpolation],
+        frames: [dynamic array [u32] [struct TrackFrame<Vector3>] TrackFrame::<Vector3>::default()]
+    }
+}
+chum_struct_binary_impl! {
+    impl ChumBinary for Track<[u8; 4]> {
+        interp: [enum [u16] Interpolation],
+        frames: [dynamic array [u32] [struct TrackFrame<[u8; 4]>] TrackFrame::<[u8; 4]>::default()]
     }
 }
 
-/// Read a track of type T from the given file.
-fn read_track<T, F, R>(file: &mut R, fmt: TotemFormat, func: F) -> io::Result<Track<T>>
-where
-    F: Fn(&mut R, TotemFormat) -> io::Result<T>,
-    R: Read,
-{
-    let interp = u16_to_interp(fmt.read_u16(file)?);
-    let mut frames = Vec::new();
-    for _ in 0..fmt.read_u32(file)? {
-        let frame = fmt.read_u16(file)?;
-        fmt.skip_n_bytes(file, 2)?;
-        let data = func(file, fmt)?;
-        frames.push(TrackFrame::<T> { frame, data });
-    }
-    Ok(Track { interp, frames })
-}
-
-/// Read a texture track (Separate from read_track because the texture ID comes before the frame)
-fn read_texture_track<T, F, R>(file: &mut R, fmt: TotemFormat, func: F) -> io::Result<Track<T>>
-where
-    F: Fn(&mut R, TotemFormat) -> io::Result<T>,
-    R: Read,
-{
-    let interp = u16_to_interp(fmt.read_u16(file)?);
-    let mut frames = Vec::new();
-    for _ in 0..fmt.read_u32(file)? {
-        let data = func(file, fmt)?;
-        let frame = fmt.read_u16(file)?;
-        frames.push(TrackFrame::<T> { frame, data });
-    }
-    Ok(Track { interp, frames })
-}
-
-impl MaterialAnimation {
-    /// Read a MaterialAnimation from a file
-    pub fn read_from<R: Read>(file: &mut R, fmt: TotemFormat) -> io::Result<MaterialAnimation> {
-        fmt.skip_n_bytes(file, 1)?;
-        let length = fmt.read_f32(file)?;
-        let track_texture = read_texture_track(file, fmt, |file, fmt| fmt.read_i32(file))?;
-        let track_scroll = read_track(file, fmt, |file, fmt| Ok(read_vec2(file, fmt)?))?;
-        let track_stretch = read_track(file, fmt, |file, fmt| Ok(read_vec2(file, fmt)?))?;
-        let track_rotation = read_track(file, fmt, |file, fmt| fmt.read_f32(file))?;
-        let track_color = read_track(file, fmt, |file, fmt| {
-            let mut data = [0.0; 3];
-            fmt.read_f32_into(file, &mut data)?;
-            Ok(data)
-        })?;
-        let _track_unknown = read_track(file, fmt, |file, fmt| Ok(read_vec3(file, fmt)?))?;
-        let track_alpha = read_track(file, fmt, |file, fmt| fmt.read_f32(file))?;
-        let _track_unk1 = read_track(file, fmt, |file, fmt| fmt.read_u32(file))?;
-        let _track_unk2 = read_track(file, fmt, |file, fmt| fmt.read_u32(file))?;
-        let _track_unk3 = read_track(file, fmt, |file, fmt| fmt.read_u32(file))?;
-        let material_id = fmt.read_i32(file)?;
-        Ok(MaterialAnimation {
-            length,
-            track_texture,
-            track_scroll,
-            track_stretch,
-            track_rotation,
-            track_color,
-            track_alpha,
-            material_id,
-        })
-    }
-
-    /// Read a TMesh from data
-    pub fn read_data(data: &[u8], fmt: TotemFormat) -> io::Result<MaterialAnimation> {
-        MaterialAnimation::read_from(&mut data.as_ref(), fmt)
+chum_struct_generate_readwrite! {
+    /// Material animation file
+    pub struct MaterialAnimation {
+        pub unk1: [u8],
+        pub length: [f32],
+        pub track_texture: [struct Track<i32>],
+        pub track_scroll: [struct Track<Vector2>],
+        pub track_stretch: [struct Track<Vector2>],
+        pub track_rotation: [struct Track<f32>],
+        pub track_color: [struct Track<Vector3>],
+        pub track_unk: [struct Track<Vector3>],
+        pub track_alpha: [struct Track<f32>],
+        pub track_unk1: [struct Track<[u8; 4]>],
+        pub track_unk2: [struct Track<[u8; 4]>],
+        pub track_unk3: [struct Track<[u8; 4]>],
+        pub material_id: [reference MATERIAL],
     }
 }

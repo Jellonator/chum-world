@@ -47,7 +47,7 @@ chum_struct_generate_readwrite! {
         pub sounds: [custom_binary
             [option [struct LodSoundData] LodSoundData::default()]
             // Only read `sounds` if the subtype is 2
-            read: |lod: &Lod, file, fmt| -> StructUnpackResult<Option<LodSoundData>> {
+            read: |lod: &Inner, file, fmt| -> StructUnpackResult<Option<LodSoundData>> {
                 match lod.item_subtype.unwrap() {
                     2 => match LodSoundData::read_from(file, fmt) {
                         Ok(value) => Ok(Some(value)),

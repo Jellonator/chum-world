@@ -197,6 +197,7 @@ macro_rules! chum_struct_get_type {
     ]) => {chum_struct_get_type!($type)};
     ([option $type:tt $default:expr]) => {Option<chum_struct_get_type!($type)>};
     // regular rules
+    ([void]) => {()};
     ([u8]) => {::std::primitive::u8};
     ([i8]) => {::std::primitive::i8};
     ([u16]) => {::std::primitive::u16};
@@ -373,6 +374,7 @@ macro_rules! chum_struct_destructure {
 /// Process a structure function.
 /// Results in `None` if the value is ignored.
 macro_rules! process_structure {
+    ($name:ident,[void],$value:expr,$self:expr) => {None};
     ($name:ident,[ignore $type:tt $default:expr],$value:expr,$self:expr) => {None};
     ($name:ident,[
         custom_structure $type:tt 
@@ -399,6 +401,7 @@ macro_rules! process_structure {
 /// Process a destructure function.
 /// Results in `()` if the value is ignored.
 macro_rules! process_destructure {
+    ($name:ident,$data:expr,[void]) => {()};
     ($name:ident,$data:expr,[ignore $type:tt $default:expr]) => {()};
     ($name:ident,$data:expr,[
         custom_structure $type:tt 
@@ -490,6 +493,27 @@ macro_rules! chum_struct {
                 pub $name : chum_struct_get_type!($type),
             )*
         }
+        chum_struct_impl! {
+            impl ChumStruct for $structname {
+                $(
+                    $name: $type
+                ),*
+            }
+        }
+    };
+}
+
+/// Special macro that just implements ChumStruct instead of also defining the struct.
+/// Useful for Generic types.
+#[macro_export]
+macro_rules! chum_struct_impl {
+    (
+        impl ChumStruct for $structname:ty {
+            $(
+                $name:ident : $type:tt
+            ),* $(,)? // this is just so that the last comma is optional
+        }
+    ) => {
         impl $crate::structure::ChumStruct for $structname {
             fn structure(&self) -> $crate::structure::ChumStructVariant {
                 #![allow(unused_imports)]
@@ -588,6 +612,9 @@ macro_rules! chum_enum {
 macro_rules! chum_struct_binary_read {
     ([ignore $type:tt $default:expr],$file:expr,$fmt:expr,$struct:expr,$path:expr,$self:expr) => {
         chum_struct_binary_read!($type,$file,$fmt,$struct,$path,$self).map(|_| ())
+    };
+    ([void],$file:expr,$fmt:expr,$struct:expr,$path:expr,$self:expr) => {
+        Ok(())
     };
     ([
         custom_structure $type:tt 
@@ -821,6 +848,9 @@ macro_rules! chum_struct_binary_write {
     ([ignore $type:tt $default:expr],$file:expr,$fmt:expr,$value:expr,$this:expr) => {
         chum_struct_binary_write!($type,$file,$fmt,&$default,$this)
     };
+    ([void],$file:expr,$fmt:expr,$value:expr,$this:expr) => {
+        ::std::io::Result::<()>::Ok(())
+    };
     ([
         custom_structure $type:tt 
         structure: $structure:expr;
@@ -954,6 +984,25 @@ macro_rules! chum_struct_generate_readwrite {
                 )*
             }
         }
+        chum_struct_binary_impl_private! {
+            impl ChumBinary for $structname {
+                $(
+                    $name: $type
+                ),*
+            }
+        }
+    }
+}
+
+/// ONLY implements ChumBinary.
+macro_rules! chum_struct_binary_impl_private {
+    (
+        impl ChumBinary for $structname:ty {
+            $(
+                $name:ident : $type:tt
+            ),* $(,)? // this is just so that the last comma is optional
+        }
+    ) => {
         impl $crate::binary::ChumBinary for $structname {
             fn read_from<R: ::std::io::Read>(file: &mut R, fmt: $crate::format::TotemFormat) 
             -> $crate::util::error::StructUnpackResult<Self> {
@@ -961,12 +1010,12 @@ macro_rules! chum_struct_generate_readwrite {
                 // Declaring another struct with the same name, purely so that
                 // chum_binary can access data before the entire structure has been read.
                 // It's all Option so it's not exactly zero-cost, but it should be fast enough.
-                pub struct $structname {
+                pub struct Inner {
                     $(
                         $name: Option<chum_struct_get_type!($type)>
                     ),*
                 }
-                let mut value = $structname {
+                let mut value = Inner {
                     $(
                         $name: None
                     ),*
@@ -989,7 +1038,35 @@ macro_rules! chum_struct_generate_readwrite {
                 Ok(())
             }
         }
-    }
+    };
+}
+
+/// Special macro that just implements ChumStruct and ChumBinary instead of also defining the struct.
+/// Useful for Generic types.
+#[macro_export]
+macro_rules! chum_struct_binary_impl {
+    (
+        impl ChumBinary for $structname:ty {
+            $(
+                $name:ident : $type:tt
+            ),* $(,)? // this is just so that the last comma is optional
+        }
+    ) => {
+        chum_struct_impl! {
+            impl ChumStruct for $structname {
+                $(
+                    $name: $type
+                ),*
+            }
+        }
+        chum_struct_binary_impl_private! {
+            impl ChumBinary for $structname {
+                $(
+                    $name: $type
+                ),*
+            }
+        }
+    };
 }
 
 /*

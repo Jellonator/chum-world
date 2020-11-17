@@ -282,3 +282,6 @@ func _on_PopupSelector_index_pressed(index):
 	_disable_camera_focus = true
 	node_tree.try_select(item)
 	_disable_camera_focus = false
+
+func _on_Button_pressed():
+	reset_surfaces()

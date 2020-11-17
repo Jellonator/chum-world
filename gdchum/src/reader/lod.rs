@@ -7,7 +7,7 @@ pub fn read_lod(
     fmt: libchum::format::TotemFormat,
     chumfile: &ChumFile,
 ) -> Option<Dictionary<Unique>> {
-    use libchum::structure::ChumBinary;
+    use libchum::binary::ChumBinary;
     let loddata = match lod::Lod::read_from(&mut data.as_slice(), fmt) {
         Ok(x) => x,
         Err(e) => {

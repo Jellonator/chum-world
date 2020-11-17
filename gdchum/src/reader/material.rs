@@ -11,7 +11,7 @@ pub fn read_material(
     reader: &mut ChumReader,
     file: &ChumFile,
 ) -> Option<Ref<ShaderMaterial,Unique>> {
-    use libchum::structure::ChumBinary;
+    use libchum::binary::ChumBinary;
     let matdata = match material::Material::read_from(&mut data.as_slice(), fmt) {
         Ok(x) => x,
         Err(err) => {

@@ -280,7 +280,7 @@ macro_rules! chum_struct_structure {
         {
             let x: &Vec<chum_struct_get_type!($type)> = &$value;
             Array(ArrayData{
-                can_resize: false,
+                can_resize: true,
                 data: x
                     .iter()
                     .map(|x| chum_struct_structure!($type, *x))

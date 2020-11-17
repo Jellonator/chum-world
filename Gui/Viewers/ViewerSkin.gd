@@ -37,7 +37,7 @@ func set_meshes(mesh_ids: Array):
 	var archive = cfile.get_archive()
 	for id in mesh_ids:
 		var mesh_file = archive.get_file_from_hash(id)
-		var mesh_data = ChumReader.read_tmesh(mesh_file)
+		var mesh_data = ChumReader.read_mesh(mesh_file)
 		if mesh_data == null or not mesh_data["exists"]:
 			meshes.append(null)
 			print("COULD NOT LOAD")

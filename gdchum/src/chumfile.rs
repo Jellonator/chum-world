@@ -453,7 +453,7 @@ impl ChumFile {
 
     #[export]
     pub fn read_structure(&self, _owner: &Resource) -> Variant {
-        use libchum::structure::ChumBinary;
+        use libchum::binary::ChumBinary;
         match self.get_type_str() {
             "BITMAP" => {
                 let bitmap = match reader::bitmap::Bitmap::read_data(
@@ -572,7 +572,7 @@ impl ChumFile {
 
     #[export]
     pub fn import_structure(&mut self, _owner: &Resource, data: Dictionary) {
-        use libchum::structure::ChumBinary;
+        use libchum::binary::ChumBinary;
         let structure = util::dict_to_struct(&data);
         match self.get_type_str() {
             "BITMAP" => {

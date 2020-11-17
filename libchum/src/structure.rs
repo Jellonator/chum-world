@@ -1,7 +1,4 @@
 use crate::common;
-use crate::format::TotemFormat;
-use crate::util::error;
-use std::io::{self, Read, Write};
 
 pub trait ChumStruct: Sized {
     fn structure(&self) -> ChumStructVariant;
@@ -12,11 +9,6 @@ pub trait ChumEnum: Sized {
     fn from_u32(value: u32) -> Option<Self>;
     fn to_u32(&self) -> u32;
     fn get_names(&self) -> Vec<String>;
-}
-
-pub trait ChumBinary: Sized {
-    fn read_from<R: Read>(file: &mut R, fmt: TotemFormat) -> error::StructUnpackResult<Self>;
-    fn write_to<W: Write>(&self, writer: &mut W, fmt: TotemFormat) -> io::Result<()>;
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]

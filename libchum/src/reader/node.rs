@@ -453,7 +453,7 @@ pub struct NodeSkinMaterial {
 
 impl NodeSkinMaterial {
     fn read_from<R: Read>(file: &mut R, fmt: TotemFormat) -> io::Result<NodeSkinMaterial> {
-        use crate::structure::ChumBinary;
+        use crate::binary::ChumBinary;
         Ok(NodeSkinMaterial {
             filetype_id: fmt.read_i32(file)?,
             filename_id: fmt.read_i32(file)?,

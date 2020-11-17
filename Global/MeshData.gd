@@ -165,7 +165,7 @@ func get_collisionvol_mesh():
 var COOL_FORWARD := Vector3(-0.22471, 0.125, 1).normalized()
 
 func load_mesh_from_file(file, node_owner):
-	var data = ChumReader.read_tmesh(file)
+	var data = ChumReader.read_mesh(file)
 	if data == null:
 		print("INVALID DATA ", file.name)
 	elif data["exists"]:

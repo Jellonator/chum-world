@@ -13,6 +13,7 @@ const STRUCT_TYPES = {
 	"reference": preload("res://Gui/Struct/StructReference.tscn"),
 	"array": preload("res://Gui/Struct/StructArray.tscn"),
 	"struct": preload("res://Gui/Struct/StructStruct.tscn"),
+	"option": preload("res://Gui/Struct/StructOption.tscn"),
 }
 
 func instance(data: Dictionary):

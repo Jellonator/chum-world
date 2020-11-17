@@ -252,7 +252,7 @@ impl Mesh {
 
     /// Read a Mesh from a file
     pub fn read_from<R: Read>(file: &mut R, fmt: TotemFormat) -> io::Result<Mesh> {
-        use crate::structure::ChumBinary;
+        use crate::binary::ChumBinary;
         let transform = THeaderTyped::read_from(file, fmt).unwrap();
         // Read coordinate data
         let num_vertices: u32 = fmt.read_u32(file)?;

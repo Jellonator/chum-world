@@ -501,7 +501,7 @@ chum_struct! {
     pub struct BitmapStruct {
         pub alpha: [enum [u8] AlphaLevel],
         pub flags: [flags [u8] {a, b, c}],
-        pub unknown: [custom [u8] 1, 5],
+        pub unknown: [int_custom [u8] 1, 5],
     }
 }
 

@@ -8,6 +8,7 @@ pub mod ngc;
 pub mod reader;
 pub mod scene;
 pub mod structure;
+pub mod binary;
 pub mod util;
 
 use crc::crc32;

@@ -325,7 +325,7 @@ impl SurfaceObject {
 
     /// Read a SurfaceObject from a file
     pub fn read_from<R: Read>(file: &mut R, fmt: TotemFormat) -> io::Result<SurfaceObject> {
-        use crate::structure::ChumBinary;
+        use crate::binary::ChumBinary;
         // fmt.skip_n_bytes(file, 96)?;
         // let _unknown2 = fmt.read_u16(file)?;
         // let _unknown3 = fmt.read_u16(file)?;

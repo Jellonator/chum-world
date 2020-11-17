@@ -566,6 +566,20 @@ impl ChumFile {
                 let structure = data.structure();
                 util::struct_to_dict(&structure).into_shared().to_variant()
             }
+            "MATERIALANIM" => {
+                let vecdata: Vec<u8> = self.get_data_as_vec();
+                let data = match reader::materialanim::MaterialAnimation::read_from(
+                    &mut vecdata.as_slice(),
+                    self.format
+                ) {
+                    Ok(x) => x,
+                    Err(err) => {
+                        panic!("MATERIALANIM file invalid: {}", err);
+                    }
+                };
+                let structure = data.structure();
+                util::struct_to_dict(&structure).into_shared().to_variant()
+            }
             _ => Variant::new(),
         }
     }
@@ -634,6 +648,12 @@ impl ChumFile {
             }
             "LOD" => {
                 let data = reader::lod::Lod::destructure(&structure).unwrap();
+                let mut outdata = Vec::new();
+                data.write_to(&mut outdata, self.format).unwrap();
+                self.replace_data_with_vec(outdata);
+            }
+            "MATERIALANIM" => {
+                let data = reader::materialanim::MaterialAnimation::destructure(&structure).unwrap();
                 let mut outdata = Vec::new();
                 data.write_to(&mut outdata, self.format).unwrap();
                 self.replace_data_with_vec(outdata);

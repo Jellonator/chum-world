@@ -9,7 +9,7 @@ uniform sampler2D arg_texture;
 uniform sampler2D arg_reflection;
 uniform bool has_texture = false;
 uniform bool has_reflection = false;
-uniform bool alternative_alpha = true;
+// uniform bool alternative_alpha = false;
 uniform int do_highlight = 0;
 
 // This psuedo-random function is credited to The Book of Shaders by 
@@ -26,7 +26,7 @@ void vertex() {
 	//  * UV2
 	//  * COLOR (since this is handled through arg_color)
 	//  * INSTANCE_CUSTOM (Can only set this through ArrayMesh)
-	int uv2x = int(UV2.x);
+	int uv2x = int(UV2.x); // determines ROTSHAPE
 	if (uv2x == 2) {
 		MODELVIEW_MATRIX = INV_CAMERA_MATRIX * mat4(
 			CAMERA_MATRIX[0],
@@ -58,6 +58,7 @@ void vertex() {
 }
 
 void fragment() {
+	int uv2y = int(UV2.y); // determines if in 3D view
 	mat3 realmat = mat3(
 		arg_texcoord_transform[0].xyz,
 		arg_texcoord_transform[1].xyz,
@@ -81,7 +82,7 @@ void fragment() {
 	outcol.rgb += col2.rgb * col2.a;
 	ALBEDO = outcol.rgb;
 	ALPHA = outcol.a;
-	EMISSION = arg_emission;
+	EMISSION = arg_emission * ALBEDO;
 	if (do_highlight == 1) {
 		if ((mod(UV.x * 8.0 - 0.025, 1.0) >= 0.95) || (mod(UV.y * 8.0 - 0.025, 1.0) >= 0.95)) {
 			EMISSION = vec3(1.0, 1.0, 1.0);
@@ -95,7 +96,7 @@ void fragment() {
 	}
 	// Joker's trick
 	// (aka workaround to make transparent things look good)
-	if (alternative_alpha) {
+	if (uv2y != 2) {
 		if (ALPHA < 1.0 && ALPHA > 0.0) {
 			int x = int(FRAGCOORD.x);
 			int y = int(FRAGCOORD.y);

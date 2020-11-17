@@ -10,7 +10,8 @@ pub fn read_materialanim(
     reader: &mut ChumReader,
     file: &ChumFile,
 ) -> Option<Ref<ShaderMaterial, Shared>> {
-    let matanimdata = match materialanim::MaterialAnimation::read_data(data, fmt) {
+    use libchum::binary::ChumBinary;
+    let matanimdata = match materialanim::MaterialAnimation::read_from(&mut data.as_slice(), fmt) {
         Ok(x) => x,
         Err(err) => {
             display_err!("Error loading MATERIALANIM: {}\n{}", file.get_name_str(), err);

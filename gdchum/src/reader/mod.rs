@@ -145,14 +145,15 @@ impl ChumReader {
             });
         }
         // let material: Ref<ShaderMaterial,Shared> = resource.cast().unwrap();
+        let tx = unsafe {
+            resource.assume_safe().get_shader_param("arg_texcoord_transform").to_transform()
+        };
         self.materialanims.push(MaterialAnimEntry {
             time: 0.0,
             data,
             textures,
-            resource: resource.clone(),
-            original_transform: unsafe {
-                resource.assume_safe().get_shader_param("arg_texcoord_transform").to_transform()
-            }
+            resource,
+            original_transform: tx
         });
     }
 

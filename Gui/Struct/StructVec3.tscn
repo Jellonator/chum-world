@@ -4,14 +4,15 @@
 
 [node name="StructVec3" type="HBoxContainer"]
 anchor_right = 1.0
+size_flags_vertical = 3
 script = ExtResource( 1 )
 __meta__ = {
 "_edit_use_anchors_": false
 }
 
 [node name="X" type="SpinBox" parent="."]
-margin_right = 338.0
-margin_bottom = 24.0
+margin_right = 424.0
+margin_bottom = 22.0
 size_flags_horizontal = 3
 step = 0.0
 value = 0.1
@@ -20,9 +21,9 @@ allow_lesser = true
 prefix = "x"
 
 [node name="Y" type="SpinBox" parent="."]
-margin_left = 342.0
-margin_right = 680.0
-margin_bottom = 24.0
+margin_left = 428.0
+margin_right = 852.0
+margin_bottom = 22.0
 size_flags_horizontal = 3
 step = 0.0
 value = 0.1
@@ -31,9 +32,9 @@ allow_lesser = true
 prefix = "y"
 
 [node name="Z" type="SpinBox" parent="."]
-margin_left = 684.0
-margin_right = 1024.0
-margin_bottom = 24.0
+margin_left = 856.0
+margin_right = 1280.0
+margin_bottom = 22.0
 size_flags_horizontal = 3
 step = 0.0
 value = 0.1

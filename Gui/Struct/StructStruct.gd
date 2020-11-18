@@ -14,6 +14,7 @@ func set_data(p_data: Dictionary):
 	for name in names:
 		var label := Label.new()
 		label.text = name
+		label.align = Label.ALIGN_RIGHT
 		add_child(label)
 		var value = values[name]
 		var instance = Structure.instance(value)

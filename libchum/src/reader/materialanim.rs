@@ -182,7 +182,7 @@ chum_struct_generate_readwrite! {
         pub track_stretch: [struct Track<Vector2>],
         pub track_rotation: [struct Track<f32>],
         pub track_color: [struct Track<Vector3>],
-        pub track_unk: [struct Track<Vector3>],
+        pub track_emission: [struct Track<Vector3>],
         pub track_alpha: [struct Track<f32>],
         pub track_unk1: [struct Track<[u8; 4]>],
         pub track_unk2: [struct Track<[u8; 4]>],

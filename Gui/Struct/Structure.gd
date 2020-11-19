@@ -18,7 +18,6 @@ const STRUCT_TYPES = {
 }
 
 func instance(data: Dictionary):
-	print("INSTANCING FOR ", data["type"])
 	var t = data["type"]
 	if t in STRUCT_TYPES:
 		var value = STRUCT_TYPES[t].instance()

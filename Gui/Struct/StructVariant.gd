@@ -1,4 +1,4 @@
-extends PanelContainer
+extends Control
 
 signal modified(data)
 var data: Dictionary

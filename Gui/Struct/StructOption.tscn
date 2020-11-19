@@ -2,23 +2,17 @@
 
 [ext_resource path="res://Gui/Struct/StructOption.gd" type="Script" id=1]
 
-[node name="StructOption" type="PanelContainer"]
+[node name="StructOption" type="MarginContainer"]
 anchor_right = 1.0
-margin_bottom = 8.0
 size_flags_horizontal = 3
 script = ExtResource( 1 )
-__meta__ = {
-"_edit_use_anchors_": false
-}
 
 [node name="VBoxContainer" type="VBoxContainer" parent="."]
-margin_left = 1.0
-margin_top = 1.0
-margin_right = 1279.0
-margin_bottom = 25.0
+margin_right = 1280.0
+margin_bottom = 24.0
 
 [node name="CheckButton" type="CheckButton" parent="VBoxContainer"]
-margin_right = 1278.0
+margin_right = 1280.0
 margin_bottom = 24.0
 text = "Enabled"
 [connection signal="toggled" from="VBoxContainer/CheckButton" to="." method="_on_CheckButton_toggled"]

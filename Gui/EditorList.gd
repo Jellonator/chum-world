@@ -43,7 +43,6 @@ func set_file(file):
 			node_margin.hide()
 
 func _on_struct_modified(data):
-	print("REFRESH", data)
 	cfile.import_structure(data)
 #	ChumReader.invalidate(cfile.get_hash_id())
 	ChumReader.clear_cache()

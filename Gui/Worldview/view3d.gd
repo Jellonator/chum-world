@@ -18,9 +18,9 @@ onready var node_tree := $Tree/VBox/Items
 onready var node_temp := $Viewport/Temp
 onready var node_popup_select := $PanelContainer/TextureRect/PopupSelector as PopupMenu
 
-const MIN_SPEED = 0.0125
-const MAX_SPEED = 128
-const SPEED_MULT = 1.25
+const MIN_SPEED = pow(2, -8)
+const MAX_SPEED = pow(2, 8)
+const SPEED_MULT = sqrt(2.0)
 
 var speed = 2.0
 var show_node_names := false
@@ -219,15 +219,13 @@ func _on_CheckButton_toggled(button_pressed):
 func _ready():
 	$PanelContainer/TextureRect/Controls/NodeNames.pressed = show_node_names
 
-var _disable_camera_focus := false
 func _on_Items_node_selected(node):
 	if selected_node != null:
 		set_node_focus_material(selected_node, false)
 	selected_node = node
 	if selected_node != null:
 		set_node_focus_material(selected_node, true)
-	if node != null and not _disable_camera_focus:
-		camera_focus_to(node)
+	node_draw.update()
 
 func set_node_focus_material(node, is_focused: bool):
 	for meshdata in node["meshes"]:
@@ -279,9 +277,7 @@ func _on_PopupSelector_index_pressed(index):
 	selected_node = item
 	if selected_node != null:
 		set_node_focus_material(selected_node, true)
-	_disable_camera_focus = true
 	node_tree.try_select(item)
-	_disable_camera_focus = false
 
 func _on_Button_pressed():
 	reset_surfaces()

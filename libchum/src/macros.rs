@@ -274,7 +274,7 @@ macro_rules! chum_struct_structure {
                 .map(|x| chum_struct_structure!($type, *x))
                 .collect(),
             // some random default value that won't be used anyways
-            default_value: ::std::boxed::Box::new(Integer(0,U8)),
+            default_value: || {Integer(0,U8)},
         })
     };
     ([dynamic array [$lentype:tt] $type:tt $default:expr],$value:expr) => {
@@ -286,7 +286,7 @@ macro_rules! chum_struct_structure {
                     .iter()
                     .map(|x| chum_struct_structure!($type, *x))
                     .collect(),
-                default_value: ::std::boxed::Box::new(chum_struct_structure!($type, $default)),
+                default_value: || {chum_struct_structure!($type, $default)},
             })
         }
     };
@@ -300,7 +300,7 @@ macro_rules! chum_struct_structure {
                 .map(|x: &chum_struct_get_type!($type)| {
                     Box::new(chum_struct_structure!($type,*x))
                 }),
-            default_value: Box::new(chum_struct_structure!($type, $default))
+            default_value: || {chum_struct_structure!($type, $default)}
         }
     };
 }
@@ -799,7 +799,7 @@ macro_rules! chum_struct_binary_read {
                 structpath: $path.to_owned(),
                 error: Box::new(e)
             }).and_then(|size| {
-                let mut vec = Vec::with_capacity(size as usize);
+                let mut vec = Vec::with_capacity((size as usize).max(1000usize));
                 for i in 0..size {
                     vec.push(chum_struct_binary_read!($type,$file,$fmt,$struct,format!("{}[{}]",$path,i),$self)?)
                 }
@@ -1004,7 +1004,7 @@ macro_rules! chum_struct_binary_impl_private {
         }
     ) => {
         impl $crate::binary::ChumBinary for $structname {
-            fn read_from<R: ::std::io::Read>(file: &mut R, fmt: $crate::format::TotemFormat) 
+            fn read_from(file: &mut dyn ::std::io::Read, fmt: $crate::format::TotemFormat) 
             -> $crate::util::error::StructUnpackResult<Self> {
                 // well this is stupid :)
                 // Declaring another struct with the same name, purely so that
@@ -1064,6 +1064,138 @@ macro_rules! chum_struct_binary_impl {
                 $(
                     $name: $type
                 ),*
+            }
+        }
+    };
+}
+
+/// Special macro that implements ChumBinary and ChumStruct for enumerated types
+#[macro_export]
+macro_rules! chum_struct_enum {
+    (
+        $(
+            #[$a:meta]
+        )*
+        pub enum $enumname:ident $enumtype:tt {
+            $(
+                $variantname:ident: $variantpattern:pat => {
+                    $(
+                        $name:ident : $type:tt = $default:expr
+                    ),* $(,)?
+                }
+            ),* $(,)?
+        }
+    ) => {
+        $(
+            #[$a]
+        )*
+        pub enum $enumname {
+            $(
+                $variantname {
+                    $(
+                        $name: chum_struct_get_type!($type)
+                    ),*
+                }
+            ),*
+        }
+        impl $crate::structure::ChumStruct for $enumname {
+            fn structure(&self) -> $crate::structure::ChumStructVariant {
+                #![allow(unused_imports)]
+                use $crate::structure::ChumStructVariant::*;
+                use $crate::structure::IntType::*;
+                use $crate::structure::ArrayData;
+                use $crate::structure::ColorInfo;
+                use $crate::structure::VariantOption;
+                let optionvec: Vec<VariantOption> = vec! [
+                    $(
+                        VariantOption {
+                            name: stringify!($variantname).to_owned(),
+                            default_value: || {
+                                Struct(vec![
+                                    $(
+                                        {
+                                            process_structure!($name,$type,($default),self)
+                                        },
+                                    )*
+                                ].into_iter().filter_map(|e|e).collect())
+                            }
+                        }
+                    ),*
+                ];
+                match self {
+                    $(
+                        $enumname::$variantname {
+                            $(
+                                ref $name
+                            ),*
+                        } => {
+                            Variant {
+                                current: stringify!($variantname).to_owned(),
+                                options: optionvec,
+                                value: Box::new(
+                                    Struct(vec![
+                                        $(
+                                            {
+                                                process_structure!($name,$type,*$name,self)
+                                            },
+                                        )*
+                                    ].into_iter().filter_map(|e|e).collect())
+                                )
+                            }
+                        }
+                    ),*
+                }
+            }
+            fn destructure(_data: &$crate::structure::ChumStructVariant) -> Result<Self, ::std::boxed::Box<dyn ::std::error::Error>> {
+                unimplemented!()
+                // Ok(
+                //     Self {
+                //         $(
+                //             $name: process_destructure!($name,data,$type),
+                //         )*
+                //     }
+                // )
+            }
+        }
+        impl $crate::binary::ChumBinary for $enumname {
+            fn read_from(file: &mut dyn ::std::io::Read, fmt: $crate::format::TotemFormat) 
+            -> $crate::util::error::StructUnpackResult<Self> {
+                let invariant = chum_struct_binary_read!($enumtype,file,fmt,stringify!($enumname),"",())?;
+                Ok(match invariant {
+                    $(
+                        $variantpattern => {
+                            pub struct Inner {
+                                $(
+                                    $name: Option<chum_struct_get_type!($type)>
+                                ),*
+                            }
+                            #[allow(unused_mut,unused_variables)]
+                            let mut value = Inner {
+                                $(
+                                    $name: None
+                                ),*
+                            };
+                            $(
+                                value.$name = Some(
+                                    chum_struct_binary_read!($type, file, fmt, stringify!($structname), stringify!($name), &value)?
+                                );
+                            )*
+                            $enumname::$variantname {
+                                $(
+                                    $name: value.$name.unwrap()
+                                ),*
+                            }
+                        }
+                    ),*
+                    _ => panic!()
+                })
+            }
+            fn write_to<W: ::std::io::Write>(&self, _writer: &mut W, _fmt: $crate::format::TotemFormat) -> ::std::io::Result<()> {
+                unimplemented!()
+                // $(
+                //     chum_struct_binary_write!($type, writer, fmt, &self.$name, self)?;
+                // )*
+                // Ok(())
             }
         }
     };

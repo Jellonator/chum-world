@@ -4,6 +4,7 @@ use gdnative::prelude::*;
 use libchum::reader::node;
 
 pub fn read_node(data: &Vec<u8>, fmt: libchum::format::TotemFormat, file: &ChumFile) -> Option<Dictionary<Unique>> {
+    use libchum::binary::ChumBinary;
     let node = match node::Node::read_from(&mut data.as_slice(), fmt) {
         Ok(x) => x,
         Err(err) => {
@@ -30,10 +31,10 @@ pub fn read_node(data: &Vec<u8>, fmt: libchum::format::TotemFormat, file: &ChumF
         "local_scale",
         util::vec3_to_godot(&node.local_scale),
     );
-    data.insert(
-        "local_rotation",
-        util::quat_to_godot(&node.local_rotation),
-    );
+    // data.insert(
+    //     "local_rotation",
+    //     util::quat_to_godot(&node.local_rotation),
+    // );
     Some(data)
 }
 

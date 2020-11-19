@@ -189,6 +189,7 @@ fn init(handle: InitHandle) {
     handle.add_class::<chumfile::ChumFile>();
     handle.add_class::<bytedata::ByteData>();
     handle.add_class::<reader::ChumReader>();
+    handle.add_class::<util::StructGenerator>();
 }
 
 godot_gdnative_init!();

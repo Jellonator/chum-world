@@ -40,16 +40,24 @@ impl IntType {
     }
 }
 
+type ChumStructDefaultValue = fn() -> ChumStructVariant;
+
 #[derive(Clone)]
 pub struct ArrayData {
     pub data: Vec<ChumStructVariant>,
-    pub default_value: Box<ChumStructVariant>,
+    pub default_value: ChumStructDefaultValue,
     pub can_resize: bool,
 }
 
 #[derive(Clone, Copy, Debug)]
 pub struct ColorInfo {
     pub has_alpha: bool,
+}
+
+#[derive(Clone)]
+pub struct VariantOption {
+    pub name: String,
+    pub default_value: ChumStructDefaultValue,
 }
 
 #[derive(Clone)]
@@ -66,7 +74,12 @@ pub enum ChumStructVariant {
     Struct(Vec<(String, ChumStructVariant)>),
     Optional {
         value: Option<Box<ChumStructVariant>>,
-        default_value: Box<ChumStructVariant>
+        default_value: ChumStructDefaultValue
+    },
+    Variant {
+        current: String,
+        value: Box<ChumStructVariant>,
+        options: Vec<VariantOption>
     }
 }
 
@@ -200,10 +213,10 @@ impl ChumStructVariant {
             _ => None,
         }
     }
-    pub fn get_array_default(&self) -> Option<&ChumStructVariant> {
+    pub fn get_array_default(&self) -> Option<fn() -> ChumStructVariant> {
         use ChumStructVariant::*;
         match self {
-            Array(ref x) => Some(&x.default_value),
+            Array(ref x) => Some(x.default_value),
             _ => None,
         }
     }
@@ -250,15 +263,14 @@ impl ChumStructVariant {
             _ => None,
         }
     }
-    pub fn get_optional_default_value(&self) -> Option<&ChumStructVariant> {
+    pub fn get_optional_default_value(&self) -> Option<fn() -> ChumStructVariant> {
         use ChumStructVariant::*;
-        use std::borrow::Borrow;
         match self {
             Optional {
                 value: _,
                 ref default_value,
             } => {
-                Some(default_value.borrow())
+                Some(*default_value)
             }
             _ => None,
         }

@@ -7,9 +7,9 @@ onready var node_mesh := $Viewport/Spatial/MeshInstance
 onready var node_spatial := $Viewport/Spatial
 onready var mat = node_mesh.get_surface_material(0)
 
-const MIN_SPEED = 0.0125
-const MAX_SPEED = 128
-const SPEED_MULT = 1.25
+const MIN_SPEED = pow(2, -8)
+const MAX_SPEED = pow(2, 8)
+const SPEED_MULT = sqrt(2.0)
 
 var speed = 2.0
 

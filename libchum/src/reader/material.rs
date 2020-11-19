@@ -2,6 +2,7 @@
 
 // Material data
 chum_struct_generate_readwrite! {
+    #[derive(Default, Clone)]
     pub struct Material {
         pub color: [Color],
         pub emission: [Vector3 rgb],

@@ -1,9 +1,9 @@
-use crate::common::*;
-use crate::format::TotemFormat;
 use crate::reader::material;
 use std::error::Error;
 use std::fmt;
-use std::io::{self, Read};
+use crate::format::TotemFormat;
+use crate::util::error::*;
+use std::io::Read;
 
 // node union
 const T_ROTSHAPEDATA: i32 = 733875652;
@@ -33,478 +33,219 @@ impl fmt::Display for NodeReadError {
 
 impl Error for NodeReadError {}
 
-pub struct Node {
-    pub node_parent_id: i32,
-    pub node_unk_ids: [i32; 3],
-    pub resource_id: i32,
-    pub node_data: NodeDataUnion,
-    pub light_id: i32,
-    pub hfog_id: i32,
-    pub userdefine_id: i32,
-    pub floatv1: [f32; 9],
-    pub floatv2: [f32; 9],
-    pub local_transform: Mat4x4,
-    pub local_translation: Vector3,
-    pub local_rotation: Quaternion,
-    pub local_scale: Vector3,
-    pub unk1: [f32; 2],
-    pub unk2: [u32; 8],
-    pub unk3: [f32; 4],
-    pub unk4: [u16; 2],
-    pub global_transform: Mat4x4,
-    pub global_transform_inverse: Mat4x4,
-}
-
-impl Node {
-    pub fn read_from<R: Read>(file: &mut R, fmt: TotemFormat) -> Result<Node, Box<dyn Error>> {
-        Ok(Node {
-            node_parent_id: fmt.read_i32(file)?,
-            node_unk_ids: [
-                fmt.read_i32(file)?,
-                fmt.read_i32(file)?,
-                fmt.read_i32(file)?,
-            ],
-            resource_id: fmt.read_i32(file)?,
-            node_data: NodeDataUnion::read_from(file, fmt)?,
-            light_id: fmt.read_i32(file)?,
-            hfog_id: fmt.read_i32(file)?,
-            userdefine_id: fmt.read_i32(file)?,
-            floatv1: {
-                let mut data = [0f32; 9];
-                fmt.read_f32_into(file, &mut data)?;
-                data
-            },
-            floatv2: {
-                let mut data = [0f32; 9];
-                fmt.read_f32_into(file, &mut data)?;
-                data
-            },
-            local_transform: read_mat4(file, fmt)?,
-            local_translation: {
-                let v = read_vec3(file, fmt)?;
-                fmt.skip_n_bytes(file, 4)?;
-                v
-            },
-            local_rotation: read_quat(file, fmt)?,
-            local_scale: {
-                let v = read_vec3(file, fmt)?;
-                fmt.skip_n_bytes(file, 4)?;
-                v
-            },
-            unk1: [fmt.read_f32(file)?, fmt.read_f32(file)?],
-            unk2: {
-                let mut data = [0u32; 8];
-                fmt.read_u32_into(file, &mut data)?;
-                data
-            },
-            unk3: {
-                let mut data = [0f32; 4];
-                fmt.read_f32_into(file, &mut data)?;
-                data
-            },
-            unk4: [fmt.read_u16(file)?, fmt.read_u16(file)?],
-            global_transform: read_mat4(file, fmt)?,
-            global_transform_inverse: read_mat4(file, fmt)?,
-        })
+chum_struct_generate_readwrite! {
+    pub struct Node {
+        pub node_parent_id: [reference NODE],
+        pub node_unk_ids: [fixed array [reference NODE] 3],
+        pub resource_id: [reference],
+        pub node_data: [struct NodeDataUnion],
+        pub light_id: [reference LIGHT],
+        pub hfog_id: [reference HFOG],
+        pub userdefine_id: [reference USERDEFINE],
+        pub floatv1: [fixed array [f32] 9],
+        pub floatv2: [fixed array [f32] 9],
+        pub local_transform: [Mat4x4],
+        pub local_translation: [Vector3],
+        pub junk1: [ignore [fixed array [u8] 4] [0u8; 4]],
+        pub local_rotation: [Color],
+        pub local_scale: [Vector3],
+        pub junk2: [ignore [fixed array [u8] 4] [0u8; 4]],
+        pub unk1: [fixed array [f32] 2],
+        pub unk2: [fixed array [u32] 8],
+        pub unk3: [fixed array [f32] 4],
+        pub unk4: [fixed array [u16] 2],
+        pub global_transform: [Mat4x4],
+        pub global_transform_inverse: [Mat4x4],
     }
 }
 
-/// String                Hash | Resource Type
-/// ------------------------------------------
-///                          0 | (empty)
-/// ROTSHAPEDATA     733875652 | ROTSHAPE
-/// MESHDATA       -1724712303 | MESH
-/// SKEL            1985457034 | SKIN
-/// SURFACEDATAS     413080818 | SURFACE
-/// LODDATA         -141015160 | LOD
-/// PARTICLESDATA   -241612565 | PARTICLES
-pub enum NodeDataUnion {
-    Empty,
-    NodeDataLod {
-        path_id: i32,
-        subtype_id: i32,
-        unk1: [f32; 5],
-        data: Vec<NodeDataUnion>,
-        unk2: [u8; 100],
-        node_id: i32,
-        light1_id: i32,
-        light2_id: i32,
-        nodes: Vec<i32>,
-        unk3: Vec<u32>,
-    },
-    NodeDataSkin {
-        path_id: i32,
-        subtype_id: i32,
-        unk1: [f32; 5],
-        unk2: Vec<NodeSkinUnk2>,
-        unk3_id: i32,
-        materials: Vec<NodeSkinMaterial>,
-        unk4: Vec<NodeSkinUnk>,
-        unk5: Vec<NodeSkinUnk>,
-        unk6: Vec<NodeSkinUnk>,
-        unk7: Vec<NodeSkinUnk7>,
-    },
-    NodeDataSurface {
-        data_id: i32,
-        subtype_id: i32,
-        data: [f32; 5],
-        unk1: Vec<NodeDataSurfaceUnk>,
-        unk2: u32,
-        unk3: u32,
-    },
-    NodeDataRotshape {
-        data_id: i32,
-        subtype_id: i32,
-        unk1: [u32; 6],
-        unk2: u16,
-        junk: [u8; 28],
-    },
-    NodeDataMesh {
-        data_id: i32,
-        subtype_id: i32,
-        data: [f32; 5],
-    },
-    NodeDataParticles {
-        data_id: i32,
-        subtype_id: i32,
-        unk1: [f32; 5],
-        unk2: u16,
-    },
+// String                Hash | Resource Type
+// ------------------------------------------
+//                          0 | (empty)
+// ROTSHAPEDATA     733875652 | ROTSHAPE
+// MESHDATA       -1724712303 | MESH
+// SKEL            1985457034 | SKIN
+// SURFACEDATAS     413080818 | SURFACE
+// LODDATA         -141015160 | LOD
+// PARTICLESDATA   -241612565 | PARTICLES
+chum_struct_enum! {
+    #[derive(Clone)]
+    pub enum NodeDataUnion [i32] {
+        Empty: 0 => {},
+        NodeDataLod: T_LODDATA => {
+            path_id: [i32] = 0i32,
+            subtype_id: [i32] = 0i32,
+            unk1: [fixed array [f32] 5] = [0f32;5],
+            data: [dynamic array [u32] [struct NodeDataUnion] NodeDataUnion::Empty{}] = Vec::new(),
+            unk2: [fixed array [u8] 100] = [0u8;100],
+            node_id: [reference NODE] = 0i32,
+            light1_id: [reference LIGHT] = 0i32,
+            light2_id: [reference LIGHT] = 0i32,
+            nodes: [dynamic array [u32] [reference NODE] 0i32] = Vec::new(),
+            unk3: [dynamic array [u32] [u32] 0u32] = Vec::new(),
+        },
+        NodeDataSkin: T_SKEL => {
+            path_id: [i32] = 0i32,
+            subtype_id: [i32] = 0i32,
+            unk1: [fixed array [f32] 5] = [0f32; 5],
+            unk2: [dynamic array [u32] [struct NodeSkinUnk2] NodeSkinUnk2::default()] = Vec::new(),
+            unk3_id: [i32] = 0i32,
+            materials: [dynamic array [u32] [struct NodeSkinMaterial] NodeSkinMaterial::default()] = Vec::new(),
+            unk4: [dynamic array [u32] [struct NodeSkinUnk] NodeSkinUnk::default()] = Vec::new(),
+            unk5: [dynamic array [u32] [struct NodeSkinUnk] NodeSkinUnk::default()] = Vec::new(),
+            unk6: [dynamic array [u32] [struct NodeSkinUnk] NodeSkinUnk::default()] = Vec::new(),
+            unk7: [custom_binary
+                [dynamic array [u32] [struct NodeSkinUnk7] NodeSkinUnk7::default()]
+                read: |_skel: &Inner, file: &mut dyn Read, fmt: TotemFormat| -> StructUnpackResult<Vec<NodeSkinUnk7>> {
+                    // Another one of Joker's tricks
+                    // also while you're here, look at the amount of code that
+                    // is required to read a few integers with proper error handling.
+                    // THIS is why I am using macros.
+                    let len = fmt.read_u32(file).map_err(|e| StructUnpackError {
+                        structname: "NodeDataUnion::NodeDataSkin".to_owned(),
+                        structpath: "unk7".to_owned(),
+                        error: Box::new(e)
+                    })? as usize;
+                    let mut value = vec![NodeSkinUnk7::default(); len];
+                    for i in 0..len {
+                        value[i].data = NodeDataUnion::read_from(file, fmt).map_err(|e|
+                            e.structuralize("NodeDataUnion::NodeDataSkin", &format!("unk7[{}].data", i))
+                        )?;
+                    }
+                    for i in 0..len {
+                        let inner_len = fmt.read_u32(file).map_err(|e| StructUnpackError {
+                            structname: "NodeDataUnion::NodeDataSkin".to_owned(),
+                            structpath: format!("unk7[{}].ids", i),
+                            error: Box::new(e)
+                        })? as usize;
+                        let mut ids = Vec::with_capacity(inner_len.min(1000usize));
+                        for j in 0..inner_len {
+                            ids.push(fmt.read_i32(file).map_err(|e| StructUnpackError {
+                                structname: "NodeDataUnion::NodeDataSkin".to_owned(),
+                                structpath: format!("unk7[{}].ids[{}]", i, j),
+                                error: Box::new(e)
+                            })?);
+                        }
+                        value[i].ids = ids;
+                    }
+                    Ok(value)
+                };
+                write: |value: &Option<LodSoundData>, file, fmt| -> io::Result<()> {
+                    unimplemented!()
+                };
+            ] = Vec::new(),
+        },
+        NodeDataSurface: T_SURFACEDATAS => {
+            data_id: [i32] = 0i32,
+            subtype_id: [i32] = 0i32,
+            data: [fixed array [f32] 5] = [0f32; 5],
+            unk1: [dynamic array [u32] [struct NodeDataSurfaceUnk] NodeDataSurfaceUnk::default()] = Vec::new(),
+            unk2: [u32] = 0u32,
+            unk3: [u32] = 0u32,
+        },
+        NodeDataRotshape: T_ROTSHAPEDATA => {
+            data_id: [i32] = 0i32,
+            subtype_id: [i32] = 0i32,
+            unk1: [fixed array [u32] 6] = [0u32; 6],
+            unk2: [u16] = 0u16,
+            junk: [fixed array [u8] 28] = [0u8;28],
+        },
+        NodeDataMesh: T_MESHDATA => {
+            data_id: [i32] = 0i32,
+            subtype_id: [i32] = 0i32,
+            data: [fixed array [f32] 5] = [0f32; 5],
+        },
+        NodeDataParticles: T_PARTICLESDATA => {
+            data_id: [i32] = 0i32,
+            subtype_id: [i32] = 0i32,
+            unk1: [fixed array [f32] 5] = [0f32; 5],
+            unk2: [u16] = 0u16,
+        },
+    }
 }
 
-impl NodeDataUnion {
-    fn read_from<R: Read>(file: &mut R, fmt: TotemFormat) -> Result<NodeDataUnion, Box<dyn Error>> {
-        use NodeDataUnion::*;
-        let datatype = fmt.read_i32(file)?;
-        match datatype {
-            0 => Ok(Empty),
-            T_ROTSHAPEDATA => {
-                // ROTSHAPEDATA
-                Ok(NodeDataRotshape {
-                    data_id: fmt.read_i32(file)?,
-                    subtype_id: fmt.read_i32(file)?,
-                    unk1: {
-                        let mut data = [0u32; 6];
-                        fmt.read_u32_into(file, &mut data)?;
-                        data
-                    },
-                    unk2: fmt.read_u16(file)?,
-                    junk: {
-                        let mut data = [0u8; 28];
-                        fmt.read_u8_into(file, &mut data)?;
-                        data
-                    },
-                })
-            }
-            T_MESHDATA => {
-                // MESHDATA
-                Ok(NodeDataMesh {
-                    data_id: fmt.read_i32(file)?,
-                    subtype_id: fmt.read_i32(file)?,
-                    data: {
-                        let mut data = [0f32; 5];
-                        fmt.read_f32_into(file, &mut data)?;
-                        data
-                    },
-                })
-            }
-            T_SKEL => {
-                // SKEL
-                Ok(NodeDataSkin {
-                    path_id: fmt.read_i32(file)?,
-                    subtype_id: fmt.read_i32(file)?,
-                    unk1: {
-                        let mut data = [0f32; 5];
-                        fmt.read_f32_into(file, &mut data)?;
-                        data
-                    },
-                    unk2: {
-                        let num = fmt.read_u32(file)?;
-                        let mut v = Vec::with_capacity(num as usize);
-                        for _ in 0..num {
-                            v.push(NodeSkinUnk2::read_from(file, fmt)?);
-                        }
-                        v
-                    },
-                    unk3_id: fmt.read_i32(file)?,
-                    materials: {
-                        let num = fmt.read_u32(file)?;
-                        let mut v = Vec::with_capacity(num as usize);
-                        for _ in 0..num {
-                            v.push(NodeSkinMaterial::read_from(file, fmt)?);
-                        }
-                        v
-                    },
-                    unk4: {
-                        let num = fmt.read_u32(file)?;
-                        let mut v = Vec::with_capacity(num as usize);
-                        for _ in 0..num {
-                            v.push(NodeSkinUnk::read_from(file, fmt)?);
-                        }
-                        v
-                    },
-                    unk6: {
-                        let num = fmt.read_u32(file)?;
-                        let mut v = Vec::with_capacity(num as usize);
-                        for _ in 0..num {
-                            v.push(NodeSkinUnk::read_from(file, fmt)?);
-                        }
-                        v
-                    },
-                    unk5: {
-                        let num = fmt.read_u32(file)?;
-                        let mut v = Vec::with_capacity(num as usize);
-                        for _ in 0..num {
-                            v.push(NodeSkinUnk::read_from(file, fmt)?);
-                        }
-                        v
-                    },
-                    unk7: NodeSkinUnk7::read_from(file, fmt)?,
-                })
-            }
-            T_SURFACEDATAS => {
-                // SURFACEDATAS
-                Ok(NodeDataSurface {
-                    data_id: fmt.read_i32(file)?,
-                    subtype_id: fmt.read_i32(file)?,
-                    data: {
-                        let mut data = [0f32; 5];
-                        fmt.read_f32_into(file, &mut data)?;
-                        data
-                    },
-                    unk1: {
-                        let num = fmt.read_u32(file)?;
-                        let mut data = Vec::with_capacity(num as usize);
-                        for _ in 0..num {
-                            data.push(NodeDataSurfaceUnk::read_from(file, fmt)?);
-                        }
-                        data
-                    },
-                    unk2: fmt.read_u32(file)?,
-                    unk3: fmt.read_u32(file)?,
-                })
-            }
-            T_LODDATA => {
-                // LODDATA
-                Ok(NodeDataLod {
-                    path_id: fmt.read_i32(file)?,
-                    subtype_id: fmt.read_i32(file)?,
-                    unk1: {
-                        let mut data = [0f32; 5];
-                        fmt.read_f32_into(file, &mut data)?;
-                        data
-                    },
-                    data: {
-                        let num = fmt.read_u32(file)?;
-                        let mut v = Vec::with_capacity(num as usize);
-                        for _ in 0..num {
-                            v.push(NodeDataUnion::read_from(file, fmt)?);
-                        }
-                        v
-                    },
-                    unk2: {
-                        let mut data = [0u8; 100];
-                        fmt.read_u8_into(file, &mut data)?;
-                        data
-                    },
-                    node_id: fmt.read_i32(file)?,
-                    light1_id: fmt.read_i32(file)?,
-                    light2_id: fmt.read_i32(file)?,
-                    nodes: {
-                        let num = fmt.read_u32(file)?;
-                        let mut v = Vec::with_capacity(num as usize);
-                        for _ in 0..num {
-                            v.push(fmt.read_i32(file)?);
-                        }
-                        v
-                    },
-                    unk3: {
-                        let num = fmt.read_u32(file)?;
-                        let mut v = Vec::with_capacity(num as usize);
-                        for _ in 0..num {
-                            v.push(fmt.read_u32(file)?);
-                        }
-                        v
-                    },
-                })
-            }
-            T_PARTICLESDATA => {
-                // PARTICLESDATA
-                Ok(NodeDataParticles {
-                    data_id: fmt.read_i32(file)?,
-                    subtype_id: fmt.read_i32(file)?,
-                    unk1: {
-                        let mut data = [0f32; 5];
-                        fmt.read_f32_into(file, &mut data)?;
-                        data
-                    },
-                    unk2: fmt.read_u16(file)?,
-                })
-            }
-            i => Err(NodeReadError::InvalidNodeData(i))?,
+impl Default for NodeDataUnion {
+    fn default() -> Self {
+        NodeDataUnion::Empty {}
+    }
+}
+
+chum_struct_generate_readwrite! {
+    #[derive(Clone)]
+    pub struct NodeDataSurfaceUnk {
+        pub data: [fixed array [u8] 104],
+    }
+}
+
+impl Default for NodeDataSurfaceUnk {
+    fn default() -> Self {
+        Self {
+            data: [0u8; 104]
         }
     }
 }
 
-pub struct NodeDataSurfaceUnk {
-    pub data: [u8; 104],
-}
-
-impl NodeDataSurfaceUnk {
-    fn read_from<R: Read>(file: &mut R, fmt: TotemFormat) -> io::Result<NodeDataSurfaceUnk> {
-        let mut data = [0u8; 104];
-        fmt.read_u8_into(file, &mut data)?;
-        Ok(NodeDataSurfaceUnk { data })
+chum_struct_generate_readwrite! {
+    #[derive(Default, Clone)]
+    pub struct NodeSkinUnk2 {
+        pub unk_ids: [fixed array [i32] 5],
+        pub extra_data: [struct NodeSkinUnk2ExtraDataUnion],
+        pub local_translation: [Vector3],
+        pub junk1: [ignore [fixed array [u8] 4] [0u8; 4]],
+        pub local_rotation: [Color],
+        pub local_scale: [Vector3],
+        pub floatv1: [fixed array [f32] 9],
+        pub floatv2: [fixed array [f32] 9],
+        pub tx1: [Mat4x4],
+        pub tx2: [Mat4x4],
     }
 }
 
-pub struct NodeSkinUnk2 {
-    pub unk_ids: [i32; 5],
-    pub extra_data: NodeSkinUnk2ExtraDataUnion,
-    pub local_translation: Vector3,
-    pub local_rotation: Quaternion,
-    pub local_scale: Vector3,
-    pub floatv1: [f32; 9],
-    pub floatv2: [f32; 9],
-    pub tx1: Mat4x4,
-    pub tx2: Mat4x4,
-}
-
-impl NodeSkinUnk2 {
-    fn read_from<R: Read>(file: &mut R, fmt: TotemFormat) -> Result<NodeSkinUnk2, Box<dyn Error>> {
-        let unk_ids = {
-            let mut data = [i32::default(); 5];
-            fmt.read_i32_into(file, &mut data)?;
-            data
-        };
-        let extra_data = NodeSkinUnk2ExtraDataUnion::read_from(file, fmt)?;
-        let local_translation = read_vec3(file, fmt)?;
-        fmt.skip_n_bytes(file, 4)?;
-        let local_rotation = read_quat(file, fmt)?;
-        let local_scale = read_vec3(file, fmt)?;
-        let floatv1 = {
-            let mut data = [f32::default(); 9];
-            fmt.read_f32_into(file, &mut data)?;
-            data
-        };
-        let floatv2 = {
-            let mut data = [f32::default(); 9];
-            fmt.read_f32_into(file, &mut data)?;
-            data
-        };
-        let tx1 = read_mat4(file, fmt)?;
-        let tx2 = read_mat4(file, fmt)?;
-        Ok(NodeSkinUnk2 {
-            unk_ids,
-            extra_data,
-            local_translation,
-            local_rotation,
-            local_scale,
-            floatv1,
-            floatv2,
-            tx1,
-            tx2,
-        })
+chum_struct_enum! {
+    /// String              Hash | Resource Type
+    /// ------------------------------------------------
+    ///                        0 | (empty)
+    /// USERDEFINE   -1879206489 | USERDEFINE (embedded)
+    #[derive(Clone)]
+    pub enum NodeSkinUnk2ExtraDataUnion [i32] {
+        Empty: 0 => {},
+        UserDefine: E_USERDATA => {
+            type1: [i32] = 0i32,
+            type2: [i32] = 0i32,
+            data: [dynamic array [u32] [u8] 0u8] = Vec::new(),
+        },
     }
 }
 
-/// String              Hash | Resource Type
-/// ------------------------------------------------
-///                        0 | (empty)
-/// USERDEFINE   -1879206489 | USERDEFINE (embedded)
-pub enum NodeSkinUnk2ExtraDataUnion {
-    Empty,
-    UserDefine {
-        type1: i32,
-        type2: i32,
-        data: Vec<u8>,
-    },
-}
-
-impl NodeSkinUnk2ExtraDataUnion {
-    fn read_from<R: Read>(
-        file: &mut R,
-        fmt: TotemFormat,
-    ) -> Result<NodeSkinUnk2ExtraDataUnion, Box<dyn Error>> {
-        let datatype = fmt.read_i32(file)?;
-        match datatype {
-            0 => Ok(NodeSkinUnk2ExtraDataUnion::Empty),
-            E_USERDATA => {
-                let type1 = fmt.read_i32(file)?;
-                let type2 = fmt.read_i32(file)?;
-                let length = fmt.read_u32(file)?;
-                let mut data = Vec::with_capacity(length as usize);
-                for _ in 0..length {
-                    data.push(fmt.read_u8(file)?);
-                }
-                Ok(NodeSkinUnk2ExtraDataUnion::UserDefine { type1, type2, data })
-            }
-            i => Err(NodeReadError::InvalidNodeSkinUnk2ExtraData(i))?,
-        }
+impl Default for NodeSkinUnk2ExtraDataUnion {
+    fn default() -> Self {
+        NodeSkinUnk2ExtraDataUnion::Empty {}
     }
 }
 
-pub struct NodeSkinMaterial {
-    pub filetype_id: i32,
-    pub filename_id: i32,
-    pub subtype_id: i32,
-    pub material: material::Material,
-}
-
-impl NodeSkinMaterial {
-    fn read_from<R: Read>(file: &mut R, fmt: TotemFormat) -> io::Result<NodeSkinMaterial> {
-        use crate::binary::ChumBinary;
-        Ok(NodeSkinMaterial {
-            filetype_id: fmt.read_i32(file)?,
-            filename_id: fmt.read_i32(file)?,
-            subtype_id: fmt.read_i32(file)?,
-            material: material::Material::read_from(file, fmt).unwrap(),
-        })
+chum_struct_generate_readwrite! {
+    #[derive(Default, Clone)]
+    pub struct NodeSkinMaterial {
+        pub filetype_id: [i32],
+        pub filename_id: [i32],
+        pub subtype_id: [i32],
+        pub material: [struct material::Material],
     }
 }
 
-pub struct NodeSkinUnk {
-    pub unk1: [f32; 4],
-    pub unk2_id: i32,
-    pub unk3_id: i32,
-}
-
-impl NodeSkinUnk {
-    fn read_from<R: Read>(file: &mut R, fmt: TotemFormat) -> io::Result<NodeSkinUnk> {
-        let mut unk1 = [0.0f32; 4];
-        fmt.read_f32_into(file, &mut unk1)?;
-        Ok(NodeSkinUnk {
-            unk1,
-            unk2_id: fmt.read_i32(file)?,
-            unk3_id: fmt.read_i32(file)?,
-        })
+chum_struct_generate_readwrite! {
+    #[derive(Default, Clone)]
+    pub struct NodeSkinUnk {
+        pub unk1: [fixed array [f32] 4],
+        pub unk2_id: [i32],
+        pub unk3_id: [i32],
     }
 }
 
-pub struct NodeSkinUnk7 {
-    pub data: NodeDataUnion,
-    pub ids: Vec<i32>,
-}
-
-impl NodeSkinUnk7 {
-    fn read_from<R: Read>(
-        file: &mut R,
-        fmt: TotemFormat,
-    ) -> Result<Vec<NodeSkinUnk7>, Box<dyn Error>> {
-        let num = fmt.read_u32(file)?;
-        let mut v: Vec<NodeSkinUnk7> = Vec::with_capacity(num as usize);
-        for _ in 0..num {
-            v.push(NodeSkinUnk7 {
-                data: NodeDataUnion::read_from(file, fmt)?,
-                ids: Vec::new(),
-            });
-        }
-        for i in 0..num {
-            let num_ids = fmt.read_u32(file)?;
-            let mut ids = vec![0; num_ids as usize];
-            fmt.read_i32_into(file, &mut ids)?;
-            v[i as usize].ids = ids;
-        }
-        Ok(v)
+chum_struct_generate_readwrite! {
+    #[derive(Default, Clone)]
+    pub struct NodeSkinUnk7 {
+        pub data: [struct NodeDataUnion],
+        pub ids: [dynamic array [u32] [i32] 0i32],
     }
 }

@@ -19,7 +19,7 @@ pub const SAFE_CAPACITY_SMALL: u32 = 1024;
 /// This is so that out of memory errors don't occur with Vec::with_capacity
 pub const SAFE_CAPACITY_BIG: u32 = 128;
 
-pub fn read_quat<R: Read>(reader: &mut R, fmt: TotemFormat) -> io::Result<Quaternion> {
+pub fn read_quat(reader: &mut dyn Read, fmt: TotemFormat) -> io::Result<Quaternion> {
     let i = fmt.read_f32(reader)?;
     let j = fmt.read_f32(reader)?;
     let k = fmt.read_f32(reader)?;
@@ -38,7 +38,7 @@ pub fn write_quat<W: Write>(q: &Quaternion, writer: &mut W, fmt: TotemFormat) ->
 }
 
 /// Read a Vector3 from a file (12 bytes)
-pub fn read_vec3<R: Read>(reader: &mut R, fmt: TotemFormat) -> io::Result<Vector3> {
+pub fn read_vec3(reader: &mut dyn Read, fmt: TotemFormat) -> io::Result<Vector3> {
     Ok(Vector3::new(
         fmt.read_f32(reader)?,
         fmt.read_f32(reader)?,
@@ -85,7 +85,7 @@ pub fn qlerp_vec3(values: &[[Vector3; 2]; 2], t_x: f32, t_y: f32) -> Vector3 {
 }
 
 /// Read a Vector2 from a file (8 bytes)
-pub fn read_vec2<R: Read>(reader: &mut R, fmt: TotemFormat) -> io::Result<Vector2> {
+pub fn read_vec2(reader: &mut dyn Read, fmt: TotemFormat) -> io::Result<Vector2> {
     Ok(Vector2::new(fmt.read_f32(reader)?, fmt.read_f32(reader)?))
 }
 
@@ -257,7 +257,7 @@ impl TriStrip {
 }
 
 /// Read a Mat3x3 from a file (36 bytes)
-pub fn read_mat3<R: Read>(reader: &mut R, fmt: TotemFormat) -> io::Result<Mat3x3> {
+pub fn read_mat3(reader: &mut dyn Read, fmt: TotemFormat) -> io::Result<Mat3x3> {
     let mut buf = [0.0f32; 9];
     fmt.read_f32_into(reader, &mut buf)?;
     Ok(Mat3x3::from_row_slice(&buf))
@@ -272,7 +272,7 @@ pub fn write_mat3<W: Write>(mat: &Mat3x3, writer: &mut W, fmt: TotemFormat) -> i
 }
 
 /// Read a Mat4x4 from a file (64 bytes)
-pub fn read_mat4<R: Read>(reader: &mut R, fmt: TotemFormat) -> io::Result<Mat4x4> {
+pub fn read_mat4(reader: &mut dyn Read, fmt: TotemFormat) -> io::Result<Mat4x4> {
     let mut buf = [0.0f32; 16];
     fmt.read_f32_into(reader, &mut buf)?;
     Ok(Mat4x4::from_row_slice(&buf))
@@ -287,7 +287,7 @@ pub fn write_mat4<W: Write>(mat: &Mat4x4, writer: &mut W, fmt: TotemFormat) -> i
 }
 
 /// Read an RGBA float-based color from a file (16 bytes)
-pub fn read_color<R: Read>(reader: &mut R, fmt: TotemFormat) -> io::Result<Color> {
+pub fn read_color(reader: &mut dyn Read, fmt: TotemFormat) -> io::Result<Color> {
     let mut buf = [0.0f32; 4];
     fmt.read_f32_into(reader, &mut buf)?;
     Ok(Color::new(buf[0], buf[1], buf[2], buf[3]))

@@ -4,8 +4,8 @@ use crate::util::error;
 use std::io::{self, Read, Write};
 
 pub trait ChumBinary: Sized {
-    fn read_from<R: Read>(file: &mut R, fmt: TotemFormat) -> error::StructUnpackResult<Self>;
-    fn write_to<W: Write>(&self, writer: &mut W, fmt: TotemFormat) -> io::Result<()>;
+    fn read_from(file: &mut dyn Read, fmt: TotemFormat) -> error::StructUnpackResult<Self>;
+    fn write_to<W: Write + Sized>(&self, writer: &mut W, fmt: TotemFormat) -> io::Result<()>;
 }
 
 // macro_rules! impl_simple_chum_binary {

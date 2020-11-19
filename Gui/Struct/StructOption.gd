@@ -2,14 +2,14 @@ extends PanelContainer
 
 signal modified(data)
 var data: Dictionary
-var default_value: Dictionary
+#var default_value: Dictionary
 var current_node: Control
 var can_emit = false
 
 func set_data(p_data: Dictionary):
 	can_emit = false
 	self.data = p_data
-	default_value = data["default"]
+#	default_value = data["default"]
 	if data.has("value"):
 		$VBoxContainer/CheckButton.pressed = true
 		create_node(data["value"])
@@ -34,7 +34,7 @@ func _on_CheckButton_toggled(button_pressed):
 	if not can_emit:
 		return
 	if button_pressed:
-		create_node(default_value)
+		create_node(data["default"].generate())
 	else:
 		delete_node()
 	emit_signal("modified", self.data)

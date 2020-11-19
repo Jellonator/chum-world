@@ -14,6 +14,7 @@ const STRUCT_TYPES = {
 	"array": preload("res://Gui/Struct/StructArray.tscn"),
 	"struct": preload("res://Gui/Struct/StructStruct.tscn"),
 	"option": preload("res://Gui/Struct/StructOption.tscn"),
+	"variant": preload("res://Gui/Struct/StructVariant.tscn"),
 }
 
 func instance(data: Dictionary):

@@ -1,13 +1,15 @@
 use crate::common::*;
-use crate::format::TotemFormat;
-use std::io::{self, Read};
 
-pub struct Spline {
-    pub transform: THeaderTyped,
-    pub vertices: Vec<Vector3>,
-    pub sections: Vec<SplineSection>,
-    pub unk4: [f32; 4],
-    pub length: f32,
+chum_struct_generate_readwrite! {
+    pub struct Spline {
+        pub transform: [struct THeaderNoType],
+        pub item_type: [ignore [u16] 2u16],
+        pub item_subtype: [ignore [u16] 2u16],
+        pub vertices: [dynamic array [u32] [Vector3] Vector3::default()],
+        pub sections: [dynamic array [u32] [struct SplineSection] SplineSection::default()],
+        pub unk4: [fixed array [f32] 4],
+        pub length: [f32],
+    }
 }
 
 impl Spline {
@@ -34,83 +36,26 @@ impl Spline {
         }
         v
     }
+}
 
-    pub fn read_from<R: Read>(file: &mut R, fmt: TotemFormat) -> io::Result<Spline> {
-        use crate::binary::ChumBinary;
-        Ok(Spline {
-            transform: THeaderTyped::read_from(file, fmt).unwrap(),
-            vertices: {
-                let num = fmt.read_u32(file)?;
-                let mut vec = Vec::with_capacity(num as usize);
-                for _ in 0..num {
-                    vec.push(read_vec3(file, fmt)?);
-                }
-                vec
-            },
-            sections: {
-                let num = fmt.read_u32(file)?;
-                let mut vec = Vec::with_capacity(num as usize);
-                for _ in 0..num {
-                    vec.push(SplineSection::read_from(file, fmt)?);
-                }
-                vec
-            },
-            unk4: [
-                fmt.read_f32(file)?,
-                fmt.read_f32(file)?,
-                fmt.read_f32(file)?,
-                fmt.read_f32(file)?,
-            ],
-            length: fmt.read_f32(file)?,
-        })
+chum_struct_generate_readwrite! {
+    #[derive(Default)]
+    pub struct SplineSection {
+        pub p1: [u32],
+        pub p2: [u32],
+        pub p1_t: [u32],
+        pub p2_t: [u32],
+        pub unk: [u32],
+        pub section_length: [f32],
+        pub subsections: [fixed array [struct SplineSubsection] 8],
     }
 }
 
-pub struct SplineSection {
-    pub p1: u32,
-    pub p2: u32,
-    pub p1_t: u32,
-    pub p2_t: u32,
-    pub unk: u32,
-    pub section_length: f32,
-    pub subsections: [SplineSubsection; 8],
-}
-
-impl SplineSection {
-    pub fn read_from<R: Read>(file: &mut R, fmt: TotemFormat) -> io::Result<SplineSection> {
-        Ok(SplineSection {
-            p1: fmt.read_u32(file)?,
-            p2: fmt.read_u32(file)?,
-            p1_t: fmt.read_u32(file)?,
-            p2_t: fmt.read_u32(file)?,
-            unk: fmt.read_u32(file)?,
-            section_length: fmt.read_f32(file)?,
-            subsections: [
-                SplineSubsection::read_from(file, fmt)?,
-                SplineSubsection::read_from(file, fmt)?,
-                SplineSubsection::read_from(file, fmt)?,
-                SplineSubsection::read_from(file, fmt)?,
-                SplineSubsection::read_from(file, fmt)?,
-                SplineSubsection::read_from(file, fmt)?,
-                SplineSubsection::read_from(file, fmt)?,
-                SplineSubsection::read_from(file, fmt)?,
-            ],
-        })
-    }
-}
-
-pub struct SplineSubsection {
-    pub point1: Vector3,
-    pub point2: Vector3,
-    pub subsection_length: f32,
-}
-
-impl SplineSubsection {
-    pub fn read_from<R: Read>(file: &mut R, fmt: TotemFormat) -> io::Result<SplineSubsection> {
-        Ok(SplineSubsection {
-            point1: read_vec3(file, fmt)?,
-            point2: read_vec3(file, fmt)?,
-            subsection_length: fmt.read_f32(file)?,
-        })
+chum_struct_generate_readwrite! {
+    #[derive(Default)]
+    pub struct SplineSubsection {
+        pub point1: [Vector3],
+        pub point2: [Vector3],
+        pub subsection_length: [f32],
     }
 }

@@ -5,7 +5,6 @@ var data: Dictionary
 
 var array: Array
 var can_resize: bool
-var default_value: Dictionary
 
 onready var node_elements := $VBox/Elements
 
@@ -99,7 +98,6 @@ func set_data(p_data: Dictionary):
 	self.data = p_data
 	self.array = data["value"]
 	self.can_resize = data["can_resize"]
-	self.default_value = data["default"]
 	for child in node_elements.get_children():
 		child.queue_free()
 	var i := 0
@@ -115,7 +113,7 @@ func set_data(p_data: Dictionary):
 		$VBox/Append.hide()
 
 func _on_Append_pressed():
-	var newdata = self.default_value.duplicate(true)
+	var newdata = data["default"].generate()
 	var i := self.array.size()
 	self.array.append(newdata)
 	push_element(i, newdata)

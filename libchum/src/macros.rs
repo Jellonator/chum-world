@@ -1055,7 +1055,7 @@ macro_rules! chum_struct_binary_impl_private {
                     ),*
                 })
             }
-            fn write_to<W: ::std::io::Write>(&self, writer: &mut W, fmt: $crate::format::TotemFormat) -> ::std::io::Result<()> {
+            fn write_to(&self, writer: &mut dyn ::std::io::Write, fmt: $crate::format::TotemFormat) -> ::std::io::Result<()> {
                 $(
                     chum_struct_binary_write!($type, writer, fmt, &self.$name, self)?;
                 )*
@@ -1102,7 +1102,7 @@ macro_rules! chum_struct_enum {
         )*
         pub enum $enumname:ident $enumtype:tt {
             $(
-                $variantname:ident: $variantpattern:pat => {
+                $variantname:ident: $variantpattern:tt => {
                     $(
                         $name:ident : $type:tt = $default:expr
                     ),* $(,)?
@@ -1214,12 +1214,22 @@ macro_rules! chum_struct_enum {
                     _ => panic!()
                 })
             }
-            fn write_to<W: ::std::io::Write>(&self, _writer: &mut W, _fmt: $crate::format::TotemFormat) -> ::std::io::Result<()> {
-                unimplemented!()
-                // $(
-                //     chum_struct_binary_write!($type, writer, fmt, &self.$name, self)?;
-                // )*
-                // Ok(())
+            fn write_to(&self, writer: &mut dyn ::std::io::Write, fmt: $crate::format::TotemFormat) -> ::std::io::Result<()> {
+                match self {
+                    $(
+                        $enumname::$variantname {
+                            $(
+                                $name
+                            ),*
+                        } => {
+                            chum_struct_binary_write!($enumtype,writer,fmt,&($variantpattern),self)?;
+                            $(
+                                chum_struct_binary_write!($type,writer,fmt,$name,self)?;
+                            )*
+                        }
+                    ),*
+                }
+                Ok(())
             }
         }
     };

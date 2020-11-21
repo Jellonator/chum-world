@@ -39,7 +39,7 @@ physics_object_picking = true
 [node name="DirectionalLight" type="DirectionalLight" parent="Viewport"]
 
 [node name="CameraViewer" parent="Viewport" instance=ExtResource( 4 )]
-transform = Transform( -1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 0, 4, -13.8483 )
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4, -13.8483 )
 
 [node name="Draw" type="Sprite" parent="Viewport"]
 
@@ -160,6 +160,8 @@ __meta__ = {
 "_edit_use_anchors_": false
 }
 [connection signal="draw" from="Viewport/Draw" to="." method="_on_Draw_draw"]
+[connection signal="on_change_transform" from="Viewport/TransformGizmo" to="." method="_on_TransformGizmo_on_change_transform"]
+[connection signal="on_finalize_transform" from="Viewport/TransformGizmo" to="." method="_on_TransformGizmo_on_finalize_transform"]
 [connection signal="text_changed" from="Tree/VBox/Search" to="Tree/VBox/Items" method="_on_Search_text_changed"]
 [connection signal="button_pressed" from="Tree/VBox/Items" to="Tree/VBox/Items" method="_on_Items_button_pressed"]
 [connection signal="item_selected" from="Tree/VBox/Items" to="Tree/VBox/Items" method="_on_Items_item_selected"]

@@ -12,55 +12,55 @@ pub enum TotemFormat {
 
 impl TotemFormat {
     // writing functions
-    pub fn write_u32<W: Write>(&self, writer: &mut W, value: u32) -> io::Result<()> {
+    pub fn write_u32(&self, writer: &mut dyn Write, value: u32) -> io::Result<()> {
         match self {
             TotemFormat::NGC => writer.write_u32::<BigEndian>(value),
             TotemFormat::PS2 => writer.write_u32::<LittleEndian>(value),
         }
     }
-    pub fn write_i32<W: Write>(&self, writer: &mut W, value: i32) -> io::Result<()> {
+    pub fn write_i32(&self, writer: &mut dyn Write, value: i32) -> io::Result<()> {
         match self {
             TotemFormat::NGC => writer.write_i32::<BigEndian>(value),
             TotemFormat::PS2 => writer.write_i32::<LittleEndian>(value),
         }
     }
-    pub fn write_u24<W: Write>(&self, writer: &mut W, value: u32) -> io::Result<()> {
+    pub fn write_u24(&self, writer: &mut dyn Write, value: u32) -> io::Result<()> {
         match self {
             TotemFormat::NGC => writer.write_u24::<BigEndian>(value),
             TotemFormat::PS2 => writer.write_u24::<LittleEndian>(value),
         }
     }
-    pub fn write_i24<W: Write>(&self, writer: &mut W, value: i32) -> io::Result<()> {
+    pub fn write_i24(&self, writer: &mut dyn Write, value: i32) -> io::Result<()> {
         match self {
             TotemFormat::NGC => writer.write_i24::<BigEndian>(value),
             TotemFormat::PS2 => writer.write_i24::<LittleEndian>(value),
         }
     }
-    pub fn write_u16<W: Write>(&self, writer: &mut W, value: u16) -> io::Result<()> {
+    pub fn write_u16(&self, writer: &mut dyn Write, value: u16) -> io::Result<()> {
         match self {
             TotemFormat::NGC => writer.write_u16::<BigEndian>(value),
             TotemFormat::PS2 => writer.write_u16::<LittleEndian>(value),
         }
     }
-    pub fn write_i16<W: Write>(&self, writer: &mut W, value: i16) -> io::Result<()> {
+    pub fn write_i16(&self, writer: &mut dyn Write, value: i16) -> io::Result<()> {
         match self {
             TotemFormat::NGC => writer.write_i16::<BigEndian>(value),
             TotemFormat::PS2 => writer.write_i16::<LittleEndian>(value),
         }
     }
-    pub fn write_u8<W: Write>(&self, writer: &mut W, value: u8) -> io::Result<()> {
+    pub fn write_u8(&self, writer: &mut dyn Write, value: u8) -> io::Result<()> {
         writer.write_u8(value)
     }
-    pub fn write_i8<W: Write>(&self, writer: &mut W, value: i8) -> io::Result<()> {
+    pub fn write_i8(&self, writer: &mut dyn Write, value: i8) -> io::Result<()> {
         writer.write_i8(value)
     }
-    pub fn write_f32<W: Write>(&self, writer: &mut W, value: f32) -> io::Result<()> {
+    pub fn write_f32(&self, writer: &mut dyn Write, value: f32) -> io::Result<()> {
         match self {
             TotemFormat::NGC => writer.write_f32::<BigEndian>(value),
             TotemFormat::PS2 => writer.write_f32::<LittleEndian>(value),
         }
     }
-    pub fn write_bytes<W: Write>(&self, writer: &mut W, buf: &[u8]) -> io::Result<()> {
+    pub fn write_bytes(&self, writer: &mut dyn Write, buf: &[u8]) -> io::Result<()> {
         writer.write_all(buf)
     }
     // reading functions

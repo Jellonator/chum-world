@@ -80,6 +80,7 @@ impl NodeView {
     #[export]
     pub fn set_global_transform(&mut self, _owner: TRef<Resource>, value: Transform) {
         self.inner.global_transform = util::transform_to_mat4x4(&value);
+        println!("TX:\n{:?}", self.inner.global_transform);
         let inverse = Transform {
             basis: value.basis.inverted(),
             origin: -value.origin

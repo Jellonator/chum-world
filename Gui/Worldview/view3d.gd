@@ -88,7 +88,7 @@ func try_add_node(node_view, file):
 	tnodes_by_id[file.get_hash_id()] = node_data
 
 func set_active(value: bool):
-	node_transform_gizmo.set_active(value)
+	node_transform_gizmo.set_active(value and selected_node != null)
 
 func reset_surfaces():
 	tnodes_by_id.clear()
@@ -120,6 +120,7 @@ func reset_surfaces():
 			print("INVALID PARENT ID ", parentid)
 	node_tree.assemble_tree(tnode_root)
 	update_shown_objects()
+	node_transform_gizmo.set_active(false)
 
 func set_archive(p_archive):
 	self.archive = p_archive
@@ -136,7 +137,7 @@ func _input(event):
 			if Input.is_action_pressed("view_look"):
 				if event is InputEventMouseMotion:
 					node_camera.move_mouse(event.relative)
-			if event.is_action_pressed("view_focus"):
+			if event.is_action_pressed("view_focus") and selected_node != null:
 				camera_focus_to(selected_node)
 			if event.is_action_pressed("view_speed_increase"):
 				speed = clamp(speed * SPEED_MULT, MIN_SPEED, MAX_SPEED)
@@ -248,14 +249,6 @@ func _on_CheckButton_toggled(button_pressed):
 func _ready():
 	$PanelContainer/TextureRect/Controls/NodeNames.pressed = show_node_names
 
-func _on_Items_node_selected(node):
-	if selected_node != null:
-		set_node_focus_material(selected_node, false)
-	selected_node = node
-	if selected_node != null:
-		set_node_focus_material(selected_node, true)
-	node_draw.update()
-
 func set_node_focus_material(node, is_focused: bool):
 	for meshdata in node["meshes"]:
 		var mat = meshdata["original"]
@@ -298,15 +291,39 @@ func update_shown_objects():
 	get_tree().set_group("vis_node", "visible", option_show_nodes)
 	get_tree().set_group("vis_spline", "visible", option_show_splines)
 
+func set_selected_node(node):
+	if selected_node != null:
+		set_node_focus_material(selected_node, false)
+	selected_node = node
+	if selected_node != null:
+		set_node_focus_material(selected_node, true)
+	node_draw.update()
+	node_transform_gizmo.set_active(true)
+	node_transform_gizmo.transform = selected_node["node"].transform
+
+func _on_Items_node_selected(node):
+	set_selected_node(node)
+	print("SELECT FROM ITEMS")
+
 func _on_PopupSelector_index_pressed(index):
 	var id = node_popup_select.get_item_id(index)
 	var item = node_popup_select.get_item_metadata(id)
-	if selected_node != null:
-		set_node_focus_material(selected_node, false)
-	selected_node = item
-	if selected_node != null:
-		set_node_focus_material(selected_node, true)
 	node_tree.try_select(item)
+	print("SELECT FROM POPUP")
+	set_selected_node(item)
 
 func _on_Button_pressed():
 	reset_surfaces()
+
+func _on_TransformGizmo_on_change_transform(tx):
+	if selected_node != null:
+		selected_node["node"].transform = tx
+
+func _on_TransformGizmo_on_finalize_transform(tx):
+	if selected_node != null:
+		selected_node["node"].transform = tx
+		var view = selected_node["view"]
+		var file = selected_node["file"]
+		view.global_transform = tx
+		view.local_transform = get_node_local_transform(selected_node)
+		view.save(file)

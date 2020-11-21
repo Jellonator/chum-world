@@ -32,8 +32,8 @@ func funny_project(plane: Plane, point: Vector3, normal: Vector3) -> Vector3:
 	return plane.project(point)
 
 func project_onto_axis_global(point: Vector3, normal: Vector3) -> Vector3:
-	point = transform.xform_inv(point)
-	normal = transform.basis.xform_inv(normal)
+	point = point - translation
+#	normal = transform.basis.xform_inv(normal)
 	match active_axis:
 		Axis.X:
 			point = funny_project(Plane.PLANE_XZ, point, normal)
@@ -50,7 +50,7 @@ func project_onto_axis_global(point: Vector3, normal: Vector3) -> Vector3:
 			normal.y = 0
 			normal = normal.normalized()
 			point = funny_project(Plane.PLANE_YZ, point, normal)
-	point = transform.xform(point)
+	point = point + translation
 	return point
 
 var mouse_start_position := Vector3.ZERO
@@ -62,6 +62,8 @@ func set_active(value: bool):
 	set_process_input(value)
 	active_axis = Axis.NONE
 	is_dragging = false
+	visible = value
+	node_base.visible = value
 
 func _process(delta):
 	var p1 := get_viewport().get_camera().global_transform.origin

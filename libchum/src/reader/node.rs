@@ -3,7 +3,7 @@ use std::error::Error;
 use std::fmt;
 use crate::format::TotemFormat;
 use crate::util::error::*;
-use std::io::Read;
+use std::io::{self, Read, Write};
 
 // node union
 const T_ROTSHAPEDATA: i32 = 733875652;
@@ -131,8 +131,18 @@ chum_struct_enum! {
                     }
                     Ok(value)
                 };
-                write: |value: &Option<LodSoundData>, file, fmt| -> io::Result<()> {
-                    unimplemented!()
+                write: |value: &Vec<NodeSkinUnk7>, file: &mut dyn Write, fmt: TotemFormat| -> io::Result<()> {
+                    fmt.write_u32(file, value.len() as u32)?;
+                    for inner in value.iter() {
+                        inner.data.write_to(file, fmt)?;
+                    }
+                    for inner in value.iter() {
+                        fmt.write_u32(file, inner.ids.len() as u32)?;
+                        for id in inner.ids.iter() {
+                            fmt.write_i32(file, *id)?;
+                        }
+                    }
+                    Ok(())
                 };
             ] = Vec::new(),
         },

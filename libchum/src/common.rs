@@ -28,7 +28,7 @@ pub fn read_quat(reader: &mut dyn Read, fmt: TotemFormat) -> io::Result<Quaterni
     Ok(Quaternion::new(w, i, j, k))
 }
 
-pub fn write_quat<W: Write>(q: &Quaternion, writer: &mut W, fmt: TotemFormat) -> io::Result<()> {
+pub fn write_quat(q: &Quaternion, writer: &mut dyn Write, fmt: TotemFormat) -> io::Result<()> {
     // Quat indexing is in (i, j, k, w) order
     fmt.write_f32(writer, q[0])?;
     fmt.write_f32(writer, q[1])?;
@@ -47,7 +47,7 @@ pub fn read_vec3(reader: &mut dyn Read, fmt: TotemFormat) -> io::Result<Vector3>
 }
 
 /// Write a Vector3 to a file (12 bytes)
-pub fn write_vec3<W: Write>(v: &Vector3, writer: &mut W, fmt: TotemFormat) -> io::Result<()> {
+pub fn write_vec3(v: &Vector3, writer: &mut dyn Write, fmt: TotemFormat) -> io::Result<()> {
     fmt.write_f32(writer, v.x)?;
     fmt.write_f32(writer, v.y)?;
     fmt.write_f32(writer, v.z)?;
@@ -90,7 +90,7 @@ pub fn read_vec2(reader: &mut dyn Read, fmt: TotemFormat) -> io::Result<Vector2>
 }
 
 /// Write a Vector2 to a file (8 bytes)
-pub fn write_vec2<W: Write>(v: &Vector2, writer: &mut W, fmt: TotemFormat) -> io::Result<()> {
+pub fn write_vec2(v: &Vector2, writer: &mut dyn Write, fmt: TotemFormat) -> io::Result<()> {
     fmt.write_f32(writer, v.x)?;
     fmt.write_f32(writer, v.y)?;
     Ok(())
@@ -264,7 +264,7 @@ pub fn read_mat3(reader: &mut dyn Read, fmt: TotemFormat) -> io::Result<Mat3x3> 
 }
 
 /// Write a Mat3x3 to a file (36 bytes)
-pub fn write_mat3<W: Write>(mat: &Mat3x3, writer: &mut W, fmt: TotemFormat) -> io::Result<()> {
+pub fn write_mat3(mat: &Mat3x3, writer: &mut dyn Write, fmt: TotemFormat) -> io::Result<()> {
     for value in mat.iter() {
         fmt.write_f32(writer, *value)?;
     }
@@ -279,7 +279,7 @@ pub fn read_mat4(reader: &mut dyn Read, fmt: TotemFormat) -> io::Result<Mat4x4> 
 }
 
 /// Write a Mat4x4 to a file (64 bytes)
-pub fn write_mat4<W: Write>(mat: &Mat4x4, writer: &mut W, fmt: TotemFormat) -> io::Result<()> {
+pub fn write_mat4(mat: &Mat4x4, writer: &mut dyn Write, fmt: TotemFormat) -> io::Result<()> {
     for value in mat.iter() {
         fmt.write_f32(writer, *value)?;
     }
@@ -294,7 +294,7 @@ pub fn read_color(reader: &mut dyn Read, fmt: TotemFormat) -> io::Result<Color> 
 }
 
 /// Write an RGBA float-based color to a file (16 bytes)
-pub fn write_color<W: Write>(col: &Color, writer: &mut W, fmt: TotemFormat) -> io::Result<()> {
+pub fn write_color(col: &Color, writer: &mut dyn Write, fmt: TotemFormat) -> io::Result<()> {
     for value in col.iter() {
         fmt.write_f32(writer, *value)?;
     }

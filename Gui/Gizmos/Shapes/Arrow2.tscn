@@ -1,0 +1,102 @@
+[gd_scene load_steps=8 format=2]
+
+[ext_resource path="res://Shader/circle_line.shader" type="Shader" id=1]
+[ext_resource path="res://Gui/Gizmos/Shapes/MeshInstance2.gd" type="Script" id=2]
+
+[sub_resource type="QuadMesh" id=9]
+
+[sub_resource type="ShaderMaterial" id=10]
+shader = ExtResource( 1 )
+
+[sub_resource type="CylinderMesh" id=11]
+top_radius = 0.001
+bottom_radius = 0.5
+height = 1.0
+
+[sub_resource type="Shader" id=8]
+code = "shader_type spatial;
+render_mode unshaded, cull_disabled;
+
+varying vec3 position;
+
+void vertex() {
+	position = VERTEX;
+}
+
+float DistToLine(vec3 pt1, vec3 pt2, vec3 testPt)
+{
+	vec3 d = (pt2 - pt1) / distance(pt1, pt2);
+	vec3 v = testPt - pt1;
+	float t = dot(v, d);
+	vec3 P = pt1 + t * d;
+	return distance(P, testPt);
+}
+
+void fragment() {
+	ALPHA_SCISSOR = 0.5;
+	vec3 p0 = vec3(0.0, 0.5, 0.0);
+	vec3 p1 = vec3(-0.5, -0.5, 0.0);
+	vec3 p2 = vec3(0.5, -0.5, 0.0);
+//	vec3 view = (CAMERA_MATRIX * inverse(WORLD_MATRIX) * vec4(VIEW, 0.0)).xyz;
+//	view.z = 0.0;
+//	view = normalize(VIEW);
+//	vec3 p1 = cross(normalize(p0), view) * 0.25;
+//	vec3 p2 = -cross(normalize(p0), view) * 0.25;
+	if (UV.y > 0.5) {
+		ALPHA = 0.0;
+	}
+	
+	if (DistToLine(p0, p1, position) > 0.1 && DistToLine(p0, p2, position) > 0.1) {
+		ALPHA = 0.0;
+	}
+	
+//	if (distance(p1, position) > 0.1) {
+//		ALPHA = 0.0;
+//	}
+	
+//	vec4 newfunny = INV_CAMERA_MATRIX * vec4(funny, 1.0);
+//	newfunny.z = 0.0;
+//	newfunny = CAMERA_MATRIX * newfunny;
+//	vec4 newoutline = INV_CAMERA_MATRIX * vec4(outline, 1.0);
+//	newoutline.z = 0.0;
+//	newoutline = CAMERA_MATRIX * newoutline;
+//	newfunny = newfunny + newfunny * VIEW;
+//	vec3 newoutline = outline;
+//	newoutline = newoutline + newoutline * VIEW;
+//	if (distance(newfunny.xyz, newoutline.xyz) < 0.5) {
+//		ALPHA = 0.0;
+//	}
+//	if (dot(VIEW, NORMAL) > 0.0) {
+//		ALPHA = 0.0;
+//	}
+//	if (UV.x < 0.1 || UV.x > 0.9) {
+//		ALPHA = 0.0;
+//	}
+//	if (distance(UV, vec2(0.5, 0.0)) > 0.6) {
+//		ALPHA = 0.0;
+//	}
+//	vec2 uv = vec2(UV.y * 2.0, UV.x);
+//	float x1 = uv.y - uv.x / 2.0;
+//	if (x1 < 0.0) {
+//		ALPHA = 0.0;
+//	}
+//	float x2 = uv.y - 1.0 + uv.x / 2.0;
+//	if (x2 > 0.0) {
+//		ALPHA = 0.0;
+//	}
+}"
+
+[sub_resource type="ShaderMaterial" id=12]
+shader = SubResource( 8 )
+
+[node name="Spatial" type="Spatial"]
+
+[node name="MeshInstance" type="MeshInstance" parent="."]
+mesh = SubResource( 9 )
+material/0 = SubResource( 10 )
+
+[node name="MeshInstance2" type="MeshInstance" parent="."]
+transform = Transform( 1, 0, 0, 0, -4.37114e-08, 1, 0, -1, -4.37114e-08, 0, 0, -0.5 )
+mesh = SubResource( 11 )
+material/0 = SubResource( 12 )
+script = ExtResource( 2 )

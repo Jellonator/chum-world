@@ -2,29 +2,41 @@
 
 [ext_resource path="res://Gui/Struct/StructReference.gd" type="Script" id=1]
 
-[node name="StructReference" type="HBoxContainer"]
+[node name="StructReference" type="VBoxContainer"]
 anchor_right = 1.0
-margin_bottom = 24.0
+margin_bottom = 44.0
 size_flags_horizontal = 3
+custom_constants/separation = 0
 script = ExtResource( 1 )
 __meta__ = {
 "_edit_use_anchors_": false
 }
 
-[node name="SpinBox" type="SpinBox" parent="."]
+[node name="Text" type="LineEdit" parent="."]
+margin_right = 1280.0
+margin_bottom = 22.0
+text = "DB:/ASDF/QWERTY"
+editable = false
+
+[node name="HBox" type="HBoxContainer" parent="."]
+margin_top = 22.0
+margin_right = 1280.0
+margin_bottom = 44.0
+
+[node name="SpinBox" type="SpinBox" parent="HBox"]
 margin_right = 1256.0
-margin_bottom = 24.0
+margin_bottom = 22.0
 size_flags_horizontal = 3
 min_value = -2.14748e+09
 max_value = 2.14748e+09
 rounded = true
 editable = false
 
-[node name="MenuButton" type="MenuButton" parent="."]
+[node name="MenuButton" type="MenuButton" parent="HBox"]
 margin_left = 1260.0
 margin_right = 1280.0
-margin_bottom = 24.0
+margin_bottom = 22.0
 disabled = true
 text = "="
 flat = false
-[connection signal="value_changed" from="SpinBox" to="." method="_on_SpinBox_value_changed"]
+[connection signal="value_changed" from="HBox/SpinBox" to="." method="_on_SpinBox_value_changed"]

@@ -1,10 +1,11 @@
-[gd_scene load_steps=8 format=2]
+[gd_scene load_steps=9 format=2]
 
 [ext_resource path="res://default_env.tres" type="Environment" id=1]
 [ext_resource path="res://Gui/Worldview/view3d.gd" type="Script" id=2]
 [ext_resource path="res://Gui/Gizmos/Grid3D.tscn" type="PackedScene" id=3]
 [ext_resource path="res://Gui/Gizmos/Camera.tscn" type="PackedScene" id=4]
 [ext_resource path="res://Gui/Worldview/NodeTree.gd" type="Script" id=5]
+[ext_resource path="res://Gui/Gizmos/TransformGizmo.tscn" type="PackedScene" id=6]
 
 [sub_resource type="World" id=1]
 environment = ExtResource( 1 )
@@ -38,11 +39,13 @@ physics_object_picking = true
 [node name="DirectionalLight" type="DirectionalLight" parent="Viewport"]
 
 [node name="CameraViewer" parent="Viewport" instance=ExtResource( 4 )]
-transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -13.8483 )
+transform = Transform( -1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 0, 4, -13.8483 )
 
 [node name="Draw" type="Sprite" parent="Viewport"]
 
 [node name="Temp" type="Spatial" parent="Viewport"]
+
+[node name="TransformGizmo" parent="Viewport" instance=ExtResource( 6 )]
 
 [node name="Tree" type="PanelContainer" parent="."]
 margin_right = 162.0

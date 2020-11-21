@@ -17,9 +17,10 @@ onready var node_menu_file := $VBox/Panel/Menu/File
 onready var node_tree := $VBox/Tabs/Files/VBox/Tree
 onready var node_editor := $VBox/Tabs/Files/EditorList
 onready var node_view3d := $"VBox/Tabs/3D View"
-onready var node_tabs := $VBox/Tabs
+onready var node_tabs := $VBox/Tabs as TabContainer
 
 func _ready():
+	node_view3d.set_active(false)
 	archive = ChumArchive.new()
 	$VBox/Panel/Menu/File.get_popup().connect(
 		"id_pressed", self, "_on_menu_file_select")
@@ -74,6 +75,10 @@ func _on_ArchiveFileSaver_files_selected(ngc, dgc, _ftype):
 	archive.save(ngc, dgc)
 
 func _on_Tabs_tab_changed(tab):
-	if tab == 1 and should_3dview_reload:
-		should_3dview_reload = false
-		node_view3d.set_archive(archive)
+	if tab == 1:
+		if should_3dview_reload:
+			should_3dview_reload = false
+			node_view3d.set_archive(archive)
+		node_view3d.set_active(true)
+	else:
+		node_view3d.set_active(false)

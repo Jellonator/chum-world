@@ -7,6 +7,7 @@ var archive_files = []
 var tnodes_by_id := {}
 var tnode_root = null
 var selected_node = null
+var can_move_mouse := true
 
 onready var node_surfaces := $Viewport/Surfaces
 onready var node_camera := $Viewport/CameraViewer
@@ -16,6 +17,7 @@ onready var node_speed := $PanelContainer/TextureRect/SpeedLabel
 onready var node_draw := $Viewport/Draw
 onready var node_tree := $Tree/VBox/Items
 onready var node_temp := $Viewport/Temp
+onready var node_transform_gizmo := $Viewport/TransformGizmo
 onready var node_popup_select := $PanelContainer/TextureRect/PopupSelector as PopupMenu
 
 const MIN_SPEED = pow(2, -8)
@@ -34,16 +36,33 @@ func get_simple_name(name: String) -> String:
 		name = name.substr(0, b)
 	return name
 
-func try_add_node(nodedata: Dictionary, file):
+func get_node_global_transform(node: Dictionary) -> Transform:
+	return node["node"].transform
+
+func get_node_local_transform(node: Dictionary) -> Transform:
+	var parent_id := node["parent"] as int
+	var gtx := node["node"].transform as Transform
+	if parent_id == 0:
+		return gtx
+	elif parent_id in tnodes_by_id:
+		var other := tnodes_by_id[parent_id] as Dictionary
+		var ptx := other["node"].transform as Transform
+		return ptx.affine_inverse() * gtx
+	else:
+		MessageOverlay.push_warn("Error: Node %d does not exist" % parent_id)
+		return gtx
+
+func try_add_node(node_view, file):
 	var node_base = Spatial.new()
-	node_base.transform = nodedata["global_transform"]
-	var resid = nodedata["resource_id"]
+	node_base.transform = node_view.global_transform
+	var resid = node_view.resource_id
 	var meshes = []
 	var node_data = {
+		"view": node_view,
 		"node": node_base,
 		"name": get_simple_name(file.name),
 		"type": "",
-		"parent": nodedata["parent_id"],
+		"parent": node_view.parent_id,
 		"id": file.get_hash_id(),
 		"file": file,
 		"children": [],
@@ -68,6 +87,9 @@ func try_add_node(nodedata: Dictionary, file):
 	node_surfaces.add_child(node_base)
 	tnodes_by_id[file.get_hash_id()] = node_data
 
+func set_active(value: bool):
+	node_transform_gizmo.set_active(value)
+
 func reset_surfaces():
 	tnodes_by_id.clear()
 	tnode_root = null
@@ -76,11 +98,14 @@ func reset_surfaces():
 		child.queue_free()
 	for file in archive_files:
 		if file.type == "NODE":
-			var node_data = ChumReader.read_node(file)
-			if not node_data["exists"]:
-				print("COULD NOT READ ", file.name)
-			else:
-				try_add_node(node_data["node"], file)
+			var node_view = ChumReader.get_node_view(file)
+			if node_view != null:
+				try_add_node(node_view, file)
+#			var node_data = ChumReader.read_node(file)
+#			if not node_data["exists"]:
+#				print("COULD NOT READ ", file.name)
+#			else:
+#				try_add_node(node_data["node"], file)
 		elif file.type == "WARP":
 			var instance = MeshData.load_warp_from_file(file, null)
 			node_surfaces.add_child(instance)
@@ -106,48 +131,52 @@ func _on_TextureRect_item_rect_changed():
 	node_viewport.set_size_override(true, node_rect.rect_size)
 
 func _input(event):
-	if node_rect.has_focus():
-		if Input.is_action_pressed("view_look"):
-			if event is InputEventMouseMotion:
-				node_camera.move_mouse(event.relative)
-		if event.is_action_pressed("view_focus"):
-			camera_focus_to(selected_node)
-		if event.is_action_pressed("view_speed_increase"):
-			speed = clamp(speed * SPEED_MULT, MIN_SPEED, MAX_SPEED)
-			node_speed.text = "Speed: " + str(speed)
-		if event.is_action_pressed("view_speed_decrease"):
-			speed = clamp(speed / SPEED_MULT, MIN_SPEED, MAX_SPEED)
-			node_speed.text = "Speed: " + str(speed)
-	if event.is_action_pressed("view_select"):
-		var pos = node_rect.get_local_mouse_position()
-		var rect = Rect2(Vector2(0, 0), node_rect.rect_size)
-		if rect.has_point(pos):
-			node_rect.grab_focus()
+	if can_move_mouse:
+		if node_rect.has_focus():
+			if Input.is_action_pressed("view_look"):
+				if event is InputEventMouseMotion:
+					node_camera.move_mouse(event.relative)
+			if event.is_action_pressed("view_focus"):
+				camera_focus_to(selected_node)
+			if event.is_action_pressed("view_speed_increase"):
+				speed = clamp(speed * SPEED_MULT, MIN_SPEED, MAX_SPEED)
+				node_speed.text = "Speed: " + str(speed)
+			if event.is_action_pressed("view_speed_decrease"):
+				speed = clamp(speed / SPEED_MULT, MIN_SPEED, MAX_SPEED)
+				node_speed.text = "Speed: " + str(speed)
+		if event.is_action_pressed("view_select"):
+			var pos = node_rect.get_local_mouse_position()
+			var rect = Rect2(Vector2(0, 0), node_rect.rect_size)
+			if rect.has_point(pos):
+				node_rect.grab_focus()
+	node_transform_gizmo._input(event)
 
 func _physics_process(delta: float):
 	if node_rect.has_focus():
-		var tx = node_camera.get_camera_transform()
-		var input_dir := Vector3()
-		if Input.is_action_pressed("view_move_forward"):
-			input_dir += -tx.basis.z
-		if Input.is_action_pressed("view_move_backward"):
-			input_dir += tx.basis.z
-		if Input.is_action_pressed("view_move_left"):
-			input_dir += -tx.basis.x
-		if Input.is_action_pressed("view_move_right"):
-			input_dir += tx.basis.x
-		input_dir = input_dir.normalized()
-		if Input.is_action_pressed("view_move_slow"):
-			input_dir *= 0.5
-		node_camera.move_strafe(input_dir * delta * speed)
+		if can_move_mouse:
+			var tx = node_camera.get_camera_transform()
+			var input_dir := Vector3()
+			if Input.is_action_pressed("view_move_forward"):
+				input_dir += -tx.basis.z
+			if Input.is_action_pressed("view_move_backward"):
+				input_dir += tx.basis.z
+			if Input.is_action_pressed("view_move_left"):
+				input_dir += -tx.basis.x
+			if Input.is_action_pressed("view_move_right"):
+				input_dir += tx.basis.x
+			input_dir = input_dir.normalized()
+			if Input.is_action_pressed("view_move_slow"):
+				input_dir *= 0.5
+			node_camera.move_strafe(input_dir * delta * speed)
+			if Input.is_action_just_pressed("view_select"):
+				pick_node()
 		node_draw.update()
-		if Input.is_action_just_pressed("view_select"):
-			pick_node()
 
 func pick_node():
 	var camera := node_viewport.get_camera()
 	var space_state := camera.get_world().direct_space_state
 	var param := PhysicsShapeQueryParameters.new()
+	param.collision_mask = 1
 	var shape := RayShape.new()
 	shape.length = 500
 	var mouse_pos = node_rect.get_local_mouse_position() * GlobalConfig.viewport_scale

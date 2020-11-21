@@ -34,6 +34,7 @@ impl fmt::Display for NodeReadError {
 impl Error for NodeReadError {}
 
 chum_struct_generate_readwrite! {
+    #[derive(Clone, Default)]
     pub struct Node {
         pub node_parent_id: [reference NODE],
         pub node_unk_ids: [fixed array [reference NODE] 3],
@@ -47,7 +48,7 @@ chum_struct_generate_readwrite! {
         pub local_transform: [Mat4x4],
         pub local_translation: [Vector3],
         pub junk1: [ignore [fixed array [u8] 4] [0u8; 4]],
-        pub local_rotation: [Color],
+        pub local_rotation: [Quaternion],
         pub local_scale: [Vector3],
         pub junk2: [ignore [fixed array [u8] 4] [0u8; 4]],
         pub unk1: [fixed array [f32] 2],
@@ -192,7 +193,7 @@ chum_struct_generate_readwrite! {
         pub extra_data: [struct NodeSkinUnk2ExtraDataUnion],
         pub local_translation: [Vector3],
         pub junk1: [ignore [fixed array [u8] 4] [0u8; 4]],
-        pub local_rotation: [Color],
+        pub local_rotation: [Quaternion],
         pub local_scale: [Vector3],
         pub floatv1: [fixed array [f32] 9],
         pub floatv2: [fixed array [f32] 9],

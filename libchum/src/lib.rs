@@ -32,6 +32,17 @@ pub struct ChumArchive {
     format: format::TotemFormat,
 }
 
+impl Default for ChumArchive {
+    fn default() -> ChumArchive {
+        ChumArchive {
+            header: dgc::TotemHeader::new(b"Legally distinct legal notice.").unwrap(),
+            names: HashMap::new(),
+            files: HashMap::new(),
+            format: format::TotemFormat::NGC
+        }
+    }
+}
+
 /// A ChumFile that is returned by the Chum Archive
 pub struct ChumFile {
     data: Vec<u8>,
@@ -54,6 +65,11 @@ impl ChumFile {
     /// Get the file's data
     pub fn get_data(&self) -> &[u8] {
         &self.data
+    }
+
+    /// Get the file's data as a mutable vector
+    pub fn get_data_mut(&mut self) -> &mut Vec<u8> {
+        &mut self.data
     }
 
     /// Get the file's name

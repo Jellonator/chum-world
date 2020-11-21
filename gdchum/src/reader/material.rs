@@ -41,7 +41,7 @@ pub fn read_material(
         .map(|archive, res| {
             if matdata.get_texture() != 0 {
                 if let Some(texturefile) =
-                    archive.get_file_from_hash(res, matdata.get_texture())
+                    archive.get_file_from_hash(&res, matdata.get_texture())
                 {
                     let texturedict = reader.read_bitmap_nodeless(texturefile.clone());
                     if texturedict.get("exists").to_bool() == true {
@@ -68,7 +68,7 @@ pub fn read_material(
             }
             if matdata.texture_reflection != 0 {
                 if let Some(texturefile) =
-                    archive.get_file_from_hash(res, matdata.texture_reflection)
+                    archive.get_file_from_hash(&res, matdata.texture_reflection)
                 {
                     let texturedict = reader.read_bitmap_nodeless(texturefile.clone());
                     if texturedict.get("exists").to_bool() == true {

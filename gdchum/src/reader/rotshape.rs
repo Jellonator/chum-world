@@ -67,7 +67,7 @@ pub fn read_rotshape(
     archiveinstance
         .map(|archive, res| {
             if let Some(materialfile) =
-                archive.get_file_from_hash(res, rsdata.materialanim_id)
+                archive.get_file_from_hash(&res, rsdata.materialanim_id)
             {
                 let materialdict = reader.read_materialanim_nodeless(materialfile.clone());
                 if materialdict.get("exists").to_bool() == true {

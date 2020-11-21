@@ -73,7 +73,7 @@ pub fn read_surface(
         archiveinstance
             .map(|archive, res| {
                 if let Some(materialfile) =
-                    archive.get_file_from_hash(res, surface.material_index)
+                    archive.get_file_from_hash(&res, surface.material_index)
                 {
                     let materialdict = reader.read_materialanim_nodeless(materialfile.clone());
                     if materialdict.get("exists").to_bool() == true {

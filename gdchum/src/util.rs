@@ -99,12 +99,24 @@ pub fn quat_to_godot(value: &common::Quaternion) -> Quat {
     Quat::quaternion(value[0], value[1], value[2], value[3])
 }
 
+pub fn godot_to_quat(value: &Quat) -> common::Quaternion {
+    common::Quaternion::new(value.r, value.i, value.j, value.k)
+}
+
 pub fn vec3_to_godot(value: &common::Vector3) -> Vector3 {
     Vector3::new(value.x, value.y, value.z)
 }
 
 pub fn vec2_to_godot(value: &common::Vector2) -> Vector2 {
     Vector2::new(value.x, value.y)
+}
+
+pub fn godot_to_vec2(value: &Vector2) -> common::Vector2 {
+    common::Vector2::new(value.x, value.y)
+}
+
+pub fn godot_to_vec3(value: &Vector3) -> common::Vector3 {
+    common::Vector3::new(value.x, value.y, value.z)
 }
 
 pub fn mat4x4_to_transform(tx: &common::Mat4x4) -> Transform {

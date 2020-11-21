@@ -3,6 +3,8 @@ use gdnative::prelude::*;
 use gdnative::api::{Resource, ShaderMaterial, ImageTexture};
 use libchum::reader;
 use std::collections::HashMap;
+use crate::views;
+use crate::chumfile::ChumFile;
 
 pub mod bitmap;
 pub mod collisionvol;
@@ -31,8 +33,6 @@ pub struct ChumReader {
     cache: HashMap<i32, Dictionary<Shared>>,
     materialanims: Vec<MaterialAnimEntry>,
 }
-
-use crate::chumfile::ChumFile;
 
 #[methods]
 impl ChumReader {
@@ -117,7 +117,7 @@ impl ChumReader {
         let mut textures: Vec<Option<Ref<Texture,Shared>>> = Vec::with_capacity(data.track_texture.len());
         for track in &data.track_texture.frames {
             let id = track.data;
-            textures.push(match archive.get_file_from_hash(archive_res, id) {
+            textures.push(match archive.get_file_from_hash(&archive_res, id) {
                 Some(texturefile) => {
                     let texturedict = self.read_bitmap_nodeless(texturefile.clone());
                     if texturedict.get("exists").to_bool() == true {
@@ -412,5 +412,15 @@ impl ChumReader {
             cache: HashMap::new(),
             materialanims: Vec::new(),
         }
+    }
+
+    // new View system
+    #[export]
+    pub fn get_node_view(&self, _owner: &Node, data: Instance<ChumFile, Shared>) -> Instance<views::node::NodeView, Unique> {
+        let instance = Instance::<views::node::NodeView, Unique>::new();
+        instance.map_mut(|nodeview, _| {
+            nodeview.load_from(data).unwrap();
+        }).unwrap();
+        instance
     }
 }

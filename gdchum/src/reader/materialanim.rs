@@ -23,7 +23,7 @@ pub fn read_materialanim(
     archiveinstance
         .map(|archive, archiveres| {
             if let Some(materialfile) =
-                archive.get_file_from_hash(archiveres, matanimdata.material_id)
+                archive.get_file_from_hash(&archiveres, matanimdata.material_id)
             {
                 let materialdict = reader.read_material_nodeless_nocache(materialfile.clone());
                 if materialdict.get("exists").to_bool() == true {

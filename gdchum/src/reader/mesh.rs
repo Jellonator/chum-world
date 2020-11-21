@@ -89,7 +89,7 @@ pub fn read_mesh(
     archiveinstance
         .map(|archive, res| {
             for (i, mat) in materials.iter().enumerate() {
-                if let Some(materialfile) = archive.get_file_from_hash(res, *mat) {
+                if let Some(materialfile) = archive.get_file_from_hash(&res, *mat) {
                     let materialdict = reader.read_material_nodeless(materialfile.clone());
                     if materialdict.get("exists").to_bool() == true {
                         let material: Ref<Material, Shared> = materialdict

@@ -214,6 +214,7 @@ macro_rules! chum_struct_get_type {
     ([Vector3]) => {$crate::common::Vector3};
     ([Vector3 rgb]) => {$crate::common::Vector3};
     ([Color]) => {$crate::common::Color};
+    ([Quaternion]) => {$crate::common::Quaternion};
     ([reference]) => {::std::primitive::i32};
     ([reference $typename:ident]) => {::std::primitive::i32};
     ([fixed array $type:tt $len:literal]) => {[chum_struct_get_type!($type);$len]};
@@ -262,6 +263,12 @@ macro_rules! chum_struct_structure {
         )
     };
     ([Color],$value:expr) => {Color($value, ColorInfo{has_alpha: true})};
+    ([Quaternion],$value:expr) => {
+        {
+            let data = nalgebra::UnitQuaternion::from_quaternion($value).euler_angles();
+            Vec3($crate::common::Vector3::new(data.0, data.1, data.2))
+        }
+    };
     ([reference],$value:expr) => {Reference($value,None)};
     ([reference $typename:ident],$value:expr) => {
         Reference($value,Some(stringify!($typename).to_owned()))
@@ -335,6 +342,12 @@ macro_rules! chum_struct_destructure {
         }
     };
     ([Color],$value:expr) => {*$value.get_color().unwrap()};
+    ([Quaternion],$value:expr) => {
+        {
+            let vec = *$value.get_vec3().unwrap();
+            *nalgebra::UnitQuaternion::from_euler_angles(vec.x, vec.y, vec.z).quaternion()
+        }
+    };
     ([reference],$value:expr) => {$value.get_reference_id().unwrap()};
     ([reference $typename:ident],$value:expr) => {$value.get_reference_id().unwrap()};
     ([fixed array $type:tt $len:literal],$value:expr) => {
@@ -759,6 +772,14 @@ macro_rules! chum_struct_binary_read {
             error: Box::new(e)
         })
     };
+    ([Quaternion],$file:expr,$fmt:expr,$struct:expr,$path:expr,$self:expr) => {
+        $crate::common::read_quat($file, $fmt)
+        .map_err(|e| $crate::util::error::StructUnpackError {
+            structname: $struct.to_owned(),
+            structpath: $path.to_owned(),
+            error: Box::new(e)
+        })
+    };
     ([reference],$file:expr,$fmt:expr,$struct:expr,$path:expr,$self:expr) => {
         $fmt.read_i32($file)
         .map_err(|e| $crate::util::error::StructUnpackError {
@@ -915,6 +936,9 @@ macro_rules! chum_struct_binary_write {
     };
     ([Color],$file:expr,$fmt:expr,$value:expr,$this:expr) => {
         $crate::common::write_color($value, $file, $fmt)
+    };
+    ([Quaternion],$file:expr,$fmt:expr,$value:expr,$this:expr) => {
+        $crate::common::write_quat($value, $file, $fmt)
     };
     ([reference],$file:expr,$fmt:expr,$value:expr,$this:expr) => {
         $fmt.write_i32($file, *$value)

@@ -135,8 +135,8 @@ impl ChumFile {
     }
 
     /// Get an Instance of this file's containing ChumArchive
-    pub fn get_archive_instance(&self) -> Instance<ChumArchive,Shared> {
-        self.parent.clone().unwrap()
+    pub fn get_archive_instance(&self) -> &Instance<ChumArchive,Shared> {
+        self.parent.as_ref().unwrap()
     }
 
     /// Read a file from the given ChumArchive
@@ -167,8 +167,6 @@ impl ChumFile {
         unsafe {archive_instance.assume_safe()}.map(|archive,_| {
             let file = archive
                 .archive
-                .as_ref()
-                .unwrap()
                 .get_file_from_name(&self.namestr)
                 .unwrap();
             let f = Instance::<ByteData, Unique>::new();
@@ -187,11 +185,29 @@ impl ChumFile {
         unsafe {archive_instance.assume_safe()}.map(|archive, _| {
             let file = archive
                 .archive
-                .as_ref()
-                .unwrap()
                 .get_file_from_name(&self.namestr)
                 .unwrap();
             file.get_data().to_owned()
+        })
+        .unwrap()
+    }
+
+    pub fn borrow_data<F, G>(&self, func: F) -> G
+    where F: Fn(&[u8]) -> G {
+        let archive_instance = self.get_archive_instance();
+        unsafe {archive_instance.assume_safe()}.map(|archive, _| {
+            let file: &libchum::ChumFile = archive.archive.get_file_from_name(&self.namestr).unwrap();
+            func(file.get_data())
+        })
+        .unwrap()
+    }
+
+    pub fn borrow_data_mut<F, G>(&mut self, func: F) -> G
+    where F: Fn(&mut Vec<u8>) -> G {
+        let archive_instance = self.get_archive_instance();
+        unsafe {archive_instance.assume_safe()}.map_mut(|archive, _| {
+            let file: &mut libchum::ChumFile = archive.archive.get_file_from_name_mut(&self.namestr).unwrap();
+            func(file.get_data_mut())
         })
         .unwrap()
     }
@@ -202,8 +218,6 @@ impl ChumFile {
         unsafe {archive_instance.assume_safe()}.map_mut(|archive, _| {
             archive
                 .archive
-                .as_mut()
-                .unwrap()
                 .get_file_from_name_mut(&self.namestr)
                 .unwrap()
                 .replace_data(data);
@@ -279,7 +293,7 @@ impl ChumFile {
                 .map(|group| archive.maybe_get_name_from_hash_str(group.group_id))
                 .collect();
             for meshid in skin.meshes.iter() {
-                if let Some(meshfile) = archive.get_file_from_hash(res, *meshid) {
+                if let Some(meshfile) = archive.get_file_from_hash(&res, *meshid) {
                     unsafe { meshfile.assume_safe() }.map(|meshscript,_| match meshscript.typestr.as_str() {
                         "MESH" => {
                             let mesh = match reader::mesh::Mesh::read_data(

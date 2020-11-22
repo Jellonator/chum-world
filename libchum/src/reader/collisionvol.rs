@@ -6,16 +6,16 @@ chum_struct_generate_readwrite! {
         pub item_type: [ignore [u16] 14u16],
         pub item_subtype: [ignore [u16] 16u16],
         pub unk1: [u32],
-        pub local_transform: [Mat4x4],
-        pub local_transform_inv: [custom_structure [Mat4x4]
+        pub local_transform: [Transform3D],
+        pub local_transform_inv: [custom_structure [Transform3D]
             // Inverse is calculated based on transform
             structure: |_lod: &CollisionVol| {
                 None
             };
             // The value of `item_subtype` depends on the presence of the `sounds` value
             destructure: |data: &crate::structure::ChumStructVariant| {
-                let tx: &Mat4x4 = data.get_struct_item("local_transform").unwrap().get_transform3d().unwrap();
-                tx.try_inverse().unwrap()
+                let tx: &Transform3D = data.get_struct_item("local_transform").unwrap().get_transform3d().unwrap();
+                tx.inverse().unwrap()
             };
         ],
         pub unk2: [u32],

@@ -1,6 +1,5 @@
 use crate::chumfile::ChumFile;
 use crate::reader::ChumReader;
-use crate::util;
 use gdnative::prelude::*;
 use gdnative::api::{ShaderMaterial, ImageTexture};
 use libchum::reader::material;
@@ -98,10 +97,10 @@ pub fn read_material(
         .unwrap();
     material.set_shader_param(
         "arg_color",
-        Vector3::new(matdata.color[0], matdata.color[1], matdata.color[2]),
+        Vector3::new(matdata.color.r, matdata.color.g, matdata.color.b),
     );
-    material.set_shader_param("arg_alpha", matdata.color[3]);
-    let tx = util::mat3x3_to_transform2d(&matdata.transform);
+    material.set_shader_param("arg_alpha", matdata.color.a);
+    let tx = matdata.transform;
     let realtx = Transform {
         basis: Basis {
             elements: [
@@ -113,7 +112,7 @@ pub fn read_material(
         origin: Vector3::new(0.0, 0.0, 0.0),
     };
     material.set_shader_param("arg_texcoord_transform", realtx);
-    material.set_shader_param("arg_emission", util::vec3_to_godot(&matdata.emission));
+    material.set_shader_param("arg_emission", matdata.emission);
     Some(material)
 }
 

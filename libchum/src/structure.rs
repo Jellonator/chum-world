@@ -64,11 +64,11 @@ pub struct VariantOption {
 pub enum ChumStructVariant {
     Integer(i64, IntType),
     Float(f32),
-    Transform3D(common::Mat4x4),
-    Transform2D(common::Mat3x3),
+    Transform3D(common::Transform3D),
+    Transform2D(common::Transform2D),
     Vec2(common::Vector2),
     Vec3(common::Vector3),
-    Color(common::Color, ColorInfo),
+    Color(common::ColorRGBA, ColorInfo),
     Reference(i32, Option<String>),
     Array(ArrayData),
     Struct(Vec<(String, ChumStructVariant)>),
@@ -125,14 +125,14 @@ impl ChumStructVariant {
         }
     }
 
-    pub fn get_transform3d(&self) -> Option<&common::Mat4x4> {
+    pub fn get_transform3d(&self) -> Option<&common::Transform3D> {
         use ChumStructVariant::*;
         match *self {
             Transform3D(ref x) => Some(x),
             _ => None,
         }
     }
-    pub fn get_transform2d(&self) -> Option<&common::Mat3x3> {
+    pub fn get_transform2d(&self) -> Option<&common::Transform2D> {
         use ChumStructVariant::*;
         match *self {
             Transform2D(ref x) => Some(x),
@@ -171,7 +171,7 @@ impl ChumStructVariant {
             _ => None,
         }
     }
-    pub fn get_color(&self) -> Option<&common::Color> {
+    pub fn get_color(&self) -> Option<&common::ColorRGBA> {
         use ChumStructVariant::*;
         match *self {
             Color(ref x, ref _info) => Some(x),

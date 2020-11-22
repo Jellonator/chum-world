@@ -7,7 +7,7 @@ chum_struct_generate_readwrite! {
         pub color: [Color],
         pub emission: [Vector3 rgb],
         pub unk2: [f32],
-        pub transform: [Mat3x3],
+        pub transform: [Transform2D],
         pub rotation: [f32],
         pub offset: [Vector2],
         pub scale: [Vector2],

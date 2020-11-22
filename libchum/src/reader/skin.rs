@@ -172,7 +172,7 @@ impl Skin {
             {
                 out_group_names.push(scene::SceneGroup {
                     name: name.clone(),
-                    transform: Mat4x4::identity(),
+                    transform: Transform3D::identity(),
                 });
                 usable_groups.push(group);
             }

@@ -54,8 +54,8 @@ pub fn eval_bezier_texnorm(
     let b3 = t * t * t;
     Point {
         vertex: points[0] * b0 + points[1] * b1 + points[2] * b2 + points[3] * b3,
-        texcoord: tx[0].lerp(&tx[1], t),
-        normal: nm[0].lerp(&nm[1], t),
+        texcoord: tx[0].lerp(tx[1], t),
+        normal: nm[0].lerp(nm[1], t),
     }
 }
 

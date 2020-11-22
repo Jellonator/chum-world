@@ -133,7 +133,7 @@ func _input(event):
 		var from = camera.project_ray_origin(mouse_pos)
 		mouse_start_position = project_onto_axis_global(from, camera.project_ray_normal(mouse_pos))
 		original_position = translation
-	elif event.is_action_released("view_look"):
+	elif event.is_action_released("view_look") and is_dragging:
 		is_dragging = false
 		emit_signal("on_finalize_transform", transform)
 	if is_dragging:

@@ -298,7 +298,7 @@ pub enum NodeTransform {
     // LookAt,
     Matrix {
         sid: Option<String>,
-        data: common::Mat4x4,
+        data: common::Transform3D,
     }, // Rotate
        // Scale
        // Skew
@@ -499,7 +499,7 @@ pub fn trimesh_to_skin_node(
             layer: vec![],
             transform: vec![NodeTransform::Matrix {
                 sid: Some("transform".to_owned()),
-                data: common::Mat4x4::identity(),
+                data: common::Transform3D::identity(),
             }],
             node: vec![
                 Node {

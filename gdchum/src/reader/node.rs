@@ -17,19 +17,19 @@ pub fn read_node(data: &Vec<u8>, fmt: libchum::format::TotemFormat, file: &ChumF
     data.insert("resource_id", node.resource_id);
     data.insert(
         "global_transform",
-        util::mat4x4_to_transform(&node.global_transform),
+        util::transform3d_to_godot(&node.global_transform),
     );
     data.insert(
         "local_transform",
-        util::mat4x4_to_transform(&node.local_transform),
+        util::transform3d_to_godot(&node.local_transform),
     );
     data.insert(
         "local_translation",
-        util::vec3_to_godot(&node.local_translation),
+        node.local_translation,
     );
     data.insert(
         "local_scale",
-        util::vec3_to_godot(&node.local_scale),
+        node.local_scale,
     );
     // data.insert(
     //     "local_rotation",

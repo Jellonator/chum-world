@@ -208,12 +208,12 @@ macro_rules! chum_struct_get_type {
     ([flags [$repr:tt] {$($_name:ident),*}]) => {$repr};
     ([int_custom [$repr:tt] $_min:expr, $_max:expr]) => {$repr};
     ([f32]) => {::std::primitive::f32};
-    ([Mat4x4]) => {$crate::common::Mat4x4};
-    ([Mat3x3]) => {$crate::common::Mat3x3};
+    ([Transform3D]) => {$crate::common::Transform3D};
+    ([Transform2D]) => {$crate::common::Transform2D};
     ([Vector2]) => {$crate::common::Vector2};
     ([Vector3]) => {$crate::common::Vector3};
     ([Vector3 rgb]) => {$crate::common::Vector3};
-    ([Color]) => {$crate::common::Color};
+    ([Color]) => {$crate::common::ColorRGBA};
     ([Quaternion]) => {$crate::common::Quaternion};
     ([reference]) => {::std::primitive::i32};
     ([reference $typename:ident]) => {::std::primitive::i32};
@@ -248,15 +248,15 @@ macro_rules! chum_struct_structure {
         Integer($value as ::std::primitive::i64, Custom($min,$max))
     };
     ([f32],$value:expr) => {Float($value)};
-    ([Mat4x4],$value:expr) => {Transform3D($value)};
-    ([Mat3x3],$value:expr) => {Transform2D($value)};
+    ([Transform3D],$value:expr) => {Transform3D($value)};
+    ([Transform2D],$value:expr) => {Transform2D($value)};
     ([Vector2],$value:expr) => {Vec2($value)};
     ([Vector3],$value:expr) => {Vec3($value)};
     ([Vector3 rgb],$value:expr) => {
         Color(
-            $crate::common::Color::new(
-                $value.x, $value.y, $value.z, 1.0f32
-            ),
+            $crate::common::ColorRGBA {
+                r: $value.x, g: $value.y, b: $value.z, a: 1.0f32
+            },
             ColorInfo {
                 has_alpha: false
             }
@@ -265,8 +265,7 @@ macro_rules! chum_struct_structure {
     ([Color],$value:expr) => {Color($value, ColorInfo{has_alpha: true})};
     ([Quaternion],$value:expr) => {
         {
-            let data = nalgebra::UnitQuaternion::from_quaternion($value).euler_angles();
-            Vec3($crate::common::Vector3::new(data.0, data.1, data.2))
+            Vec3($crate::common::quat_to_euler($value))
         }
     };
     ([reference],$value:expr) => {Reference($value,None)};
@@ -329,15 +328,15 @@ macro_rules! chum_struct_destructure {
     ([flags [$repr:tt] {$($name:ident),*}],$value:expr) => {$value.get_i64().unwrap() as $repr};
     ([int_custom [$repr:tt] $min:expr, $max:expr],$value:expr) => {$value.get_i64().unwrap() as $repr};
     ([f32],$value:expr) => {$value.get_f32().unwrap()};
-    ([Mat4x4],$value:expr) => {*$value.get_transform3d().unwrap()};
-    ([Mat3x3],$value:expr) => {*$value.get_transform2d().unwrap()};
+    ([Transform3D],$value:expr) => {*$value.get_transform3d().unwrap()};
+    ([Transform2D],$value:expr) => {*$value.get_transform2d().unwrap()};
     ([Vector2],$value:expr) => {*$value.get_vec2().unwrap()};
     ([Vector3],$value:expr) => {*$value.get_vec3().unwrap()};
     ([Vector3 rgb],$value:expr) => {
         {
             let col = $value.get_color().unwrap();
             $crate::common::Vector3::new(
-                col.x, col.y, col.z
+                col.r, col.g, col.b
             )
         }
     };
@@ -345,7 +344,7 @@ macro_rules! chum_struct_destructure {
     ([Quaternion],$value:expr) => {
         {
             let vec = *$value.get_vec3().unwrap();
-            *nalgebra::UnitQuaternion::from_euler_angles(vec.x, vec.y, vec.z).quaternion()
+            $crate::common::Quaternion::from_euler(vec)
         }
     };
     ([reference],$value:expr) => {$value.get_reference_id().unwrap()};
@@ -724,16 +723,16 @@ macro_rules! chum_struct_binary_read {
             error: Box::new(e)
         })
     };
-    ([Mat4x4],$file:expr,$fmt:expr,$struct:expr,$path:expr,$self:expr) => {
-        $crate::common::read_mat4($file, $fmt)
+    ([Transform3D],$file:expr,$fmt:expr,$struct:expr,$path:expr,$self:expr) => {
+        $crate::common::read_transform3d($file, $fmt)
         .map_err(|e| $crate::util::error::StructUnpackError {
             structname: $struct.to_owned(),
             structpath: $path.to_owned(),
             error: Box::new(e)
         })
     };
-    ([Mat3x3],$file:expr,$fmt:expr,$struct:expr,$path:expr,$self:expr) => {
-        $crate::common::read_mat3($file, $fmt)
+    ([Transform2D],$file:expr,$fmt:expr,$struct:expr,$path:expr,$self:expr) => {
+        $crate::common::read_transform2d($file, $fmt)
         .map_err(|e| $crate::util::error::StructUnpackError {
             structname: $struct.to_owned(),
             structpath: $path.to_owned(),
@@ -765,7 +764,7 @@ macro_rules! chum_struct_binary_read {
         })
     };
     ([Color],$file:expr,$fmt:expr,$struct:expr,$path:expr,$self:expr) => {
-        $crate::common::read_color($file, $fmt)
+        $crate::common::read_color_rgba($file, $fmt)
         .map_err(|e| $crate::util::error::StructUnpackError {
             structname: $struct.to_owned(),
             structpath: $path.to_owned(),
@@ -919,11 +918,11 @@ macro_rules! chum_struct_binary_write {
     ([f32],$file:expr,$fmt:expr,$value:expr,$this:expr) => {
         $fmt.write_f32($file, *$value)
     };
-    ([Mat4x4],$file:expr,$fmt:expr,$value:expr,$this:expr) => {
-        $crate::common::write_mat4($value, $file, $fmt)
+    ([Transform3D],$file:expr,$fmt:expr,$value:expr,$this:expr) => {
+        $crate::common::write_transform3d($value, $file, $fmt)
     };
-    ([Mat3x3],$file:expr,$fmt:expr,$value:expr,$this:expr) => {
-        $crate::common::write_mat3($value, $file, $fmt)
+    ([Transform2D],$file:expr,$fmt:expr,$value:expr,$this:expr) => {
+        $crate::common::write_transform2d($value, $file, $fmt)
     };
     ([Vector2],$file:expr,$fmt:expr,$value:expr,$this:expr) => {
         $crate::common::write_vec2($value, $file, $fmt)
@@ -935,7 +934,7 @@ macro_rules! chum_struct_binary_write {
         $crate::common::write_vec3($value, $file, $fmt)
     };
     ([Color],$file:expr,$fmt:expr,$value:expr,$this:expr) => {
-        $crate::common::write_color($value, $file, $fmt)
+        $crate::common::write_color_rgba($value, $file, $fmt)
     };
     ([Quaternion],$file:expr,$fmt:expr,$value:expr,$this:expr) => {
         $crate::common::write_quat($value, $file, $fmt)

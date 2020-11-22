@@ -8,6 +8,7 @@ var tnodes_by_id := {}
 var tnode_root = null
 var selected_node = null
 var can_move_mouse := true
+var do_move_children := true
 
 onready var node_surfaces := $Viewport/Surfaces
 onready var node_camera := $Viewport/CameraViewer
@@ -41,12 +42,15 @@ func get_node_global_transform(node: Dictionary) -> Transform:
 
 func get_node_local_transform(node: Dictionary) -> Transform:
 	var parent_id := node["parent"] as int
-	var gtx := node["node"].transform as Transform
+	var gtx := node["view"].global_transform as Transform
+#	var gtx := node["node"].global_transform as Transform
 	if parent_id == 0:
+		print("RETURNING GLOBAL")
 		return gtx
 	elif parent_id in tnodes_by_id:
 		var other := tnodes_by_id[parent_id] as Dictionary
-		var ptx := other["node"].transform as Transform
+		var ptx := other["view"].global_transform as Transform
+#		var ptx := other["node"].global_transform as Transform
 		return ptx.affine_inverse() * gtx
 	else:
 		MessageOverlay.push_warn("Error: Node %d does not exist" % parent_id)
@@ -315,9 +319,31 @@ func _on_PopupSelector_index_pressed(index):
 func _on_Button_pressed():
 	reset_surfaces()
 
+func update_child_tranforms(parent_node: Dictionary, new_parent_transform: Transform, do_update_view: bool):
+	for child_node in parent_node["children"]:
+		var child_view = child_node["view"]
+		if do_move_children:
+			# Keep local transform, update global transform
+			var new_transform = new_parent_transform * child_view.local_transform
+			child_node["node"].transform = new_transform
+			if do_update_view:
+				child_view.global_transform = new_transform
+				child_view.save(child_node["file"])
+			update_child_tranforms(child_node, new_transform, do_update_view)
+		else:
+			# Keep global transform, update local transform
+			# Children do not need to be modified since global transform is the same
+			if do_update_view:
+#				var new_local_tx = child_view.global_transform * new_parent_transform.affine_inverse()
+				var new_local_tx = get_node_local_transform(child_node)
+				child_view.local_transform = new_local_tx
+				child_view.save(child_node["file"])
+
 func _on_TransformGizmo_on_change_transform(tx):
 	if selected_node != null:
+#		var ogtx = selected_node["node"].transform
 		selected_node["node"].transform = tx
+		update_child_tranforms(selected_node, tx, false)
 
 func _on_TransformGizmo_on_finalize_transform(tx):
 	if selected_node != null:
@@ -325,5 +351,10 @@ func _on_TransformGizmo_on_finalize_transform(tx):
 		var view = selected_node["view"]
 		var file = selected_node["file"]
 		view.global_transform = tx
-		view.local_transform = get_node_local_transform(selected_node)
+		var localtx = get_node_local_transform(selected_node)
+		view.local_transform = localtx
+		update_child_tranforms(selected_node, tx, true)
 		view.save(file)
+
+func _on_MoveChildren_toggled(button_pressed: bool):
+	do_move_children = button_pressed

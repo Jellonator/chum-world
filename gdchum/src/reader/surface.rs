@@ -8,7 +8,7 @@ use libchum::reader::surface;
 
 pub struct SurfaceResult {
     // pub surface: Reference,
-    pub transform: common::Mat4x4,
+    pub transform: common::Transform3D,
     pub surfaces: Vec<Ref<ArrayMesh,Shared>>,
 }
 
@@ -114,7 +114,7 @@ pub fn read_surface_from_res(data: &ChumFile, reader: &mut ChumReader) -> Dictio
             dict.insert("surfaces", mesh.surfaces);
             dict.insert(
                 "transform",
-                util::mat4x4_to_transform(&mesh.transform),
+                util::transform3d_to_godot(&mesh.transform),
             );
         }
         None => {

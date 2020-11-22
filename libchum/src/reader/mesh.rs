@@ -71,7 +71,7 @@ pub struct Footer1 {
 
 #[derive(Clone, Debug)]
 pub struct Footer2 {
-    pub transform: Mat4x4,
+    pub transform: Transform3D,
 }
 
 #[derive(Clone, Debug)]
@@ -312,7 +312,7 @@ impl Mesh {
         let num_unk2: u32 = fmt.read_u32(file)?;
         let footer2: Vec<Footer2> = (0..num_unk2)
             .map(|_| {
-                let transform = read_mat4(file, fmt)?;
+                let transform = read_transform3d(file, fmt)?;
                 fmt.skip_n_bytes(file, 16)?;
                 Ok(Footer2 { transform })
             })
@@ -404,7 +404,7 @@ impl Mesh {
         scene::SceneTriMesh {
             name,
             // Mesh.transform.transform is NOT actually applied to this mesh
-            transform: Mat4x4::identity(),
+            transform: Transform3D::identity(),
             vertices: self.vertices.clone(),
             normals: self.normals.clone(),
             texcoords: self.texcoords.clone(),

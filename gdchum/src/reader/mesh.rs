@@ -17,7 +17,7 @@ pub struct MeshResultSurface {
 pub struct MeshResult {
     pub mesh: Ref<ArrayMesh,Unique>,
     pub surfaces: Vec<MeshResultSurface>,
-    pub transform: common::Mat4x4,
+    pub transform: common::Transform3D,
     pub unk1: Vec<mesh::Footer1>,
     pub unk2: Vec<mesh::Footer2>,
     pub unk3: Vec<mesh::Footer3>,
@@ -155,7 +155,7 @@ pub fn read_mesh_from_res(data: &ChumFile, reader: &mut ChumReader) -> Dictionar
             dict.insert("surfaces", surfaces);
             dict.insert(
                 "transform",
-                util::mat4x4_to_transform(&mesh.transform),
+                util::transform3d_to_godot(&mesh.transform),
             );
             dict.insert(
                 "unk1",
@@ -164,7 +164,7 @@ pub fn read_mesh_from_res(data: &ChumFile, reader: &mut ChumReader) -> Dictionar
                     .into_iter()
                     .map(|x| {
                         let dict = Dictionary::new();
-                        dict.insert("pos", util::vec3_to_godot(&x.pos));
+                        dict.insert("pos", x.pos);
                         dict.insert("radius", x.radius);
                         dict.into_shared()
                     })
@@ -179,7 +179,7 @@ pub fn read_mesh_from_res(data: &ChumFile, reader: &mut ChumReader) -> Dictionar
                         let dict = Dictionary::new();
                         dict.insert(
                             "transform",
-                            util::mat4x4_to_transform(&x.transform),
+                            util::transform3d_to_godot(&x.transform),
                         );
                         dict.into_shared()
                     })
@@ -195,7 +195,7 @@ pub fn read_mesh_from_res(data: &ChumFile, reader: &mut ChumReader) -> Dictionar
                         dict.insert("unk1", &(&x.unk1[..]).to_owned());
                         dict.insert(
                             "normal",
-                            util::vec3_to_godot(&x.normal),
+                            x.normal,
                         );
                         dict.insert("junk", x.junk);
                         dict.insert("unk2", x.unk2);

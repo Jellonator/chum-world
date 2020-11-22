@@ -52,9 +52,9 @@ impl ChumReader {
             }
             if let Some((a, b, t)) = entry.data.track_color.find_frame(frame) {
                 let color = Vector3::new(
-                    a[0] * (1.0 - t) + b[0] * t,
-                    a[1] * (1.0 - t) + b[1] * t,
-                    a[2] * (1.0 - t) + b[2] * t,
+                    a.x * (1.0 - t) + b.x * t,
+                    a.y * (1.0 - t) + b.y * t,
+                    a.y * (1.0 - t) + b.y * t,
                 );
                 material.set_shader_param("arg_color", color);
             }
@@ -67,13 +67,13 @@ impl ChumReader {
                 || entry.data.track_rotation.len() > 0
             {
                 let scale = if let Some((a, b, t)) = entry.data.track_stretch.find_frame(frame) {
-                    let v = a.lerp(b, t);
+                    let v = a.lerp(*b, t);
                     Vector2::new(v.x, v.y)
                 } else {
                     Vector2::new(1.0, 1.0)
                 };
                 let scroll = if let Some((a, b, t)) = entry.data.track_scroll.find_frame(frame) {
-                    let v = a.lerp(b, t);
+                    let v = a.lerp(*b, t);
                     Vector2::new(v.x, v.y)
                 } else {
                     Vector2::new(0.0, 0.0)

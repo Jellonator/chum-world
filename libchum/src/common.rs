@@ -1,14 +1,83 @@
 use crate::format::TotemFormat;
-use nalgebra;
+use euclid;
 use std::io::{self, Read, Write};
 use std::mem;
 
-pub type Vector3 = nalgebra::Vector3<f32>;
-pub type Vector2 = nalgebra::Vector2<f32>;
-pub type Quaternion = nalgebra::Quaternion<f32>;
-pub type Mat4x4 = nalgebra::Matrix4<f32>;
-pub type Mat3x3 = nalgebra::Matrix3<f32>;
-pub type Color = nalgebra::Vector4<f32>;
+pub type Vector3 = euclid::Vector3D<f32, euclid::UnknownUnit>;
+pub type Vector2 = euclid::Vector2D<f32, euclid::UnknownUnit>;
+#[derive(Copy, Clone, Debug, PartialEq)]
+pub struct Quaternion {
+    // ONLY DOING THIS BECAUSE Rotation3D DOES NOT IMPLEMENTE Default DESPITE
+    // THERE EXISTING A Rotation3D::identity function WHY
+    pub inner: euclid::Rotation3D<f32, euclid::UnknownUnit, euclid::UnknownUnit>
+}
+pub type Transform3D = euclid::Transform3D<f32, euclid::UnknownUnit, euclid::UnknownUnit>;
+pub type Transform2D = euclid::Transform2D<f32, euclid::UnknownUnit, euclid::UnknownUnit>;
+
+impl Default for Quaternion {
+    fn default() -> Quaternion {
+        Quaternion {
+            inner: euclid::Rotation3D::identity()
+        }
+    }
+}
+
+impl std::borrow::Borrow<euclid::Rotation3D<f32, euclid::UnknownUnit, euclid::UnknownUnit>> for Quaternion {
+    fn borrow(&self) -> &euclid::Rotation3D<f32, euclid::UnknownUnit, euclid::UnknownUnit> {
+        &self.inner
+    }
+}
+
+impl std::borrow::BorrowMut<euclid::Rotation3D<f32, euclid::UnknownUnit, euclid::UnknownUnit>> for Quaternion {
+    fn borrow_mut(&mut self) -> &mut euclid::Rotation3D<f32, euclid::UnknownUnit, euclid::UnknownUnit> {
+        &mut self.inner
+    }
+}
+
+impl Quaternion {
+    pub fn from_euler(rot: Vector3) -> Quaternion {
+        Self {
+            inner: euclid::Rotation3D::euler(
+                euclid::Angle::radians(rot.x),
+                euclid::Angle::radians(rot.y),
+                euclid::Angle::radians(rot.z),
+            )
+        }
+    }
+
+    pub fn new_unit(i: f32, j: f32, k: f32, w: f32) -> Quaternion {
+        Self {
+            inner: euclid::Rotation3D::unit_quaternion(i, j, k, w)
+        }
+    }
+}
+
+#[derive(Copy, Clone, Debug)]
+pub struct ColorRGBA {
+    pub r: f32,
+    pub g: f32,
+    pub b: f32,
+    pub a: f32,
+}
+
+impl Default for ColorRGBA {
+    fn default() -> ColorRGBA {
+        ColorRGBA {
+            r: 1.0,
+            g: 1.0,
+            b: 1.0,
+            a: 1.0,
+        }
+    }
+}
+
+impl ColorRGBA {
+    pub fn new(r: f32, g: f32, b: f32, a: f32) -> ColorRGBA {
+        ColorRGBA {
+            r, g, b, a
+        }
+    }
+}
 
 /// A good, safe capacity for small data structures
 /// e.g. primitives or Vector3
@@ -25,15 +94,15 @@ pub fn read_quat(reader: &mut dyn Read, fmt: TotemFormat) -> io::Result<Quaterni
     let k = fmt.read_f32(reader)?;
     let w = fmt.read_f32(reader)?;
     // Quaternion::new is in (w, i, j, k) order
-    Ok(Quaternion::new(w, i, j, k))
+    Ok(Quaternion::new_unit(i, j, k, w))
 }
 
 pub fn write_quat(q: &Quaternion, writer: &mut dyn Write, fmt: TotemFormat) -> io::Result<()> {
     // Quat indexing is in (i, j, k, w) order
-    fmt.write_f32(writer, q[0])?;
-    fmt.write_f32(writer, q[1])?;
-    fmt.write_f32(writer, q[2])?;
-    fmt.write_f32(writer, q[3])?;
+    fmt.write_f32(writer, q.inner.i)?;
+    fmt.write_f32(writer, q.inner.j)?;
+    fmt.write_f32(writer, q.inner.k)?;
+    fmt.write_f32(writer, q.inner.r)?;
     Ok(())
 }
 
@@ -52,6 +121,81 @@ pub fn write_vec3(v: &Vector3, writer: &mut dyn Write, fmt: TotemFormat) -> io::
     fmt.write_f32(writer, v.y)?;
     fmt.write_f32(writer, v.z)?;
     Ok(())
+}
+
+pub fn read_transform2d(reader: &mut dyn Read, fmt: TotemFormat) -> io::Result<Transform2D> {
+    let mut buf = [0.0f32; 9];
+    fmt.read_f32_into(reader, &mut buf)?;
+    Ok(Transform2D::new(
+        buf[0], buf[1],
+        buf[3], buf[4],
+        buf[6], buf[7],
+    ))
+}
+
+pub fn write_transform2d(tx: &Transform2D, writer: &mut dyn Write, fmt: TotemFormat) -> io::Result<()> {
+    fmt.write_f32(writer, tx.m11)?;
+    fmt.write_f32(writer, tx.m12)?;
+    fmt.write_f32(writer, 0.0)?;
+    fmt.write_f32(writer, tx.m21)?;
+    fmt.write_f32(writer, tx.m22)?;
+    fmt.write_f32(writer, 0.0)?;
+    fmt.write_f32(writer, tx.m31)?;
+    fmt.write_f32(writer, tx.m32)?;
+    fmt.write_f32(writer, 1.0)?;
+    Ok(())
+}
+
+pub fn read_transform3d(reader: &mut dyn Read, fmt: TotemFormat) -> io::Result<Transform3D> {
+    let mut buf = [0.0f32; 16];
+    fmt.read_f32_into(reader, &mut buf)?;
+    Ok(Transform3D::new(
+        buf[0], buf[1], buf[2], buf[3],
+        buf[4], buf[5], buf[6], buf[7],
+        buf[8], buf[9], buf[10], buf[11],
+        buf[12], buf[13], buf[14], buf[15]
+    ))
+}
+
+pub fn write_transform3d(tx: &Transform3D, writer: &mut dyn Write, fmt: TotemFormat) -> io::Result<()> {
+    fmt.write_f32(writer, tx.m11)?;
+    fmt.write_f32(writer, tx.m12)?;
+    fmt.write_f32(writer, tx.m13)?;
+    fmt.write_f32(writer, tx.m14)?;
+    fmt.write_f32(writer, tx.m21)?;
+    fmt.write_f32(writer, tx.m22)?;
+    fmt.write_f32(writer, tx.m23)?;
+    fmt.write_f32(writer, tx.m24)?;
+    fmt.write_f32(writer, tx.m31)?;
+    fmt.write_f32(writer, tx.m32)?;
+    fmt.write_f32(writer, tx.m33)?;
+    fmt.write_f32(writer, tx.m34)?;
+    fmt.write_f32(writer, tx.m41)?;
+    fmt.write_f32(writer, tx.m42)?;
+    fmt.write_f32(writer, tx.m43)?;
+    fmt.write_f32(writer, tx.m44)?;
+    Ok(())
+}
+
+pub fn quat_to_euler(quat: Quaternion) -> Vector3 {
+    // Shamelessly copied from Wikipedia: https://en.wikipedia.org/wiki/Conversion_between_quaternions_and_Euler_angles
+    let q = &quat.inner;
+    // roll (x-axis rotation)
+    let sinr_cosp = 2.0 * (q.r * q.i + q.j * q.k);
+    let cosr_cosp = 1.0 - 2.9 * (q.i * q.i + q.j * q.j);
+    let roll = f32::atan2(sinr_cosp, cosr_cosp);
+    // pitch (y-axis rotation)
+    let sinp = 2.0 * (q.r * q.j - q.k * q.i);
+    let pitch = if sinp.abs() >= 1.0 {
+        f32::copysign(std::f32::consts::PI / 2.0, sinp) // use 90 degrees if out of range
+    } else {
+        f32::asin(sinp)
+    };
+    // yaw (z-axis rotation)
+    let siny_cosp = 2.0 * (q.r * q.k + q.i * q.j);
+    let cosy_cosp = 1.0 - 2.0 * (q.j * q.j + q.k * q.k);
+    let yaw = f32::atan2(siny_cosp, cosy_cosp);
+    Vector3::new(roll, pitch, yaw)
 }
 
 /// Reinterpret a Vector3 as three u32. Used so that Vector3 can be a HashMap key.
@@ -256,48 +400,24 @@ impl TriStrip {
     }
 }
 
-/// Read a Mat3x3 from a file (36 bytes)
-pub fn read_mat3(reader: &mut dyn Read, fmt: TotemFormat) -> io::Result<Mat3x3> {
-    let mut buf = [0.0f32; 9];
-    fmt.read_f32_into(reader, &mut buf)?;
-    Ok(Mat3x3::from_row_slice(&buf))
-}
-
-/// Write a Mat3x3 to a file (36 bytes)
-pub fn write_mat3(mat: &Mat3x3, writer: &mut dyn Write, fmt: TotemFormat) -> io::Result<()> {
-    for value in mat.iter() {
-        fmt.write_f32(writer, *value)?;
-    }
-    Ok(())
-}
-
-/// Read a Mat4x4 from a file (64 bytes)
-pub fn read_mat4(reader: &mut dyn Read, fmt: TotemFormat) -> io::Result<Mat4x4> {
-    let mut buf = [0.0f32; 16];
-    fmt.read_f32_into(reader, &mut buf)?;
-    Ok(Mat4x4::from_row_slice(&buf))
-}
-
-/// Write a Mat4x4 to a file (64 bytes)
-pub fn write_mat4(mat: &Mat4x4, writer: &mut dyn Write, fmt: TotemFormat) -> io::Result<()> {
-    for value in mat.iter() {
-        fmt.write_f32(writer, *value)?;
-    }
-    Ok(())
-}
-
 /// Read an RGBA float-based color from a file (16 bytes)
-pub fn read_color(reader: &mut dyn Read, fmt: TotemFormat) -> io::Result<Color> {
+pub fn read_color_rgba(reader: &mut dyn Read, fmt: TotemFormat) -> io::Result<ColorRGBA> {
     let mut buf = [0.0f32; 4];
     fmt.read_f32_into(reader, &mut buf)?;
-    Ok(Color::new(buf[0], buf[1], buf[2], buf[3]))
+    Ok(ColorRGBA {
+        r: buf[0],
+        g: buf[1],
+        b: buf[2],
+        a: buf[3]
+    })
 }
 
 /// Write an RGBA float-based color to a file (16 bytes)
-pub fn write_color(col: &Color, writer: &mut dyn Write, fmt: TotemFormat) -> io::Result<()> {
-    for value in col.iter() {
-        fmt.write_f32(writer, *value)?;
-    }
+pub fn write_color_rgba(col: &ColorRGBA, writer: &mut dyn Write, fmt: TotemFormat) -> io::Result<()> {
+    fmt.write_f32(writer, col.r)?;
+    fmt.write_f32(writer, col.g)?;
+    fmt.write_f32(writer, col.b)?;
+    fmt.write_f32(writer, col.a)?;
     Ok(())
 }
 
@@ -307,7 +427,7 @@ chum_struct_generate_readwrite! {
     #[derive(Clone, Debug)]
     pub struct THeaderTyped {
         pub floats: [fixed array [f32] 4],
-        pub transform: [Mat4x4],
+        pub transform: [Transform3D],
         pub junk: [ignore [fixed array [u8] 16] [0;16]],
         pub item_type: [u16],
         pub item_subtype: [u16],
@@ -320,7 +440,7 @@ chum_struct_generate_readwrite! {
     #[derive(Clone, Debug)]
     pub struct THeaderNoType {
         pub floats: [fixed array [f32] 4],
-        pub transform: [Mat4x4],
+        pub transform: [Transform3D],
         pub junk: [ignore [fixed array [u8] 16] [0;16]],
     }
 }

@@ -57,7 +57,7 @@ impl_tag_enum!(
 
 #[derive(Clone, Debug)]
 pub struct BindShapeMatrix {
-    data: common::Mat4x4,
+    data: common::Transform3D,
 }
 
 impl_tag_content!(BindShapeMatrix, "bind_shape_matrix", data);
@@ -142,7 +142,7 @@ pub fn skin_to_controller(skin: &scene::SceneSkin, meshname: &str) -> Controller
         name: Some(id_skin.clone()),
         data: ControllerData::Skin {
             bind_shape_matrix: Some(BindShapeMatrix {
-                data: common::Mat4x4::identity(),
+                data: common::Transform3D::identity(),
             }),
             source: format!("#{}", id_mesh),
             source_elements: vec![
@@ -185,9 +185,9 @@ pub fn skin_to_controller(skin: &scene::SceneSkin, meshname: &str) -> Controller
                             .flat_map(|group| {
                                 group
                                     .transform
-                                    .try_inverse()
-                                    .unwrap_or(common::Mat4x4::identity())
-                                    .as_slice()
+                                    .inverse()
+                                    .unwrap_or(common::Transform3D::identity())
+                                    .to_array()
                                     .to_vec()
                             })
                             .collect(),

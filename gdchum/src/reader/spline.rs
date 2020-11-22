@@ -1,5 +1,4 @@
 use crate::chumfile::ChumFile;
-use crate::util;
 use gdnative::prelude::*;
 use libchum::reader::spline;
 
@@ -19,7 +18,6 @@ pub fn read_spline(data: &Vec<u8>, fmt: libchum::format::TotemFormat, file: &Chu
         spline
             .get_vertices_as_vec()
             .into_iter()
-            .map(|x| util::vec3_to_godot(&x))
             .collect::<Vec<Vector3>>()
             .to_variant(),
     );
@@ -28,7 +26,6 @@ pub fn read_spline(data: &Vec<u8>, fmt: libchum::format::TotemFormat, file: &Chu
         &spline
             .get_section_stops_as_vec()
             .into_iter()
-            .map(|x| util::vec3_to_godot(&x))
             .collect::<Vec<Vector3>>()
             .to_variant(),
     );

@@ -45,7 +45,7 @@ chum_struct_generate_readwrite! {
         pub userdefine_id: [reference USERDEFINE],
         pub floatv1: [fixed array [f32] 9],
         pub floatv2: [fixed array [f32] 9],
-        pub local_transform: [Mat4x4],
+        pub local_transform: [Transform3D],
         pub local_translation: [Vector3],
         pub junk1: [ignore [fixed array [u8] 4] [0u8; 4]],
         pub local_rotation: [Quaternion],
@@ -55,8 +55,8 @@ chum_struct_generate_readwrite! {
         pub unk2: [fixed array [u32] 8],
         pub unk3: [fixed array [f32] 4],
         pub unk4: [fixed array [u16] 2],
-        pub global_transform: [Mat4x4],
-        pub global_transform_inverse: [Mat4x4],
+        pub global_transform: [Transform3D],
+        pub global_transform_inverse: [Transform3D],
     }
 }
 
@@ -207,8 +207,8 @@ chum_struct_generate_readwrite! {
         pub local_scale: [Vector3],
         pub floatv1: [fixed array [f32] 9],
         pub floatv2: [fixed array [f32] 9],
-        pub tx1: [Mat4x4],
-        pub tx2: [Mat4x4],
+        pub tx1: [Transform3D],
+        pub tx2: [Transform3D],
     }
 }
 

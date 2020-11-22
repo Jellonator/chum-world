@@ -79,31 +79,30 @@ impl NodeView {
 
     #[export]
     pub fn set_global_transform(&mut self, _owner: TRef<Resource>, value: Transform) {
-        self.inner.global_transform = util::transform_to_mat4x4(&value);
-        println!("TX:\n{:?}", self.inner.global_transform);
+        self.inner.global_transform = util::godot_to_transform3d(&value);
         let inverse = Transform {
             basis: value.basis.inverted(),
             origin: -value.origin
         };
-        self.inner.global_transform_inverse = util::transform_to_mat4x4(&inverse);
+        self.inner.global_transform_inverse = util::godot_to_transform3d(&inverse);
     }
 
     #[export]
     pub fn get_global_transform(&self, _owner: TRef<Resource>) -> Transform {
-        util::mat4x4_to_transform(&self.inner.global_transform)
+        util::transform3d_to_godot(&self.inner.global_transform)
     }
 
     #[export]
     pub fn set_local_transform(&mut self, _owner: TRef<Resource>, value: Transform) {
-        self.inner.local_transform = util::transform_to_mat4x4(&value);
-        self.inner.local_translation = util::godot_to_vec3(&value.origin);
-        self.inner.local_rotation = util::godot_to_quat(&value.basis.to_quat());
-        self.inner.local_scale = util::godot_to_vec3(&value.basis.to_scale());
+        self.inner.local_transform = util::godot_to_transform3d(&value);
+        self.inner.local_translation = value.origin;
+        self.inner.local_rotation.inner = value.basis.to_quat();
+        self.inner.local_scale = value.basis.to_scale();
     }
 
     #[export]
     pub fn get_local_transform(&self, _owner: TRef<Resource>) -> Transform {
-        util::mat4x4_to_transform(&self.inner.local_transform)
+        util::transform3d_to_godot(&self.inner.local_transform)
     }
 
     #[export]

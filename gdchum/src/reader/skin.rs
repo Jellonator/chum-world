@@ -14,7 +14,7 @@ pub fn read_skin(data: &Vec<u8>, fmt: libchum::format::TotemFormat, file: &ChumF
     let data = Dictionary::new();
     data.insert(
         "transform",
-        util::mat4x4_to_transform(&skin.transform.transform),
+        util::transform3d_to_godot(&skin.transform.transform),
     );
     data.insert("meshes", skin.meshes);
     let groups = Dictionary::new();

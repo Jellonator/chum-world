@@ -33,7 +33,7 @@ impl SceneSkinVertex {
 #[derive(Clone, Debug)]
 pub struct SceneGroup {
     pub name: String,
-    pub transform: common::Mat4x4,
+    pub transform: common::Transform3D,
 }
 
 /// Skin for a scene object.
@@ -48,7 +48,7 @@ pub struct SceneSkin {
 #[derive(Clone, Debug)]
 pub struct SceneTriMesh {
     pub name: String,
-    pub transform: common::Mat4x4,
+    pub transform: common::Transform3D,
     pub vertices: Vec<common::Vector3>,
     pub texcoords: Vec<common::Vector2>,
     pub normals: Vec<common::Vector3>,
@@ -131,7 +131,7 @@ pub fn merge_meshes(mut a: SceneTriMesh, mut b: SceneTriMesh) -> SceneTriMesh {
     }));
     SceneTriMesh {
         name: a.name,
-        transform: common::Mat4x4::identity(),
+        transform: common::Transform3D::identity(),
         vertices: a.vertices,
         texcoords: a.texcoords,
         normals: a.normals,
@@ -159,17 +159,18 @@ pub fn try_determine_group_transforms(mesh: &mut SceneTriMesh) {
             for (skinv, meshv) in skin.vertices.iter().zip(mesh.vertices.iter()) {
                 for influence in skinv.influences.iter() {
                     if influence.joint == groupi {
-                        sum += meshv * influence.weight;
+                        sum += *meshv * influence.weight;
                         sum_weight += influence.weight;
                     }
                 }
             }
             if sum_weight > 1e-5 {
-                group.transform = common::Mat4x4::new_translation(&(sum / sum_weight)).transpose();
+                let offset = sum / sum_weight;
+                group.transform = common::Transform3D::translation(offset.x, offset.y, offset.z);
                 println!("{:?}", group.transform);
-                println!("{:?}", group.transform.as_slice());
+                println!("{:?}", group.transform.to_array());
             } else {
-                group.transform = common::Mat4x4::identity();
+                group.transform = common::Transform3D::identity();
             }
         }
     }

@@ -95,6 +95,41 @@ macro_rules! display_err {
     };
 }
 
+pub fn transform3d_to_godot(tx: &common::Transform3D) -> Transform {
+    Transform {
+        basis: Basis {
+            elements: [
+                Vector3::new(tx.m11, tx.m21, tx.m31),
+                Vector3::new(tx.m12, tx.m22, tx.m32),
+                Vector3::new(tx.m13, tx.m23, tx.m33),
+            ],
+        },
+        origin: Vector3::new(tx.m41, tx.m42, tx.m43),
+    }
+}
+
+pub fn godot_to_transform3d(tx: &Transform) -> common::Transform3D {
+    common::Transform3D::new(
+        tx.basis.elements[0].x,
+        tx.basis.elements[1].x,
+        tx.basis.elements[2].x,
+        0.0,
+        tx.basis.elements[0].y,
+        tx.basis.elements[1].y,
+        tx.basis.elements[2].y,
+        0.0,
+        tx.basis.elements[0].z,
+        tx.basis.elements[1].z,
+        tx.basis.elements[2].z,
+        0.0,
+        tx.origin.x,
+        tx.origin.y,
+        tx.origin.z,
+        1.0,
+    )
+}
+
+/*
 pub fn quat_to_godot(value: &common::Quaternion) -> Quat {
     Quat::quaternion(value[0], value[1], value[2], value[3])
 }
@@ -165,6 +200,7 @@ pub fn transform2d_to_mat3x3(value: &Transform2D) -> common::Mat3x3 {
         array[0], array[2], array[4], array[1], array[3], array[5], 0.0, 0.0, 1.0,
     ])
 }
+*/
 
 /// Convert a Godot Dictionary to a ChumStructVariant
 pub fn dict_to_struct(dict: &Dictionary) -> ChumStructVariant {
@@ -221,19 +257,18 @@ pub fn dict_to_struct(dict: &Dictionary) -> ChumStructVariant {
         }
         "transform3d" => {
             let value = dict.get("value").try_to_transform().unwrap();
-            let mat = transform_to_mat4x4(&value);
+            let mat = godot_to_transform3d(&value);
             ChumStructVariant::Transform3D(mat)
         }
         "transform2d" => {
             let value = dict.get("value").try_to_transform2d().unwrap();
-            let mat = transform2d_to_mat3x3(&value);
-            ChumStructVariant::Transform2D(mat)
+            ChumStructVariant::Transform2D(value)
         }
         "color" => {
             let value = dict.get("value").try_to_color().unwrap();
             let alpha = dict.get("has_alpha").try_to_bool().unwrap();
             ChumStructVariant::Color(
-                common::Color::new(value.r, value.g, value.b, value.a),
+                common::ColorRGBA::new(value.r, value.g, value.b, value.a),
                 ColorInfo {
                     has_alpha: alpha
                 }
@@ -441,16 +476,15 @@ pub fn struct_to_dict(value: &ChumStructVariant) -> Dictionary<Unique> {
         }
         ChumStructVariant::Transform3D(value) => {
             let dict = Dictionary::new();
-            let transform = mat4x4_to_transform(value);
+            let transform = transform3d_to_godot(value);
             dict.insert("type", "transform3d");
             dict.insert("value", transform);
             dict
         }
         ChumStructVariant::Transform2D(value) => {
             let dict = Dictionary::new();
-            let transform = mat3x3_to_transform2d(value);
             dict.insert("type", "transform2d");
-            dict.insert("value", transform);
+            dict.insert("value", value);
             dict
         }
         ChumStructVariant::Color(color, info) => {
@@ -459,7 +493,7 @@ pub fn struct_to_dict(value: &ChumStructVariant) -> Dictionary<Unique> {
             dict.insert("has_alpha", info.has_alpha);
             dict.insert(
                 "value",
-                Color::rgba(color[0], color[1], color[2], color[3]),
+                Color::rgba(color.r, color.g, color.b, color.a),
             );
             dict
         }

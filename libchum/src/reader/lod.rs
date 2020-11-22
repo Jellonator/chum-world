@@ -78,7 +78,7 @@ chum_struct_generate_readwrite! {
 
 chum_struct_generate_readwrite! {
     pub struct LodTransform {
-        pub transform: [Mat4x4],
+        pub transform: [Transform3D],
         pub junk: [ignore [fixed array [u8] 16] [0u8; 16]]
     }
 }
@@ -86,7 +86,7 @@ chum_struct_generate_readwrite! {
 impl Default for LodTransform {
     fn default() -> Self {
         LodTransform {
-            transform: Mat4x4::default(),
+            transform: Transform3D::default(),
             junk: ()
         }
     }

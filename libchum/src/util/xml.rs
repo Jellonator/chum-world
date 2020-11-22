@@ -165,11 +165,11 @@ where
     }
 }
 
-impl XMLContent for common::Mat4x4 {
+impl XMLContent for common::Transform3D {
     fn serialize_content(&self) -> Result<String, SerializeError> {
-        let mut s = self[0].to_string();
-        for value in &self.as_slice()[1..] {
-            s += &format!(" {}", value);
+        let mut s = self.m11.to_string();
+        for value in &self.to_array_transposed()[1..] {
+            s = format!("{} {}", s, value);
         }
         Ok(s)
     }

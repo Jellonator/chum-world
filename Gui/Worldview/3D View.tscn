@@ -150,6 +150,23 @@ margin_bottom = 162.0
 text = "Show Hidden Nodes"
 align = 2
 
+[node name="HSeparator" type="HSeparator" parent="PanelContainer/TextureRect/Controls"]
+margin_top = 166.0
+margin_right = 206.0
+margin_bottom = 166.0
+custom_constants/separation = 0
+
+[node name="MoveChildren" type="CheckButton" parent="PanelContainer/TextureRect/Controls"]
+margin_top = 170.0
+margin_right = 206.0
+margin_bottom = 194.0
+pressed = true
+text = "Move Children"
+align = 2
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
 [node name="PopupSelector" type="PopupMenu" parent="PanelContainer/TextureRect"]
 margin_left = 258.0
 margin_top = 130.0
@@ -173,4 +190,5 @@ __meta__ = {
 [connection signal="toggled" from="PanelContainer/TextureRect/Controls/ShowVolumes" to="." method="_on_ShowVolumes_toggled"]
 [connection signal="toggled" from="PanelContainer/TextureRect/Controls/ShowSplines" to="." method="_on_ShowSplines_toggled"]
 [connection signal="toggled" from="PanelContainer/TextureRect/Controls/ShowNodes" to="." method="_on_ShowNodes_toggled"]
+[connection signal="toggled" from="PanelContainer/TextureRect/Controls/MoveChildren" to="." method="_on_MoveChildren_toggled"]
 [connection signal="index_pressed" from="PanelContainer/TextureRect/PopupSelector" to="." method="_on_PopupSelector_index_pressed"]

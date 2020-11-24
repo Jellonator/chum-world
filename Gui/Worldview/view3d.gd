@@ -20,6 +20,8 @@ onready var node_tree := $Tree/VBox/Items
 onready var node_temp := $Viewport/Temp
 onready var node_transform_gizmo := $Viewport/TransformGizmo
 onready var node_popup_select := $PanelContainer/TextureRect/PopupSelector as PopupMenu
+onready var node_current_menu := $Tree/VBox/Current
+onready var node_current_menu_open_resource := $Tree/VBox/Current/OpenResourceInFiles
 
 const MIN_SPEED = pow(2, -8)
 const MAX_SPEED = pow(2, 8)
@@ -98,6 +100,7 @@ func reset_surfaces():
 	tnodes_by_id.clear()
 	tnode_root = null
 	selected_node = null
+	node_current_menu.hide()
 	for child in node_surfaces.get_children():
 		child.queue_free()
 	for file in archive_files:
@@ -304,10 +307,17 @@ func set_selected_node(node):
 		set_node_focus_material(selected_node, false)
 	selected_node = node
 	if selected_node != null:
+		node_current_menu.show()
 		set_node_focus_material(selected_node, true)
+		node_current_menu_open_resource.disabled = node["view"].resource_id == 0
+	else:
+		node_current_menu.hide()
 	node_draw.update()
-	node_transform_gizmo.set_active(true)
-	node_transform_gizmo.transform = selected_node["node"].transform
+	if selected_node != null:
+		node_transform_gizmo.set_active(true)
+		node_transform_gizmo.transform = selected_node["node"].transform
+	else:
+		node_transform_gizmo.set_active(false)
 
 func _on_Items_node_selected(node):
 	set_selected_node(node)
@@ -364,8 +374,25 @@ func _on_MoveChildren_toggled(button_pressed: bool):
 	do_move_children = button_pressed
 
 func _on_OpenNodeInFiles_pressed():
+	if selected_node == null:
+		return
 	var id = int(selected_node["id"])
 	var file = archive.get_file_from_hash(id)
+	var viewer = owner
+	var tree = viewer.node_tree
+	var editor = viewer.node_editor
+	viewer.node_tabs.current_tab = 0
+	editor.set_file(file)
+	tree.set_selected(file)
+
+func _on_OpenResourceInFiles_pressed():
+	if selected_node == null:
+		return
+	var resource_id = selected_node["view"].resource_id
+	var file = archive.get_file_from_hash(resource_id)
+	if file == null:
+		MessageOverlay.push_warn("No such file with ID %d" % resource_id)
+		return
 	var viewer = owner
 	var tree = viewer.node_tree
 	var editor = viewer.node_editor

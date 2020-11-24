@@ -398,8 +398,31 @@ impl ChumArchive {
         self.format
     }
 
+    /// Get a string from the given ID
     pub fn get_name_from_id(&self, id: i32) -> Option<&str> {
         self.names.get(&id).map(|x| x.as_str())
+    }
+
+    /// Add the given name to this archive's name database.
+    /// Returns an error if adding the name would result in a hash collision.
+    pub fn add_name(&mut self, name: &str) -> Result<bool, Box<dyn Error>> {
+        match self.check_can_add_id(name)? {
+            None => Ok(false),
+            Some(id) => {
+                self.names.insert(id, name.to_owned());
+                Ok(true)
+            }
+        }
+    }
+
+    /// Get an iterator of IDs
+    pub fn get_ids(&self) -> impl Iterator<Item=&i32> {
+        self.names.keys()
+    }
+
+    /// Get an iterator of names
+    pub fn get_names(&self) -> impl Iterator<Item=&String> {
+        self.names.values()
     }
 }
 

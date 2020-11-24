@@ -82,11 +82,11 @@ impl ColorRGBA {
 /// A good, safe capacity for small data structures
 /// e.g. primitives or Vector3
 /// This is so that out of memory errors don't occur with Vec::with_capacity
-pub const SAFE_CAPACITY_SMALL: u32 = 1024;
+pub const SAFE_CAPACITY_SMALL: usize = 1024;
 /// A good, safe capacity for big data structures
 /// e.g. those that allocate memory (Vec) or > 100B
 /// This is so that out of memory errors don't occur with Vec::with_capacity
-pub const SAFE_CAPACITY_BIG: u32 = 128;
+pub const SAFE_CAPACITY_BIG: usize = 128;
 
 pub fn read_quat(reader: &mut dyn Read, fmt: TotemFormat) -> io::Result<Quaternion> {
     let i = fmt.read_f32(reader)?;

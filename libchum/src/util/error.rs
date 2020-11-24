@@ -172,3 +172,29 @@ where
         error: x.error,
     })
 }
+
+/// Error that occurs when a structure variant fails
+#[derive(Debug, Clone)]
+pub struct ChumStructVariantError {
+    pub expected: Vec<String>,
+    pub value: String
+}
+
+impl fmt::Display for ChumStructVariantError {
+    fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
+        write!(fmt, "Expected one of: [")?;
+        let mut is_first = true;
+        for value in self.expected.iter() {
+            if is_first {
+                write!(fmt, "\"{}\"", value)?;
+                is_first = false;
+            } else {
+                write!(fmt, ", \"{}\"", value)?;
+            }
+        }
+        write!(fmt, "]\nGot: {}", self.value)?;
+        Ok(())
+    }
+}
+
+impl Error for ChumStructVariantError {}

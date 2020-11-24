@@ -20,11 +20,11 @@ chum_struct_generate_readwrite! {
         ],
         pub unk2: [u32],
         pub unk3: [u32],
-        pub node_ids: [fixed array [i32] 10],
+        pub node_ids: [fixed array [reference NODE] 10],
         pub unk4: [fixed array [f32] 10],
-        pub unk5: [dynamic array [u32] [i32] 0],
+        pub unk5: [dynamic array [u32] [reference] 0],
         pub bitmaps: [dynamic array [u32] [reference BITMAP] 0],
-        pub volume_type: [i32],
+        pub volume_type: [reference],
         pub unk6: [u32],
     }
 }

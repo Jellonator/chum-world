@@ -194,9 +194,13 @@ func pick_node():
 	var result := space_state.intersect_shape(param, 16)
 	if result.size() > 0:
 		node_popup_select.clear()
+		var item_set := {}
 		for value in result:
 			var data = value["collider"].get_node_data()
+			if data in item_set:
+				continue
 			var name = data["name"]
+			item_set[data] = data
 			var i := node_popup_select.get_item_count()
 			var icon = node_tree.get_node_icon(data)
 			node_popup_select.add_icon_item(icon, name, i)
@@ -312,9 +316,9 @@ func _on_Items_node_selected(node):
 func _on_PopupSelector_index_pressed(index):
 	var id = node_popup_select.get_item_id(index)
 	var item = node_popup_select.get_item_metadata(id)
-	node_tree.try_select(item)
 	print("SELECT FROM POPUP")
 	set_selected_node(item)
+	node_tree.try_select(item)
 
 func _on_Button_pressed():
 	reset_surfaces()
@@ -358,3 +362,13 @@ func _on_TransformGizmo_on_finalize_transform(tx):
 
 func _on_MoveChildren_toggled(button_pressed: bool):
 	do_move_children = button_pressed
+
+func _on_OpenNodeInFiles_pressed():
+	var id = int(selected_node["id"])
+	var file = archive.get_file_from_hash(id)
+	var viewer = owner
+	var tree = viewer.node_tree
+	var editor = viewer.node_editor
+	viewer.node_tabs.current_tab = 0
+	editor.set_file(file)
+	tree.set_selected(file)

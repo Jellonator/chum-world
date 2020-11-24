@@ -119,7 +119,7 @@ chum_struct_enum! {
                             structpath: format!("unk7[{}].ids", i),
                             error: Box::new(e)
                         })? as usize;
-                        let mut ids = Vec::with_capacity(inner_len.min(1000usize));
+                        let mut ids = Vec::with_capacity(inner_len.min(crate::common::SAFE_CAPACITY_SMALL));
                         for j in 0..inner_len {
                             ids.push(fmt.read_i32(file).map_err(|e| StructUnpackError {
                                 structname: "NodeDataUnion::NodeDataSkin".to_owned(),

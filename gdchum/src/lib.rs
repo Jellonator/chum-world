@@ -156,6 +156,32 @@ impl ChumArchive {
             }
         }
     }
+
+    #[export]
+    pub fn register_name(&mut self, _owner: &Resource, name: GodotString) -> bool {
+        let utf8 = name.to_utf8();
+        let name_str = utf8.as_str();
+        match self.archive.add_name(name_str) {
+            Ok(did_insert) => {
+                if did_insert {
+                    display_info!("String \"{}\" has been registered in the name database.", name);
+                }
+                true
+            },
+            Err(_) => {
+                display_err!(
+                    "Could not insert the string \"{}\" into the name database due to a name collision with \"{}\".",
+                    name, self.maybe_get_name_from_hash_str(libchum::hash_name(name_str))
+                );
+                false
+            }
+        }
+    }
+
+    #[export]
+    pub fn get_hash_of_name(&self, _owner: &Resource, name: GodotString) -> i32 {
+        libchum::hash_name(name.to_utf8().as_str())
+    }
 }
 
 fn init(handle: InitHandle) {

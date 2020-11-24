@@ -15,3 +15,4 @@ pub mod mesh;
 pub mod warp;
 pub mod omni;
 pub mod light;
+pub mod gameobj;

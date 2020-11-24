@@ -331,7 +331,7 @@ impl SurfaceObject {
         // let _unknown3 = fmt.read_u16(file)?;
         let transform = THeaderTyped::read_from(file, fmt).unwrap();
         let num_vertices = fmt.read_u32(file)?;
-        let mut vertices = Vec::with_capacity(num_vertices as usize);
+        let mut vertices = Vec::with_capacity((num_vertices as usize).min(SAFE_CAPACITY_SMALL));
         for _ in 0..num_vertices {
             vertices.push(read_vec3(file, fmt)?);
         }
@@ -340,7 +340,7 @@ impl SurfaceObject {
         let num_unk1 = fmt.read_u32(file)?;
         fmt.skip_n_bytes(file, num_unk1 as u64 * 24)?;
         let num_surfaces = fmt.read_u32(file)?;
-        let mut surfaces = Vec::with_capacity(num_surfaces as usize);
+        let mut surfaces = Vec::with_capacity((num_surfaces as usize).min(SAFE_CAPACITY_SMALL));
         for _ in 0..num_surfaces {
             let texcoords = [
                 read_vec2(file, fmt)?,
@@ -365,7 +365,7 @@ impl SurfaceObject {
             });
         }
         let num_curves = fmt.read_u32(file)?;
-        let mut curves = Vec::with_capacity(num_curves as usize);
+        let mut curves = Vec::with_capacity((num_curves as usize).min(SAFE_CAPACITY_SMALL));
         for _ in 0..num_curves {
             curves.push(Curve {
                 p1: fmt.read_u16(file)?,
@@ -375,7 +375,7 @@ impl SurfaceObject {
             });
         }
         let num_normals = fmt.read_u32(file)?;
-        let mut normals = Vec::with_capacity(num_normals as usize);
+        let mut normals = Vec::with_capacity((num_normals as usize).min(SAFE_CAPACITY_SMALL));
         for _ in 0..num_normals {
             normals.push(read_vec3(file, fmt)?);
         }

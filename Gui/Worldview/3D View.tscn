@@ -65,11 +65,22 @@ placeholder_text = "search"
 [node name="Items" type="Tree" parent="Tree/VBox"]
 margin_top = 26.0
 margin_right = 160.0
-margin_bottom = 718.0
+margin_bottom = 692.0
 rect_min_size = Vector2( 160, 0 )
 size_flags_vertical = 3
 hide_root = true
 script = ExtResource( 5 )
+
+[node name="Current" type="VBoxContainer" parent="Tree/VBox"]
+margin_top = 696.0
+margin_right = 160.0
+margin_bottom = 718.0
+size_flags_horizontal = 3
+
+[node name="OpenNodeInFiles" type="Button" parent="Tree/VBox/Current"]
+margin_right = 160.0
+margin_bottom = 22.0
+text = "Open Node in Files"
 
 [node name="PanelContainer" type="PanelContainer" parent="."]
 margin_left = 170.0
@@ -183,6 +194,7 @@ __meta__ = {
 [connection signal="button_pressed" from="Tree/VBox/Items" to="Tree/VBox/Items" method="_on_Items_button_pressed"]
 [connection signal="item_selected" from="Tree/VBox/Items" to="Tree/VBox/Items" method="_on_Items_item_selected"]
 [connection signal="node_selected" from="Tree/VBox/Items" to="." method="_on_Items_node_selected"]
+[connection signal="pressed" from="Tree/VBox/Current/OpenNodeInFiles" to="." method="_on_OpenNodeInFiles_pressed"]
 [connection signal="item_rect_changed" from="PanelContainer/TextureRect" to="." method="_on_TextureRect_item_rect_changed"]
 [connection signal="pressed" from="PanelContainer/TextureRect/Controls/Button" to="." method="_on_Button_pressed"]
 [connection signal="toggled" from="PanelContainer/TextureRect/Controls/NodeNames" to="." method="_on_CheckButton_toggled"]

@@ -686,6 +686,12 @@ impl ChumFile {
                 data.write_to(&mut outdata, self.format).unwrap();
                 self.replace_data_with_vec(outdata);
             }
+            "NODE" => {
+                let data = reader::node::Node::destructure(&structure).unwrap();
+                let mut outdata = Vec::new();
+                data.write_to(&mut outdata, self.format).unwrap();
+                self.replace_data_with_vec(outdata);
+            }
             _ => panic!("Could not import data"),
         }
     }

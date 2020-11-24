@@ -275,4 +275,31 @@ impl ChumStructVariant {
             _ => None,
         }
     }
+    pub fn get_variant_name(&self) -> Option<&str> {
+        use ChumStructVariant::*;
+        match self {
+            Variant {
+                value: _,
+                options: _,
+                ref current,
+            } => {
+                Some(current)
+            }
+            _ => None,
+        }
+    }
+    pub fn get_variant_data(&self) -> Option<&ChumStructVariant> {
+        use ChumStructVariant::*;
+        use std::borrow::Borrow;
+        match self {
+            Variant {
+                ref value,
+                options: _,
+                current: _,
+            } => {
+                Some(value.borrow())
+            }
+            _ => None,
+        }
+    }
 }

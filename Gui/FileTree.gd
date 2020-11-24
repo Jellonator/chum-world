@@ -62,7 +62,7 @@ func _sort_file(a, b):
 		return a.subtype < b.subtype
 
 var prev_search := ""
-func do_search(text: String):
+func do_search(text: String, selected_file):
 	prev_search = text
 	prints("SEARCH", text, archive)
 	text = text.to_lower()
@@ -78,7 +78,8 @@ func do_search(text: String):
 		var subtype := file.subtype as String
 		if text != "" and not text in name.to_lower()\
 					  and not text in type.to_lower()\
-					  and not text in subtype.to_lower():
+					  and not text in subtype.to_lower()\
+					  and not file == selected_file:
 			continue
 		var item := create_item(get_item_parent(name))
 		item.set_icon(0, get_type_icon(type))
@@ -88,15 +89,21 @@ func do_search(text: String):
 		item.set_custom_color(0, Color.white)
 		item.set_meta("file", file)
 		item.set_meta("category", false)
+		if file == selected_file:
+			_do_skip_select = true
+			item.select(0)
+			_do_skip_select = false
 
 func set_archive(p_archive):
 	self.archive = p_archive
 	self.archive_files = archive.get_file_list()
 	archive_files.sort_custom(self, "_sort_file")
-	do_search(prev_search)
+	do_search(prev_search, null)
 
+var _do_skip_select := false
 func _on_Tree_item_selected():
-	emit_signal("file_selected", get_selected().get_meta("file"))
+	if not _do_skip_select:
+		emit_signal("file_selected", get_selected().get_meta("file"))
 
 func _ready():
 	columns = 3
@@ -109,7 +116,13 @@ func _ready():
 	set_column_min_width(2, 4)
 
 func _on_LineEdit_text_changed(new_text: String):
-	do_search(new_text)
+	var current_file = null
+	if get_selected() != null:
+		current_file = get_selected().get_meta("file")
+	do_search(new_text, current_file)
+
+func set_selected(new_file):
+	do_search(prev_search, new_file)
 
 var _tree_menu_item: TreeItem = null
 func _gui_input(event):

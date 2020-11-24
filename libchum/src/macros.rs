@@ -819,7 +819,7 @@ macro_rules! chum_struct_binary_read {
                 structpath: $path.to_owned(),
                 error: Box::new(e)
             }).and_then(|size| {
-                let mut vec = Vec::with_capacity((size as usize).max(1000usize));
+                let mut vec = Vec::with_capacity((size as usize).min($crate::common::SAFE_CAPACITY_BIG));
                 for i in 0..size {
                     vec.push(chum_struct_binary_read!($type,$file,$fmt,$struct,format!("{}[{}]",$path,i),$self)?)
                 }
@@ -1169,15 +1169,37 @@ macro_rules! chum_struct_enum {
                     ),*
                 }
             }
-            fn destructure(_data: &$crate::structure::ChumStructVariant) -> Result<Self, ::std::boxed::Box<dyn ::std::error::Error>> {
-                unimplemented!()
-                // Ok(
-                //     Self {
-                //         $(
-                //             $name: process_destructure!($name,data,$type),
-                //         )*
-                //     }
-                // )
+            fn destructure(data: &$crate::structure::ChumStructVariant) -> Result<Self, ::std::boxed::Box<dyn ::std::error::Error>> {
+                // unimplemented!()
+                let inner_name = data.get_variant_name().unwrap();
+                let inner_data = data.get_variant_data().unwrap();
+                match inner_name {
+                    $(
+                        stringify!($variantname) => {
+                            Ok(
+                                $enumname::$variantname {
+                                    $(
+                                        $name: process_destructure!($name,inner_data,$type)
+                                    ),*
+                                }
+                            )
+                        },
+                    )*
+                    o => {
+                        Err(
+                            Box::new(
+                                $crate::util::error::ChumStructVariantError {
+                                    expected: vec![
+                                        $(
+                                            stringify!($variantname).to_owned()
+                                        ),*
+                                    ],
+                                    value: o.to_owned()
+                                }
+                            )
+                        )
+                    }
+                }
             }
         }
         impl $crate::binary::ChumBinary for $enumname {

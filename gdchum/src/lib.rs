@@ -11,6 +11,7 @@ pub mod chumfile;
 pub mod names;
 pub mod reader;
 pub mod views;
+pub mod scenedata;
 
 #[derive(NativeClass)]
 #[inherit(Resource)]
@@ -190,6 +191,7 @@ fn init(handle: InitHandle) {
     handle.add_class::<bytedata::ByteData>();
     handle.add_class::<reader::ChumReader>();
     handle.add_class::<util::StructGenerator>();
+    handle.add_class::<scenedata::SceneData>();
     views::init(handle);
 }
 

@@ -5,3 +5,4 @@ testassets/
 /export
 export_presets.cfg
 *.png~
+gdchum/cross_build_osx.sh

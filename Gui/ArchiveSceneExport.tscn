@@ -1,0 +1,163 @@
+[gd_scene load_steps=3 format=2]
+
+[ext_resource path="res://Gui/ArchiveSceneExport.gd" type="Script" id=1]
+[ext_resource path="res://Gui/theme.tres" type="Theme" id=2]
+
+[node name="SceneExportDialog" type="ConfirmationDialog"]
+margin_left = 238.0
+margin_top = 208.0
+margin_right = 764.0
+margin_bottom = 442.0
+theme = ExtResource( 2 )
+popup_exclusive = true
+window_title = "Scene Export"
+script = ExtResource( 1 )
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="VBox" type="GridContainer" parent="."]
+margin_left = 8.0
+margin_top = 8.0
+margin_right = 518.0
+margin_bottom = 196.0
+columns = 2
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="Label" type="Label" parent="VBox"]
+margin_right = 104.0
+margin_bottom = 22.0
+text = "File"
+
+[node name="File" type="HBoxContainer" parent="VBox"]
+margin_left = 108.0
+margin_right = 510.0
+margin_bottom = 22.0
+size_flags_horizontal = 3
+
+[node name="FileString" type="LineEdit" parent="VBox/File"]
+margin_right = 347.0
+margin_bottom = 22.0
+size_flags_horizontal = 3
+
+[node name="FileSelect" type="Button" parent="VBox/File"]
+margin_left = 351.0
+margin_right = 402.0
+margin_bottom = 22.0
+text = "Select"
+
+[node name="Label3" type="Label" parent="VBox"]
+margin_top = 83.0
+margin_right = 104.0
+margin_bottom = 105.0
+text = "Types"
+
+[node name="Include" type="VBoxContainer" parent="VBox"]
+margin_left = 108.0
+margin_top = 26.0
+margin_right = 510.0
+margin_bottom = 162.0
+
+[node name="Mesh" type="CheckBox" parent="VBox/Include"]
+margin_right = 402.0
+margin_bottom = 24.0
+pressed = true
+text = "Include MESH"
+
+[node name="Skin" type="CheckBox" parent="VBox/Include"]
+margin_top = 28.0
+margin_right = 402.0
+margin_bottom = 52.0
+pressed = true
+text = "Include SKIN"
+
+[node name="Lod" type="CheckBox" parent="VBox/Include"]
+margin_top = 56.0
+margin_right = 402.0
+margin_bottom = 80.0
+pressed = true
+text = "Include LOD"
+
+[node name="Surface" type="CheckBox" parent="VBox/Include"]
+margin_top = 84.0
+margin_right = 402.0
+margin_bottom = 108.0
+pressed = true
+text = "Include SURFACE"
+
+[node name="Rotshape" type="CheckBox" parent="VBox/Include"]
+margin_top = 112.0
+margin_right = 402.0
+margin_bottom = 136.0
+pressed = true
+text = "Include ROTSHAPE"
+
+[node name="Light" type="CheckBox" parent="VBox/Include"]
+visible = false
+margin_top = 140.0
+margin_right = 402.0
+margin_bottom = 164.0
+pressed = true
+text = "Include LIGHT"
+
+[node name="SurfaceLabel" type="Label" parent="VBox"]
+margin_top = 166.0
+margin_right = 104.0
+margin_bottom = 188.0
+text = "Surface Quality"
+
+[node name="SurfaceQuality" type="HBoxContainer" parent="VBox"]
+margin_left = 108.0
+margin_top = 166.0
+margin_right = 510.0
+margin_bottom = 188.0
+
+[node name="Slider" type="HSlider" parent="VBox/SurfaceQuality"]
+margin_right = 322.0
+margin_bottom = 16.0
+size_flags_horizontal = 3
+min_value = 1.0
+max_value = 256.0
+value = 16.0
+exp_edit = true
+rounded = true
+scrollable = false
+tick_count = 9
+ticks_on_borders = true
+
+[node name="Label" type="SpinBox" parent="VBox/SurfaceQuality"]
+margin_left = 326.0
+margin_right = 402.0
+margin_bottom = 22.0
+rect_min_size = Vector2( 32, 0 )
+min_value = 1.0
+max_value = 256.0
+value = 16.0
+rounded = true
+align = 1
+
+[node name="FileDialog" type="FileDialog" parent="."]
+visible = true
+margin_left = 8.0
+margin_top = 8.0
+margin_right = 518.0
+margin_bottom = 196.0
+popup_exclusive = true
+window_title = "Save Scene"
+resizable = true
+mode_overrides_title = false
+access = 2
+filters = PoolStringArray( "*.dae; COLLADA Scene" )
+current_dir = "/home/jellonator/Workspace/Rust/ChumWorld"
+current_path = "/home/jellonator/Workspace/Rust/ChumWorld/"
+__meta__ = {
+"_edit_use_anchors_": false
+}
+[connection signal="confirmed" from="." to="." method="_on_SceneExportDialog_confirmed"]
+[connection signal="pressed" from="VBox/File/FileSelect" to="." method="_on_FileSelect_pressed"]
+[connection signal="toggled" from="VBox/Include/Surface" to="." method="_on_Surface_toggled"]
+[connection signal="value_changed" from="VBox/SurfaceQuality/Slider" to="." method="_on_Slider_value_changed"]
+[connection signal="value_changed" from="VBox/SurfaceQuality/Label" to="." method="_on_Label_value_changed"]
+[connection signal="file_selected" from="FileDialog" to="." method="_on_FileDialog_file_selected"]

@@ -5,27 +5,38 @@ const MENU_FILE_OPEN := 0
 const MENU_FILE_EXIT := 1
 const MENU_FILE_SAVE_AS := 2
 
-const MENU_ARCHIVE_BULKEXPORT := 0
+const MENU_EXPORT_BULK_EXPORT := 0
+const MENU_EXPORT_SCENE_EXPORT := 1
 
 const MENU_VIEW_CULLING := 0
 const MENU_VIEW_ALPHA := 1
+
+const MENU_HELP_GUIDE := 0
+const MENU_HELP_ABOUT := 1
 
 var archive: ChumArchive
 var should_3dview_reload := false
 
 onready var node_menu_file := $VBox/Panel/Menu/File
+onready var node_menu_export := $VBox/Panel/Menu/Export
+onready var node_menu_view := $VBox/Panel/Menu/View
+onready var node_menu_help := $VBox/Panel/Menu/Help
 onready var node_tree := $VBox/Tabs/Files/VBox/Tree
 onready var node_editor := $VBox/Tabs/Files/EditorList
 onready var node_view3d := $"VBox/Tabs/3D View"
 onready var node_tabs := $VBox/Tabs as TabContainer
+onready var node_about_dialog := $AboutDialog
+onready var node_scene_export_dialog := $SceneExportDialog
 
 func _ready():
 	node_view3d.set_active(false)
 	archive = ChumArchive.new()
-	$VBox/Panel/Menu/File.get_popup().connect(
+	node_menu_file.get_popup().connect(
 		"id_pressed", self, "_on_menu_file_select")
-	$VBox/Panel/Menu/Archive.get_popup().connect(
-		"id_pressed", self, "_on_menu_archive_select")
+	node_menu_export.get_popup().connect(
+		"id_pressed", self, "_on_menu_export_select")
+	node_menu_help.get_popup().connect(
+		"id_pressed", self, "_on_menu_help_select")
 
 func _on_menu_file_select(id):
 	match id:
@@ -36,11 +47,22 @@ func _on_menu_file_select(id):
 		MENU_FILE_SAVE_AS:
 			$ArchiveFileSaver.popup_centered()
 
-func _on_menu_archive_select(id):
+func _on_menu_export_select(id):
+	if archive == null:
+		return
 	match id:
-		MENU_ARCHIVE_BULKEXPORT:
-			if archive != null:
-				$BulkExport.show_with_archive(archive)
+		MENU_EXPORT_BULK_EXPORT:
+			$BulkExport.show_with_archive(archive)
+		MENU_EXPORT_SCENE_EXPORT:
+			node_scene_export_dialog.set_archive(archive)
+			node_scene_export_dialog.popup_centered()
+
+func _on_menu_help_select(id):
+	match id:
+		MENU_HELP_ABOUT:
+			node_about_dialog.popup_centered()
+		MENU_HELP_GUIDE:
+			OS.shell_open("https://github.com/Jellonator/chum-world/wiki/User-Guide")
 
 func load_archive(ngc: String, dgc: String, ftype: String):
 	node_editor.set_file(null)

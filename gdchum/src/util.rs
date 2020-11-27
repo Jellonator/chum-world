@@ -54,6 +54,21 @@ impl MessageLevel {
     }
 }
 
+pub fn get_filename(name: &str) -> &str {
+    match name.rfind('>') {
+        Some(pos) => &name[pos + 1..],
+        None => name,
+    }
+}
+
+pub fn get_basename(name: &str) -> &str {
+    let name = get_filename(name);
+    match name.find('.') {
+        Some(pos) => &name[..pos],
+        None => name,
+    }
+}
+
 pub fn push_message(value: &str, level: MessageLevel) {
     println!("{}: {}", level.get_name(), value);
     use gdnative::api::MainLoop;

@@ -3,6 +3,7 @@
 use crate::common::*;
 use crate::format::TotemFormat;
 use crate::util::bezierpatch;
+use crate::scene;
 use std::collections::HashMap;
 use std::error::Error;
 use std::io::{self, Read, Write};
@@ -400,6 +401,68 @@ impl SurfaceObject {
             genmode: mode,
         }
     }
+
+    pub fn generate_trimesh(&self, name: String, mode: SurfaceGenMode) -> scene::SceneTriMesh {
+        let mut trimesh = scene::SceneTriMesh {
+            name,
+            // Mesh.transform.transform is NOT actually applied to this mesh
+            transform: Transform3D::identity(),
+            vertices: Vec::new(),
+            normals: Vec::new(),
+            texcoords: Vec::new(),
+            elements: Vec::new(),
+            skin: None,
+        };
+        let mut vertices = HashMap::<[u32; 3], usize>::new();
+        let mut normals = HashMap::<[u32; 3], usize>::new();
+        let mut texcoords = HashMap::<[u32; 2], usize>::new();
+        let gen = self.generate_meshes(mode);
+        for mesh in gen.iter() {
+            for quad in mesh.quads.iter() {
+                for point in quad.points.iter() {
+                    let nvert = vertices.len();
+                    if insert_if_not_exist(&mut vertices, reinterpret_vec3(&point.vertex), nvert)
+                    {
+                        trimesh.vertices.push(point.vertex);
+                    }
+                    let nnorm = normals.len();
+                    if insert_if_not_exist(&mut normals, reinterpret_vec3(&point.normal), nnorm)
+                    {
+                        trimesh.normals.push(point.normal);
+                    }
+                    let ntex = texcoords.len();
+                    if insert_if_not_exist(&mut texcoords, reinterpret_vec2(&point.texcoord), ntex)
+                    {
+                        trimesh.texcoords.push(point.texcoord);
+                    }
+                }
+            }
+        }
+        for mesh in gen.iter() {
+            for quad in mesh.quads.iter() {
+                for tri in quad.tris().iter() {
+                    trimesh.elements.push([
+                        (
+                            vertices[&reinterpret_vec3(&tri.points[0].vertex)],
+                            texcoords[&reinterpret_vec2(&tri.points[0].texcoord)],
+                            normals[&reinterpret_vec3(&tri.points[0].normal)]
+                        ),
+                        (
+                            vertices[&reinterpret_vec3(&tri.points[1].vertex)],
+                            texcoords[&reinterpret_vec2(&tri.points[1].texcoord)],
+                            normals[&reinterpret_vec3(&tri.points[1].normal)]
+                        ),
+                        (
+                            vertices[&reinterpret_vec3(&tri.points[2].vertex)],
+                            texcoords[&reinterpret_vec2(&tri.points[2].texcoord)],
+                            normals[&reinterpret_vec3(&tri.points[2].normal)]
+                        )
+                    ])
+                }
+            }
+        }
+        trimesh
+    }
 }
 
 /// Surface export mode
@@ -430,7 +493,7 @@ where
 
 impl<'a> SurfaceExport<'a> {
     /// Export as a mesh with the given generation mode
-    fn export_mesh<W>(&self, writer: &mut W, mode: SurfaceGenMode) -> Result<(), Box<dyn Error>>
+    fn export_obj_mesh<W>(&self, writer: &mut W, mode: SurfaceGenMode) -> Result<(), Box<dyn Error>>
     where
         W: Write,
     {
@@ -497,7 +560,7 @@ impl<'a> SurfaceExport<'a> {
     {
         match self.genmode {
             SurfaceExportMode::Mesh(x) => {
-                self.export_mesh(writer, x)?;
+                self.export_obj_mesh(writer, x)?;
             }
         }
         Ok(())

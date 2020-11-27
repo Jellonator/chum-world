@@ -1,4 +1,4 @@
-[gd_scene load_steps=11 format=2]
+[gd_scene load_steps=12 format=2]
 
 [ext_resource path="res://Gui/Viewer.gd" type="Script" id=1]
 [ext_resource path="res://Gui/EditorList.tscn" type="PackedScene" id=2]
@@ -9,6 +9,7 @@
 [ext_resource path="res://Gui/FileTree.gd" type="Script" id=7]
 [ext_resource path="res://Gui/ExitDialogue.gd" type="Script" id=8]
 [ext_resource path="res://Gui/theme.tres" type="Theme" id=9]
+[ext_resource path="res://Gui/ArchiveSceneExport.tscn" type="PackedScene" id=10]
 
 [sub_resource type="StyleBoxFlat" id=1]
 content_margin_left = 4.0
@@ -58,13 +59,13 @@ text = "File"
 flat = false
 items = [ "Open Archive", null, 0, false, false, 0, 0, null, "", false, "Save Archive As", null, 0, false, true, 2, 0, null, "", false, "Exit", null, 0, false, false, 1, 0, null, "", false ]
 
-[node name="Archive" type="MenuButton" parent="VBox/Panel/Menu"]
+[node name="Export" type="MenuButton" parent="VBox/Panel/Menu"]
 margin_left = 39.0
-margin_right = 99.0
+margin_right = 91.0
 margin_bottom = 22.0
-text = "Archive"
+text = "Export"
 flat = false
-items = [ "Bulk Export", null, 0, false, false, 0, 0, null, "", false ]
+items = [ "Bulk Export", null, 0, false, false, 0, 0, null, "", false, "Scene Export", null, 0, false, false, 1, 0, null, "", false ]
 
 [node name="View" type="MenuButton" parent="VBox/Panel/Menu"]
 visible = false
@@ -74,6 +75,14 @@ margin_bottom = 22.0
 text = "View"
 flat = false
 items = [ "Backface Culling", null, 1, false, false, 0, 0, null, "", false, "High Quality Alpha", null, 1, false, false, 1, 0, null, "", false ]
+
+[node name="Help" type="MenuButton" parent="VBox/Panel/Menu"]
+margin_left = 95.0
+margin_right = 137.0
+margin_bottom = 22.0
+text = "Help"
+flat = false
+items = [ "Guide", null, 0, false, false, 0, 0, null, "", false, "About", null, 0, false, false, 1, 0, null, "", false ]
 
 [node name="Tabs" type="TabContainer" parent="VBox"]
 margin_top = 34.0
@@ -157,10 +166,10 @@ current_dir = "/home/jellonator/Workspace/Rust/ChumWorld"
 current_path = "/home/jellonator/Workspace/Rust/ChumWorld/"
 
 [node name="BulkExport" parent="." instance=ExtResource( 5 )]
-margin_left = 339.408
-margin_top = 297.42
-margin_right = 990.408
-margin_bottom = 397.42
+margin_left = 379.006
+margin_top = 281.864
+margin_right = 1030.01
+margin_bottom = 467.864
 
 [node name="ExitDialogue" type="ConfirmationDialog" parent="."]
 margin_right = 200.0
@@ -169,6 +178,44 @@ theme = ExtResource( 9 )
 popup_exclusive = true
 dialog_text = "Are you sure you with to exit?"
 script = ExtResource( 8 )
+
+[node name="AboutDialog" type="AcceptDialog" parent="."]
+margin_left = 372.0
+margin_top = 242.0
+margin_right = 856.0
+margin_bottom = 441.0
+window_title = "About"
+
+[node name="RichTextLabel" type="RichTextLabel" parent="AboutDialog"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+margin_left = 8.0
+margin_top = 8.0
+margin_right = -8.0
+margin_bottom = -38.0
+focus_mode = 2
+bbcode_enabled = true
+bbcode_text = "Source available on Github: [url]https://github.com/Jellonator/chum-world/[/url]
+
+Created by Jocelyn \"Jellonator\" Beedie.
+
+This software is not associated with Nickelodeon, Viacom, Asobo Studios, Kalisto Entertainment, or Big Sky interactive.
+
+This software is licensed under the [url=https://github.com/Jellonator/chum-world/blob/master/LICENSE]MIT[/url] license. This software provides no warranty. Contibutions are welcome!"
+text = "Source available on Github: https://github.com/Jellonator/chum-world/
+
+Created by Jocelyn \"Jellonator\" Beedie.
+
+This software is not associated with Nickelodeon, Viacom, Asobo Studios, Kalisto Entertainment, or Big Sky interactive.
+
+This software is licensed under the MIT license. This software provides no warranty. Contibutions are welcome!"
+scroll_active = false
+selection_enabled = true
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="SceneExportDialog" parent="." instance=ExtResource( 10 )]
 [connection signal="tab_changed" from="VBox/Tabs" to="." method="_on_Tabs_tab_changed"]
 [connection signal="text_changed" from="VBox/Tabs/Files/VBox/HBox/LineEdit" to="VBox/Tabs/Files/VBox/Tree" method="_on_LineEdit_text_changed"]
 [connection signal="file_selected" from="VBox/Tabs/Files/VBox/Tree" to="." method="_on_Tree_file_selected"]

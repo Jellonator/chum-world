@@ -11,21 +11,6 @@ use libchum::{
 use std::fs::File;
 use std::io::{BufReader, Write};
 
-pub fn get_filename(name: &str) -> &str {
-    match name.rfind('>') {
-        Some(pos) => &name[pos + 1..],
-        None => name,
-    }
-}
-
-pub fn get_basename(name: &str) -> &str {
-    let name = get_filename(name);
-    match name.find('.') {
-        Some(pos) => &name[..pos],
-        None => name,
-    }
-}
-
 /// A File resource derived from a ChumArchive.
 #[derive(NativeClass)]
 #[inherit(Resource)]
@@ -272,7 +257,7 @@ impl ChumFile {
             }
         };
         let mut scene = scene::Scene::new_empty();
-        scene.add_trimesh(mesh.create_scene_mesh(get_basename(&self.namestr).to_owned()));
+        scene.add_trimesh(mesh.create_scene_mesh(util::get_basename(&self.namestr).to_owned()));
         collada::scene_to_writer_dae(&scene, &mut buffer).unwrap();
     }
 
@@ -306,7 +291,7 @@ impl ChumFile {
                                 }
                             };
                             let mut trimesh = mesh.create_scene_mesh(
-                                get_basename(&meshscript.namestr).to_owned(),
+                                util::get_basename(&meshscript.namestr).to_owned(),
                             );
                             trimesh.skin = Some(skin.generate_scene_skin_for_mesh(
                                 names.as_slice(),

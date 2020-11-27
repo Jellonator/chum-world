@@ -423,4 +423,13 @@ impl Mesh {
             skin: None,
         }
     }
+
+    pub fn transform(&mut self, tx: &Transform3D) {
+        for point in self.vertices.iter_mut() {
+            *point = tx.transform_point3d(point.to_point()).unwrap().to_vector();
+        }
+        for vector in self.normals.iter_mut() {
+            *vector = tx.transform_vector3d(*vector);
+        }
+    }
 }

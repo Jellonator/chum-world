@@ -52,6 +52,7 @@ pub struct SceneTriMesh {
     pub vertices: Vec<common::Vector3>,
     pub texcoords: Vec<common::Vector2>,
     pub normals: Vec<common::Vector3>,
+    // in (vertex, texcoord, normal) order
     pub elements: Vec<[(usize, usize, usize); 3]>,
     pub skin: Option<SceneSkin>,
 }

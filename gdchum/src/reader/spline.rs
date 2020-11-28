@@ -2,7 +2,11 @@ use crate::chumfile::ChumFile;
 use gdnative::prelude::*;
 use libchum::reader::spline;
 
-pub fn read_spline(data: &Vec<u8>, fmt: libchum::format::TotemFormat, file: &ChumFile) -> Option<Dictionary<Unique>> {
+pub fn read_spline(
+    data: &Vec<u8>,
+    fmt: libchum::format::TotemFormat,
+    file: &ChumFile,
+) -> Option<Dictionary<Unique>> {
     use libchum::binary::ChumBinary;
     let spline = match spline::Spline::read_from(&mut data.as_slice(), fmt) {
         Ok(x) => x,

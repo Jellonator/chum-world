@@ -6,7 +6,7 @@ pub fn read_bitmap(
     data: &Vec<u8>,
     fmt: libchum::format::TotemFormat,
     chumfile: &ChumFile,
-) -> Option<(Ref<Image,Unique>, bool)> {
+) -> Option<(Ref<Image, Unique>, bool)> {
     let bitmap = match bitmap::Bitmap::read_data(data, fmt) {
         Ok(x) => x,
         Err(err) => {
@@ -14,7 +14,7 @@ pub fn read_bitmap(
             return None;
         }
     };
-    let image = Ref::<Image,Unique>::new();
+    let image = Ref::<Image, Unique>::new();
     let mut data = ByteArray::new();
     for color in bitmap.get_data_as_vec().into_iter() {
         data.push(color.r);

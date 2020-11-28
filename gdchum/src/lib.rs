@@ -1,8 +1,8 @@
-use gdnative::prelude::*;
 use gdnative::api::Resource;
+use gdnative::prelude::*;
 use libchum;
-use std::fs::File;
 use std::collections::HashMap;
+use std::fs::File;
 
 #[macro_use]
 pub mod util;
@@ -10,14 +10,14 @@ pub mod bytedata;
 pub mod chumfile;
 pub mod names;
 pub mod reader;
-pub mod views;
 pub mod scenedata;
+pub mod views;
 
 #[derive(NativeClass)]
 #[inherit(Resource)]
 pub struct ChumArchive {
     pub archive: libchum::ChumArchive,
-    pub files: HashMap<i32, Instance<chumfile::ChumFile, Shared>>
+    pub files: HashMap<i32, Instance<chumfile::ChumFile, Shared>>,
 }
 
 #[methods]
@@ -25,17 +25,12 @@ impl ChumArchive {
     fn new(_owner: &Resource) -> Self {
         ChumArchive {
             archive: libchum::ChumArchive::default(),
-            files: HashMap::new()
+            files: HashMap::new(),
         }
     }
 
     #[export]
-    fn save(
-        &mut self,
-        _owner: &Resource,
-        ngcpath: GodotString,
-        dgcpath: GodotString,
-    ) -> i64 {
+    fn save(&mut self, _owner: &Resource, ngcpath: GodotString, dgcpath: GodotString) -> i64 {
         let mut ngcfile = match File::create(ngcpath.to_string()) {
             Ok(x) => x,
             Err(_) => return GodotError::FileCantOpen as i64,
@@ -44,8 +39,7 @@ impl ChumArchive {
             Ok(x) => x,
             Err(_) => return GodotError::FileCantOpen as i64,
         };
-        match self.archive.write_chum_archive(&mut ngcfile, &mut dgcfile)
-        {
+        match self.archive.write_chum_archive(&mut ngcfile, &mut dgcfile) {
             Ok(_) => 0,
             Err(_) => GodotError::FileCantWrite as i64,
         }
@@ -90,13 +84,14 @@ impl ChumArchive {
             Ok(x) => {
                 self.files.clear();
                 for file in x.get_files() {
-                    let f = Instance::<chumfile::ChumFile,Unique>::new();
-                    let id = f.map_mut(|script, _res| {
-                        let instance = Instance::from_base(owner.claim()).unwrap();
-                        script.read_from_chumfile(file, x.get_format(), instance);
-                        script.get_hash_id_ownerless()
-                    })
-                    .unwrap();
+                    let f = Instance::<chumfile::ChumFile, Unique>::new();
+                    let id = f
+                        .map_mut(|script, _res| {
+                            let instance = Instance::from_base(owner.claim()).unwrap();
+                            script.read_from_chumfile(file, x.get_format(), instance);
+                            script.get_hash_id_ownerless()
+                        })
+                        .unwrap();
                     self.files.insert(id, f.into_shared());
                 }
                 self.archive = x;
@@ -165,14 +160,17 @@ impl ChumArchive {
         match self.archive.add_name(name_str) {
             Ok(did_insert) => {
                 if did_insert {
-                    display_info!("String \"{}\" has been registered in the name database.", name);
+                    display_info!(
+                        "String \"{}\" has been registered in the name database.",
+                        name
+                    );
                 }
                 true
-            },
+            }
             Err(_) => {
                 display_err!(
                     "Could not insert the string \"{}\" into the name database due to a name collision with \"{}\".",
-                    name, self.maybe_get_name_from_hash_str(libchum::hash_name(name_str))
+                    name, self.maybe_get_name_from_hash_str(libchum::util::hash_name_i32(name_str))
                 );
                 false
             }
@@ -181,7 +179,7 @@ impl ChumArchive {
 
     #[export]
     pub fn get_hash_of_name(&self, _owner: &Resource, name: GodotString) -> i32 {
-        libchum::hash_name(name.to_utf8().as_str())
+        libchum::util::hash_name_i32(name.to_utf8().as_str())
     }
 }
 

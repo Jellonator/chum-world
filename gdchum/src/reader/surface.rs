@@ -1,15 +1,15 @@
 use crate::chumfile::ChumFile;
 use crate::reader::ChumReader;
 use crate::util;
+use gdnative::api::{ArrayMesh, Material, Mesh};
 use gdnative::prelude::*;
-use gdnative::api::{ArrayMesh, Mesh, Material};
 use libchum::common;
 use libchum::reader::surface;
 
 pub struct SurfaceResult {
     // pub surface: Reference,
     pub transform: common::Transform3D,
-    pub surfaces: Vec<Ref<ArrayMesh,Shared>>,
+    pub surfaces: Vec<Ref<ArrayMesh, Shared>>,
 }
 
 pub fn read_surface(
@@ -25,10 +25,10 @@ pub fn read_surface(
             return None;
         }
     };
-    let mut meshes: Vec<Ref<ArrayMesh,Shared>> = Vec::new();
+    let mut meshes: Vec<Ref<ArrayMesh, Shared>> = Vec::new();
     let surfaces = surfaceobj.generate_meshes(surface::SurfaceGenMode::BezierInterp(4));
     for surface in surfaces {
-        let mesh = Ref::<ArrayMesh,Unique>::new();
+        let mesh = Ref::<ArrayMesh, Unique>::new();
         let mut verts = Vector3Array::new();
         let mut texcoords = Vector2Array::new();
         let mut uv2 = Vector2Array::new();
@@ -37,21 +37,10 @@ pub fn read_surface(
         for quad in surface.quads.iter() {
             for tri in &quad.tris() {
                 for point in &tri.points {
-                    verts.push(Vector3::new(
-                        point.vertex.x,
-                        point.vertex.y,
-                        point.vertex.z,
-                    ));
+                    verts.push(Vector3::new(point.vertex.x, point.vertex.y, point.vertex.z));
                     texcoords.push(Vector2::new(point.texcoord.x, point.texcoord.y));
-                    normals.push(Vector3::new(
-                        point.normal.x,
-                        point.normal.y,
-                        point.normal.z,
-                    ));
-                    uv2.push(Vector2::new(
-                        point.uv2.x,
-                        point.uv2.y
-                    ));
+                    normals.push(Vector3::new(point.normal.x, point.normal.y, point.normal.z));
+                    uv2.push(Vector2::new(point.uv2.x, point.uv2.y));
                 }
             }
         }
@@ -72,20 +61,19 @@ pub fn read_surface(
         let archiveinstance = unsafe { unsafe_archive_instance.assume_safe() };
         archiveinstance
             .map(|archive, res| {
-                if let Some(materialfile) =
-                    archive.get_file_from_hash(&res, surface.material_index)
+                if let Some(materialfile) = archive.get_file_from_hash(&res, surface.material_index)
                 {
                     let materialdict = reader.read_materialanim_nodeless(materialfile.clone());
                     if materialdict.get("exists").to_bool() == true {
-                        let material: Ref<Material, Shared> = materialdict
-                            .get("material")
-                            .try_to_object()
-                            .unwrap();
-                        unsafe {mesh.assume_safe()}.surface_set_material(0, material);
+                        let material: Ref<Material, Shared> =
+                            materialdict.get("material").try_to_object().unwrap();
+                        unsafe { mesh.assume_safe() }.surface_set_material(0, material);
                     } else {
                         display_warn!(
                             "Could not apply materialanim {} to surface {}.",
-                            unsafe { materialfile.assume_safe() }.map(|x,_| x.get_name_str().to_owned()).unwrap(),
+                            unsafe { materialfile.assume_safe() }
+                                .map(|x, _| x.get_name_str().to_owned())
+                                .unwrap(),
                             file.get_name_str()
                         );
                     }
@@ -112,10 +100,7 @@ pub fn read_surface_from_res(data: &ChumFile, reader: &mut ChumReader) -> Dictio
         Some(mesh) => {
             dict.insert("exists", true);
             dict.insert("surfaces", mesh.surfaces);
-            dict.insert(
-                "transform",
-                util::transform3d_to_godot(&mesh.transform),
-            );
+            dict.insert("transform", util::transform3d_to_godot(&mesh.transform));
         }
         None => {
             godot_print!("read_tmesh returned None");

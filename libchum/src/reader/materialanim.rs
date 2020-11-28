@@ -33,12 +33,14 @@ pub struct TrackFrame<T> {
 }
 
 impl<T> Default for TrackFrame<T>
-where T: Default {
+where
+    T: Default,
+{
     fn default() -> Self {
         TrackFrame::<T> {
             frame: 0,
             junk: (),
-            data: T::default()
+            data: T::default(),
         }
     }
 }

@@ -1,8 +1,8 @@
 use crate::chumfile::ChumFile;
 use crate::reader::ChumReader;
 use crate::util;
+use gdnative::api::{ArrayMesh, Material, Mesh};
 use gdnative::prelude::*;
-use gdnative::api::{ArrayMesh, Mesh, Material};
 use libchum::common;
 use libchum::reader::mesh;
 
@@ -15,7 +15,7 @@ pub struct MeshResultSurface {
 
 // #[derive(Clone)]
 pub struct MeshResult {
-    pub mesh: Ref<ArrayMesh,Unique>,
+    pub mesh: Ref<ArrayMesh, Unique>,
     pub surfaces: Vec<MeshResultSurface>,
     pub transform: common::Transform3D,
     pub unk1: Vec<mesh::Footer1>,
@@ -37,7 +37,7 @@ pub fn read_mesh(
             return None;
         }
     };
-    let array_mesh = Ref::<ArrayMesh,Unique>::new();
+    let array_mesh = Ref::<ArrayMesh, Unique>::new();
     let generated_tris = mesh.gen_triangles();
     let mesh_materials = mesh.get_materials();
     let mut materials = Vec::new();
@@ -54,17 +54,9 @@ pub fn read_mesh(
         };
         for tri in trivec.tris {
             for point in &tri.points {
-                verts.push(Vector3::new(
-                    point.vertex.x,
-                    point.vertex.y,
-                    point.vertex.z,
-                ));
+                verts.push(Vector3::new(point.vertex.x, point.vertex.y, point.vertex.z));
                 texcoords.push(Vector2::new(point.texcoord.x, point.texcoord.y));
-                normals.push(Vector3::new(
-                    point.normal.x,
-                    point.normal.y,
-                    point.normal.z,
-                ));
+                normals.push(Vector3::new(point.normal.x, point.normal.y, point.normal.z));
                 surface.vertex_ids.push(point.vertex_id);
                 surface.texcoord_ids.push(point.texcoord_id);
                 surface.normal_ids.push(point.normal_id);
@@ -92,15 +84,15 @@ pub fn read_mesh(
                 if let Some(materialfile) = archive.get_file_from_hash(&res, *mat) {
                     let materialdict = reader.read_material_nodeless(materialfile.clone());
                     if materialdict.get("exists").to_bool() == true {
-                        let material: Ref<Material, Shared> = materialdict
-                            .get("material")
-                            .try_to_object()
-                            .unwrap();
+                        let material: Ref<Material, Shared> =
+                            materialdict.get("material").try_to_object().unwrap();
                         array_mesh.surface_set_material(i as i64, material);
                     } else {
                         display_warn!(
                             "Could not apply material {} to mesh {}.",
-                            unsafe { materialfile.assume_safe() }.map(|x,_| x.get_name_str().to_owned()).unwrap(),
+                            unsafe { materialfile.assume_safe() }
+                                .map(|x, _| x.get_name_str().to_owned())
+                                .unwrap(),
                             file.get_name_str()
                         );
                     }
@@ -153,14 +145,10 @@ pub fn read_mesh_from_res(data: &ChumFile, reader: &mut ChumReader) -> Dictionar
                 surfaces.push(surfacedict);
             }
             dict.insert("surfaces", surfaces);
-            dict.insert(
-                "transform",
-                util::transform3d_to_godot(&mesh.transform),
-            );
+            dict.insert("transform", util::transform3d_to_godot(&mesh.transform));
             dict.insert(
                 "unk1",
-                mesh
-                    .unk1
+                mesh.unk1
                     .into_iter()
                     .map(|x| {
                         let dict = Dictionary::new();
@@ -172,15 +160,11 @@ pub fn read_mesh_from_res(data: &ChumFile, reader: &mut ChumReader) -> Dictionar
             );
             dict.insert(
                 "unk2",
-                mesh
-                    .unk2
+                mesh.unk2
                     .into_iter()
                     .map(|x| {
                         let dict = Dictionary::new();
-                        dict.insert(
-                            "transform",
-                            util::transform3d_to_godot(&x.transform),
-                        );
+                        dict.insert("transform", util::transform3d_to_godot(&x.transform));
                         dict.into_shared()
                     })
                     .collect::<Vec<_>>(),
@@ -193,10 +177,7 @@ pub fn read_mesh_from_res(data: &ChumFile, reader: &mut ChumReader) -> Dictionar
                     .map(|x| {
                         let dict = Dictionary::new();
                         dict.insert("unk1", &(&x.unk1[..]).to_owned());
-                        dict.insert(
-                            "normal",
-                            x.normal,
-                        );
+                        dict.insert("normal", x.normal);
                         dict.insert("junk", x.junk);
                         dict.insert("unk2", x.unk2);
                         dict.into_shared()

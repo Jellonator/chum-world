@@ -1,7 +1,7 @@
 use crate::chumfile::ChumFile;
 use crate::reader::ChumReader;
+use gdnative::api::{ImageTexture, ShaderMaterial};
 use gdnative::prelude::*;
-use gdnative::api::{ShaderMaterial, ImageTexture};
 use libchum::reader::material;
 
 pub fn read_material(
@@ -9,7 +9,7 @@ pub fn read_material(
     fmt: libchum::format::TotemFormat,
     reader: &mut ChumReader,
     file: &ChumFile,
-) -> Option<Ref<ShaderMaterial,Unique>> {
+) -> Option<Ref<ShaderMaterial, Unique>> {
     use libchum::binary::ChumBinary;
     let matdata = match material::Material::read_from(&mut data.as_slice(), fmt) {
         Ok(x) => x,
@@ -18,8 +18,8 @@ pub fn read_material(
             return None;
         }
     };
-    let material = Ref::<ShaderMaterial,Unique>::new();
-    let shader: Ref::<Shader,Shared> = match ResourceLoader::godot_singleton().load(
+    let material = Ref::<ShaderMaterial, Unique>::new();
+    let shader: Ref<Shader, Shared> = match ResourceLoader::godot_singleton().load(
         "res://Shader/material.shader",
         "Shader",
         false,
@@ -39,21 +39,21 @@ pub fn read_material(
     archiveinstance
         .map(|archive, res| {
             if matdata.get_texture() != 0 {
-                if let Some(texturefile) =
-                    archive.get_file_from_hash(&res, matdata.get_texture())
-                {
+                if let Some(texturefile) = archive.get_file_from_hash(&res, matdata.get_texture()) {
                     let texturedict = reader.read_bitmap_nodeless(texturefile.clone());
                     if texturedict.get("exists").to_bool() == true {
-                        let image: Ref<Image,Shared> =
+                        let image: Ref<Image, Shared> =
                             texturedict.get("bitmap").try_to_object().unwrap();
-                        let texture = Ref::<ImageTexture,Unique>::new();
+                        let texture = Ref::<ImageTexture, Unique>::new();
                         texture.create_from_image(image, 1 | 2 | 4);
                         material.set_shader_param("has_texture", true);
                         material.set_shader_param("arg_texture", texture);
                     } else {
                         display_warn!(
                             "Could not apply bitmap {} to material {}.",
-                            unsafe { texturefile.assume_safe() }.map(|x,_| x.get_name_str().to_owned()).unwrap(),
+                            unsafe { texturefile.assume_safe() }
+                                .map(|x, _| x.get_name_str().to_owned())
+                                .unwrap(),
                             file.get_name_str()
                         );
                     }
@@ -81,7 +81,9 @@ pub fn read_material(
                     } else {
                         display_warn!(
                             "Could not apply bitmap {} to material {}.",
-                            unsafe {texturefile.assume_safe() }.map(|x,_| x.get_name_str().to_owned()).unwrap(),
+                            unsafe { texturefile.assume_safe() }
+                                .map(|x, _| x.get_name_str().to_owned())
+                                .unwrap(),
                             file.get_name_str()
                         );
                     }

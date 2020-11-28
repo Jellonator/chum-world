@@ -2,8 +2,8 @@
 use crate::common::*;
 // use crate::format::TotemFormat;
 // use crate::util::error;
-use std::io::{self};
 use crate::util::error::*;
+use std::io::{self};
 
 chum_struct_generate_readwrite! {
     pub struct Lod {
@@ -87,7 +87,7 @@ impl Default for LodTransform {
     fn default() -> Self {
         LodTransform {
             transform: Transform3D::default(),
-            junk: ()
+            junk: (),
         }
     }
 }
@@ -120,7 +120,7 @@ impl Default for LodAnimEntry {
     fn default() -> Self {
         LodAnimEntry {
             symbol: 0,
-            animation_id: 0
+            animation_id: 0,
         }
     }
 }
@@ -136,9 +136,7 @@ chum_struct_generate_readwrite! {
 
 impl Default for LodSoundData {
     fn default() -> Self {
-        LodSoundData {
-            data: Vec::new()
-        }
+        LodSoundData { data: Vec::new() }
     }
 }
 

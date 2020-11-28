@@ -1,28 +1,28 @@
+use crate::chumfile::ChumFile;
+use crate::views;
 use crate::ChumArchive;
+use gdnative::api::{ImageTexture, Resource, ShaderMaterial};
 use gdnative::prelude::*;
-use gdnative::api::{Resource, ShaderMaterial, ImageTexture};
 use libchum::reader;
 use std::collections::HashMap;
-use crate::views;
-use crate::chumfile::ChumFile;
 
 pub mod bitmap;
 pub mod collisionvol;
 pub mod lod;
 pub mod material;
 pub mod materialanim;
+pub mod mesh;
 pub mod node;
 pub mod rotshape;
 pub mod skin;
 pub mod spline;
 pub mod surface;
 pub mod text;
-pub mod mesh;
 
 pub struct MaterialAnimEntry {
     resource: Ref<ShaderMaterial, Shared>,
     data: reader::materialanim::MaterialAnimation,
-    textures: Vec<Option<Ref<Texture,Shared>>>,
+    textures: Vec<Option<Ref<Texture, Shared>>>,
     time: f32,
     original_transform: Transform,
 }
@@ -93,13 +93,14 @@ impl ChumReader {
                     })
                     .then_translate(-Vector2::new(0.5, 0.5));
                 let realtx = Transform {
-                    basis: entry.original_transform.basis * Basis {
-                        elements: [
-                            Vector3::new(tx.m11, tx.m12, 0.0),
-                            Vector3::new(tx.m21, tx.m22, 0.0),
-                            Vector3::new(tx.m31, tx.m32, 1.0),
-                        ],
-                    },
+                    basis: entry.original_transform.basis
+                        * Basis {
+                            elements: [
+                                Vector3::new(tx.m11, tx.m12, 0.0),
+                                Vector3::new(tx.m21, tx.m22, 0.0),
+                                Vector3::new(tx.m31, tx.m32, 1.0),
+                            ],
+                        },
                     origin: entry.original_transform.origin,
                 };
                 material.set_shader_param("arg_texcoord_transform", realtx);
@@ -114,7 +115,8 @@ impl ChumReader {
         archive: &ChumArchive,
         archive_res: TRef<Resource>,
     ) {
-        let mut textures: Vec<Option<Ref<Texture,Shared>>> = Vec::with_capacity(data.track_texture.len());
+        let mut textures: Vec<Option<Ref<Texture, Shared>>> =
+            Vec::with_capacity(data.track_texture.len());
         for track in &data.track_texture.frames {
             let id = track.data;
             textures.push(match archive.get_file_from_hash(&archive_res, id) {
@@ -122,51 +124,57 @@ impl ChumReader {
                     let texturedict = self.read_bitmap_nodeless(texturefile.clone());
                     if texturedict.get("exists").to_bool() == true {
                         godot_print!("Found material for {}", id);
-                        let image: Ref<Image,Shared> =
+                        let image: Ref<Image, Shared> =
                             texturedict.get("bitmap").try_to_object().unwrap();
-                        let texture = Ref::<ImageTexture,Unique>::new();
+                        let texture = Ref::<ImageTexture, Unique>::new();
                         texture.create_from_image(image, 2);
                         Some(texture.into_shared().upcast::<Texture>())
                     } else {
                         display_warn!(
                             "Could not apply bitmap {} to materialanim.",
-                            unsafe { texturefile.assume_safe() }.map(|x,_| x.get_name_str().to_owned()).unwrap()
+                            unsafe { texturefile.assume_safe() }
+                                .map(|x, _| x.get_name_str().to_owned())
+                                .unwrap()
                         );
                         None
                     }
                 }
                 None => {
-                    display_warn!(
-                        "No such bitmap with ID {} to apply to materialanim.",
-                        id
-                    );
+                    display_warn!("No such bitmap with ID {} to apply to materialanim.", id);
                     None
-                },
+                }
             });
         }
         // let material: Ref<ShaderMaterial,Shared> = resource.cast().unwrap();
         let tx = unsafe {
-            resource.assume_safe().get_shader_param("arg_texcoord_transform").to_transform()
+            resource
+                .assume_safe()
+                .get_shader_param("arg_texcoord_transform")
+                .to_transform()
         };
         self.materialanims.push(MaterialAnimEntry {
             time: 0.0,
             data,
             textures,
             resource,
-            original_transform: tx
+            original_transform: tx,
         });
     }
 
     #[export]
-    pub fn read_text(&mut self, _owner: &Node, data: Instance<ChumFile,Shared>) -> Dictionary<Unique> {
+    pub fn read_text(
+        &mut self,
+        _owner: &Node,
+        data: Instance<ChumFile, Shared>,
+    ) -> Dictionary<Unique> {
         self.read_text_nodeless(data)
     }
-    pub fn read_text_nodeless(&mut self, data: Instance<ChumFile,Shared>) -> Dictionary<Unique> {
+    pub fn read_text_nodeless(&mut self, data: Instance<ChumFile, Shared>) -> Dictionary<Unique> {
         // This is the only file that does not use the cache.
         // This is because any file can be viewed as text, so cacheing it as
         // text can mess up the cache.
-        unsafe{data.assume_safe()}
-            .map(|x,_| {
+        unsafe { data.assume_safe() }
+            .map(|x, _| {
                 let value = text::read_text_from_res(x);
                 value
             })
@@ -174,12 +182,16 @@ impl ChumReader {
     }
 
     #[export]
-    pub fn read_mesh(&mut self, _owner: &Node, data: Instance<ChumFile,Shared>) -> Dictionary<Shared> {
+    pub fn read_mesh(
+        &mut self,
+        _owner: &Node,
+        data: Instance<ChumFile, Shared>,
+    ) -> Dictionary<Shared> {
         self.read_mesh_nodeless(data)
     }
-    pub fn read_mesh_nodeless(&mut self, data: Instance<ChumFile,Shared>) -> Dictionary<Shared> {
-        unsafe{data.assume_safe()}
-            .map(|x,_| {
+    pub fn read_mesh_nodeless(&mut self, data: Instance<ChumFile, Shared>) -> Dictionary<Shared> {
+        unsafe { data.assume_safe() }
+            .map(|x, _| {
                 let hash = x.get_hash_id_ownerless();
                 if let Some(data) = self.cache.get(&hash) {
                     data.new_ref()
@@ -193,12 +205,19 @@ impl ChumReader {
     }
 
     #[export]
-    pub fn read_surface(&mut self, _owner: &Node, data: Instance<ChumFile,Shared>) -> Dictionary<Shared> {
+    pub fn read_surface(
+        &mut self,
+        _owner: &Node,
+        data: Instance<ChumFile, Shared>,
+    ) -> Dictionary<Shared> {
         self.read_surface_nodeless(data)
     }
-    pub fn read_surface_nodeless(&mut self, data: Instance<ChumFile,Shared>) -> Dictionary<Shared> {
-        unsafe{data.assume_safe()}
-            .map(|x,_| {
+    pub fn read_surface_nodeless(
+        &mut self,
+        data: Instance<ChumFile, Shared>,
+    ) -> Dictionary<Shared> {
+        unsafe { data.assume_safe() }
+            .map(|x, _| {
                 let hash = x.get_hash_id_ownerless();
                 if let Some(data) = self.cache.get(&hash) {
                     data.new_ref()
@@ -212,12 +231,16 @@ impl ChumReader {
     }
 
     #[export]
-    pub fn read_bitmap(&mut self, _owner: &Node, data: Instance<ChumFile,Shared>) -> Dictionary<Shared> {
+    pub fn read_bitmap(
+        &mut self,
+        _owner: &Node,
+        data: Instance<ChumFile, Shared>,
+    ) -> Dictionary<Shared> {
         self.read_bitmap_nodeless(data)
     }
-    pub fn read_bitmap_nodeless(&mut self, data: Instance<ChumFile,Shared>) -> Dictionary<Shared> {
-        unsafe{data.assume_safe()}
-            .map(|x,_| {
+    pub fn read_bitmap_nodeless(&mut self, data: Instance<ChumFile, Shared>) -> Dictionary<Shared> {
+        unsafe { data.assume_safe() }
+            .map(|x, _| {
                 let hash = x.get_hash_id_ownerless();
                 if let Some(data) = self.cache.get(&hash) {
                     data.new_ref()
@@ -231,12 +254,19 @@ impl ChumReader {
     }
 
     #[export]
-    pub fn read_material(&mut self, _owner: &Node, data: Instance<ChumFile,Shared>) -> Dictionary<Shared> {
+    pub fn read_material(
+        &mut self,
+        _owner: &Node,
+        data: Instance<ChumFile, Shared>,
+    ) -> Dictionary<Shared> {
         self.read_material_nodeless(data)
     }
-    pub fn read_material_nodeless(&mut self, data: Instance<ChumFile,Shared>) -> Dictionary<Shared> {
-        unsafe{data.assume_safe()}
-            .map(|x,_| {
+    pub fn read_material_nodeless(
+        &mut self,
+        data: Instance<ChumFile, Shared>,
+    ) -> Dictionary<Shared> {
+        unsafe { data.assume_safe() }
+            .map(|x, _| {
                 let hash = x.get_hash_id_ownerless();
                 if let Some(data) = self.cache.get(&hash) {
                     data.new_ref()
@@ -248,9 +278,12 @@ impl ChumReader {
             })
             .unwrap()
     }
-    pub fn read_material_nodeless_nocache(&mut self, data: Instance<ChumFile,Shared>) -> Dictionary<Unique> {
-        unsafe{data.assume_safe()}
-            .map(|x,_| {
+    pub fn read_material_nodeless_nocache(
+        &mut self,
+        data: Instance<ChumFile, Shared>,
+    ) -> Dictionary<Unique> {
+        unsafe { data.assume_safe() }
+            .map(|x, _| {
                 let value = material::read_material_from_res(x, self);
                 value
             })
@@ -258,12 +291,19 @@ impl ChumReader {
     }
 
     #[export]
-    pub fn read_materialanim(&mut self, _owner: &Node, data: Instance<ChumFile,Shared>) -> Dictionary<Shared> {
+    pub fn read_materialanim(
+        &mut self,
+        _owner: &Node,
+        data: Instance<ChumFile, Shared>,
+    ) -> Dictionary<Shared> {
         self.read_materialanim_nodeless(data)
     }
-    pub fn read_materialanim_nodeless(&mut self, data: Instance<ChumFile,Shared>) -> Dictionary<Shared> {
-        unsafe{data.assume_safe()}
-            .map(|x,_| {
+    pub fn read_materialanim_nodeless(
+        &mut self,
+        data: Instance<ChumFile, Shared>,
+    ) -> Dictionary<Shared> {
+        unsafe { data.assume_safe() }
+            .map(|x, _| {
                 let hash = x.get_hash_id_ownerless();
                 if let Some(data) = self.cache.get(&hash) {
                     data.new_ref()
@@ -277,12 +317,16 @@ impl ChumReader {
     }
 
     #[export]
-    pub fn read_skin(&mut self, _owner: &Node, data: Instance<ChumFile,Shared>) -> Dictionary<Shared> {
+    pub fn read_skin(
+        &mut self,
+        _owner: &Node,
+        data: Instance<ChumFile, Shared>,
+    ) -> Dictionary<Shared> {
         self.read_skin_nodeless(data)
     }
-    pub fn read_skin_nodeless(&mut self, data: Instance<ChumFile,Shared>) -> Dictionary<Shared> {
-        unsafe{data.assume_safe()}
-            .map(|x,_| {
+    pub fn read_skin_nodeless(&mut self, data: Instance<ChumFile, Shared>) -> Dictionary<Shared> {
+        unsafe { data.assume_safe() }
+            .map(|x, _| {
                 let hash = x.get_hash_id_ownerless();
                 if let Some(data) = self.cache.get(&hash) {
                     data.new_ref()
@@ -296,12 +340,16 @@ impl ChumReader {
     }
 
     #[export]
-    pub fn read_node(&mut self, _owner: &Node, data: Instance<ChumFile,Shared>) -> Dictionary<Shared> {
+    pub fn read_node(
+        &mut self,
+        _owner: &Node,
+        data: Instance<ChumFile, Shared>,
+    ) -> Dictionary<Shared> {
         self.read_node_nodeless(data)
     }
-    pub fn read_node_nodeless(&mut self, data: Instance<ChumFile,Shared>) -> Dictionary<Shared> {
-        unsafe{data.assume_safe()}
-            .map(|x,_| {
+    pub fn read_node_nodeless(&mut self, data: Instance<ChumFile, Shared>) -> Dictionary<Shared> {
+        unsafe { data.assume_safe() }
+            .map(|x, _| {
                 let hash = x.get_hash_id_ownerless();
                 if let Some(data) = self.cache.get(&hash) {
                     data.new_ref()
@@ -315,12 +363,16 @@ impl ChumReader {
     }
 
     #[export]
-    pub fn read_lod(&mut self, _owner: &Node, data: Instance<ChumFile,Shared>) -> Dictionary<Shared> {
+    pub fn read_lod(
+        &mut self,
+        _owner: &Node,
+        data: Instance<ChumFile, Shared>,
+    ) -> Dictionary<Shared> {
         self.read_lod_nodeless(data)
     }
-    pub fn read_lod_nodeless(&mut self, data: Instance<ChumFile,Shared>) -> Dictionary<Shared> {
-        unsafe{data.assume_safe()}
-            .map(|x,_| {
+    pub fn read_lod_nodeless(&mut self, data: Instance<ChumFile, Shared>) -> Dictionary<Shared> {
+        unsafe { data.assume_safe() }
+            .map(|x, _| {
                 let hash = x.get_hash_id_ownerless();
                 if let Some(data) = self.cache.get(&hash) {
                     data.new_ref()
@@ -334,12 +386,19 @@ impl ChumReader {
     }
 
     #[export]
-    pub fn read_rotshape(&mut self, _owner: &Node, data: Instance<ChumFile,Shared>) -> Dictionary<Shared> {
+    pub fn read_rotshape(
+        &mut self,
+        _owner: &Node,
+        data: Instance<ChumFile, Shared>,
+    ) -> Dictionary<Shared> {
         self.read_rotshape_nodeless(data)
     }
-    pub fn read_rotshape_nodeless(&mut self, data: Instance<ChumFile,Shared>) -> Dictionary<Shared> {
-        unsafe{data.assume_safe()}
-            .map(|x,_| {
+    pub fn read_rotshape_nodeless(
+        &mut self,
+        data: Instance<ChumFile, Shared>,
+    ) -> Dictionary<Shared> {
+        unsafe { data.assume_safe() }
+            .map(|x, _| {
                 let hash = x.get_hash_id_ownerless();
                 if let Some(data) = self.cache.get(&hash) {
                     data.new_ref()
@@ -353,12 +412,16 @@ impl ChumReader {
     }
 
     #[export]
-    pub fn read_spline(&mut self, _owner: &Node, data: Instance<ChumFile,Shared>) -> Dictionary<Shared> {
+    pub fn read_spline(
+        &mut self,
+        _owner: &Node,
+        data: Instance<ChumFile, Shared>,
+    ) -> Dictionary<Shared> {
         self.read_spline_nodeless(data)
     }
-    pub fn read_spline_nodeless(&mut self, data: Instance<ChumFile,Shared>) -> Dictionary<Shared> {
-        unsafe{data.assume_safe()}
-            .map(|x,_| {
+    pub fn read_spline_nodeless(&mut self, data: Instance<ChumFile, Shared>) -> Dictionary<Shared> {
+        unsafe { data.assume_safe() }
+            .map(|x, _| {
                 let hash = x.get_hash_id_ownerless();
                 if let Some(data) = self.cache.get(&hash) {
                     data.new_ref()
@@ -372,12 +435,19 @@ impl ChumReader {
     }
 
     #[export]
-    pub fn read_collisionvol(&mut self, _owner: &Node, data: Instance<ChumFile,Shared>) -> Dictionary<Shared> {
+    pub fn read_collisionvol(
+        &mut self,
+        _owner: &Node,
+        data: Instance<ChumFile, Shared>,
+    ) -> Dictionary<Shared> {
         self.read_collisionvol_nodeless(data)
     }
-    pub fn read_collisionvol_nodeless(&mut self, data: Instance<ChumFile,Shared>) -> Dictionary<Shared> {
-        unsafe{data.assume_safe()}
-            .map(|x,_| {
+    pub fn read_collisionvol_nodeless(
+        &mut self,
+        data: Instance<ChumFile, Shared>,
+    ) -> Dictionary<Shared> {
+        unsafe { data.assume_safe() }
+            .map(|x, _| {
                 let hash = x.get_hash_id_ownerless();
                 if let Some(data) = self.cache.get(&hash) {
                     data.new_ref()
@@ -389,7 +459,7 @@ impl ChumReader {
             })
             .unwrap()
     }
-    
+
     #[export]
     pub fn cool(&self, _owner: &Node) {
         // very important function do not remove
@@ -416,11 +486,17 @@ impl ChumReader {
 
     // new View system
     #[export]
-    pub fn get_node_view(&self, _owner: &Node, data: Instance<ChumFile, Shared>) -> Instance<views::node::NodeView, Unique> {
+    pub fn get_node_view(
+        &self,
+        _owner: &Node,
+        data: Instance<ChumFile, Shared>,
+    ) -> Instance<views::node::NodeView, Unique> {
         let instance = Instance::<views::node::NodeView, Unique>::new();
-        instance.map_mut(|nodeview, _| {
-            nodeview.load_from(data).unwrap();
-        }).unwrap();
+        instance
+            .map_mut(|nodeview, _| {
+                nodeview.load_from(data).unwrap();
+            })
+            .unwrap();
         instance
     }
 }

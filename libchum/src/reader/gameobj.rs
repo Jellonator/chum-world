@@ -32,7 +32,7 @@ impl Default for Prefab {
             asset_type: (),
             subtype1: 0,
             subtype2: 0,
-            node: node::Node::default()
+            node: node::Node::default(),
         }
     }
 }

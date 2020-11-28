@@ -1,8 +1,8 @@
+use crate::format::TotemFormat;
 use crate::reader::material;
+use crate::util::error::*;
 use std::error::Error;
 use std::fmt;
-use crate::format::TotemFormat;
-use crate::util::error::*;
 use std::io::{self, Read, Write};
 
 // node union
@@ -190,9 +190,7 @@ chum_struct_generate_readwrite! {
 
 impl Default for NodeDataSurfaceUnk {
     fn default() -> Self {
-        Self {
-            data: [0u8; 104]
-        }
+        Self { data: [0u8; 104] }
     }
 }
 

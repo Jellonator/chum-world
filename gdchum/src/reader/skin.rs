@@ -3,7 +3,11 @@ use crate::util;
 use gdnative::prelude::*;
 use libchum::reader::skin;
 
-pub fn read_skin(data: &Vec<u8>, fmt: libchum::format::TotemFormat, file: &ChumFile) -> Option<Dictionary<Unique>> {
+pub fn read_skin(
+    data: &Vec<u8>,
+    fmt: libchum::format::TotemFormat,
+    file: &ChumFile,
+) -> Option<Dictionary<Unique>> {
     let skin = match skin::Skin::read_data(data, fmt) {
         Ok(x) => x,
         Err(err) => {

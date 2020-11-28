@@ -1,6 +1,7 @@
 #[macro_use]
 pub mod macros;
 pub mod animsymbol;
+pub mod binary;
 pub mod common;
 pub mod dgc;
 pub mod format;
@@ -8,20 +9,13 @@ pub mod ngc;
 pub mod reader;
 pub mod scene;
 pub mod structure;
-pub mod binary;
 pub mod util;
 
-use crc::crc32;
 use std::collections::{HashMap, HashSet};
 use std::error::Error;
 use std::fmt;
 use std::fmt::Display;
 use std::io::{Read, Write};
-
-/// Hash the given name using the crc32 IEEE algorithm.
-pub fn hash_name(name: &str) -> i32 {
-    crc32::checksum_ieee(&name.as_bytes()) as i32
-}
 
 /// Complete Chum archive.
 /// This is literally all the data that matters.
@@ -38,7 +32,7 @@ impl Default for ChumArchive {
             header: dgc::TotemHeader::new(b"Legally distinct legal notice.").unwrap(),
             names: HashMap::new(),
             files: HashMap::new(),
-            format: format::TotemFormat::NGC
+            format: format::TotemFormat::NGC,
         }
     }
 }
@@ -164,7 +158,7 @@ impl ChumArchive {
         // create file map
         archive.files = files
             .into_iter()
-            .map(|x| (hash_name(x.get_name_id()), x))
+            .map(|x| (util::hash_name_i32(x.get_name_id()), x))
             .collect();
         Ok(archive)
     }
@@ -174,7 +168,7 @@ impl ChumArchive {
     /// Returns Ok(None) if ID already exists
     /// Returns OK(Some(i32)) if ID needs to be inserted
     fn check_can_add_id(&mut self, s: &str) -> Result<Option<i32>, Box<dyn Error>> {
-        let hash = hash_name(s);
+        let hash = util::hash_name_i32(s);
         match self.names.get(&hash) {
             Some(existing) => {
                 if existing == s {
@@ -208,7 +202,7 @@ impl ChumArchive {
         } else {
             // Name must not already exist
             return Err(Box::new(ChumError::NameCollisionError {
-                id: hash_name(file.get_name_id()),
+                id: util::hash_name_i32(file.get_name_id()),
                 existing_name: file.get_name_id().into(), // existing is same as new name
                 new_name: file.get_name_id().into(),
             }));
@@ -255,7 +249,7 @@ impl ChumArchive {
 
     /// Get a file from its name
     pub fn get_file_from_name(&self, name: &str) -> Option<&ChumFile> {
-        let hash = hash_name(&name);
+        let hash = util::hash_name_i32(&name);
         if let Some(x) = self.names.get(&hash) {
             if x != name {
                 None
@@ -274,7 +268,7 @@ impl ChumArchive {
 
     /// Get a mutable file from its name
     pub fn get_file_from_name_mut(&mut self, name: &str) -> Option<&mut ChumFile> {
-        let hash = hash_name(&name);
+        let hash = util::hash_name_i32(&name);
         if let Some(x) = self.names.get(&hash) {
             if x != name {
                 None
@@ -295,9 +289,9 @@ impl ChumArchive {
                 .map(|file| {
                     dgc::TotemFile::new(
                         file.data.clone(),
-                        hash_name(file.get_type_id()),
-                        hash_name(file.get_name_id()),
-                        hash_name(file.get_subtype_id()),
+                        util::hash_name_i32(file.get_type_id()),
+                        util::hash_name_i32(file.get_name_id()),
+                        util::hash_name_i32(file.get_subtype_id()),
                     )
                 })
                 .collect(),
@@ -416,12 +410,12 @@ impl ChumArchive {
     }
 
     /// Get an iterator of IDs
-    pub fn get_ids(&self) -> impl Iterator<Item=&i32> {
+    pub fn get_ids(&self) -> impl Iterator<Item = &i32> {
         self.names.keys()
     }
 
     /// Get an iterator of names
-    pub fn get_names(&self) -> impl Iterator<Item=&String> {
+    pub fn get_names(&self) -> impl Iterator<Item = &String> {
         self.names.values()
     }
 }

@@ -1,5 +1,5 @@
-use gdnative::prelude::*;
 use gdnative::api::Resource;
+use gdnative::prelude::*;
 
 /// More or less a combination of Godot's PoolByteArray and
 /// Array types. Note that modifying the data will modify the
@@ -62,8 +62,8 @@ impl ByteData {
     }
 
     #[export]
-    pub fn duplicate(&self, _owner: &Resource) -> Instance<ByteData,Unique> {
-        let f = Instance::<ByteData,Unique>::new();
+    pub fn duplicate(&self, _owner: &Resource) -> Instance<ByteData, Unique> {
+        let f = Instance::<ByteData, Unique>::new();
         f.map_mut(|script, _| {
             script.set_data(self.data.clone());
         })
@@ -151,8 +151,8 @@ impl ByteData {
     }
 
     #[export]
-    pub fn slice(&self, _owner: &Resource, from: i64, to: i64) -> Instance<ByteData,Unique> {
-        let f = Instance::<ByteData,Unique>::new();
+    pub fn slice(&self, _owner: &Resource, from: i64, to: i64) -> Instance<ByteData, Unique> {
+        let f = Instance::<ByteData, Unique>::new();
         f.map_mut(|script, _| {
             script.set_data(self.data[from as usize..(to + 1) as usize].to_owned());
         })

@@ -3,7 +3,11 @@ use crate::util;
 use gdnative::prelude::*;
 use libchum::reader::node;
 
-pub fn read_node(data: &Vec<u8>, fmt: libchum::format::TotemFormat, file: &ChumFile) -> Option<Dictionary<Unique>> {
+pub fn read_node(
+    data: &Vec<u8>,
+    fmt: libchum::format::TotemFormat,
+    file: &ChumFile,
+) -> Option<Dictionary<Unique>> {
     use libchum::binary::ChumBinary;
     let node = match node::Node::read_from(&mut data.as_slice(), fmt) {
         Ok(x) => x,
@@ -23,14 +27,8 @@ pub fn read_node(data: &Vec<u8>, fmt: libchum::format::TotemFormat, file: &ChumF
         "local_transform",
         util::transform3d_to_godot(&node.local_transform),
     );
-    data.insert(
-        "local_translation",
-        node.local_translation,
-    );
-    data.insert(
-        "local_scale",
-        node.local_scale,
-    );
+    data.insert("local_translation", node.local_translation);
+    data.insert("local_scale", node.local_scale);
     // data.insert(
     //     "local_rotation",
     //     util::quat_to_godot(&node.local_rotation),

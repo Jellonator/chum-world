@@ -9,7 +9,7 @@ pub type Vector2 = euclid::Vector2D<f32, euclid::UnknownUnit>;
 pub struct Quaternion {
     // ONLY DOING THIS BECAUSE Rotation3D DOES NOT IMPLEMENTE Default DESPITE
     // THERE EXISTING A Rotation3D::identity function WHY
-    pub inner: euclid::Rotation3D<f32, euclid::UnknownUnit, euclid::UnknownUnit>
+    pub inner: euclid::Rotation3D<f32, euclid::UnknownUnit, euclid::UnknownUnit>,
 }
 pub type Transform3D = euclid::Transform3D<f32, euclid::UnknownUnit, euclid::UnknownUnit>;
 pub type Transform2D = euclid::Transform2D<f32, euclid::UnknownUnit, euclid::UnknownUnit>;
@@ -17,19 +17,25 @@ pub type Transform2D = euclid::Transform2D<f32, euclid::UnknownUnit, euclid::Unk
 impl Default for Quaternion {
     fn default() -> Quaternion {
         Quaternion {
-            inner: euclid::Rotation3D::identity()
+            inner: euclid::Rotation3D::identity(),
         }
     }
 }
 
-impl std::borrow::Borrow<euclid::Rotation3D<f32, euclid::UnknownUnit, euclid::UnknownUnit>> for Quaternion {
+impl std::borrow::Borrow<euclid::Rotation3D<f32, euclid::UnknownUnit, euclid::UnknownUnit>>
+    for Quaternion
+{
     fn borrow(&self) -> &euclid::Rotation3D<f32, euclid::UnknownUnit, euclid::UnknownUnit> {
         &self.inner
     }
 }
 
-impl std::borrow::BorrowMut<euclid::Rotation3D<f32, euclid::UnknownUnit, euclid::UnknownUnit>> for Quaternion {
-    fn borrow_mut(&mut self) -> &mut euclid::Rotation3D<f32, euclid::UnknownUnit, euclid::UnknownUnit> {
+impl std::borrow::BorrowMut<euclid::Rotation3D<f32, euclid::UnknownUnit, euclid::UnknownUnit>>
+    for Quaternion
+{
+    fn borrow_mut(
+        &mut self,
+    ) -> &mut euclid::Rotation3D<f32, euclid::UnknownUnit, euclid::UnknownUnit> {
         &mut self.inner
     }
 }
@@ -41,13 +47,13 @@ impl Quaternion {
                 euclid::Angle::radians(rot.x),
                 euclid::Angle::radians(rot.y),
                 euclid::Angle::radians(rot.z),
-            )
+            ),
         }
     }
 
     pub fn new_unit(i: f32, j: f32, k: f32, w: f32) -> Quaternion {
         Self {
-            inner: euclid::Rotation3D::unit_quaternion(i, j, k, w)
+            inner: euclid::Rotation3D::unit_quaternion(i, j, k, w),
         }
     }
 }
@@ -73,9 +79,7 @@ impl Default for ColorRGBA {
 
 impl ColorRGBA {
     pub fn new(r: f32, g: f32, b: f32, a: f32) -> ColorRGBA {
-        ColorRGBA {
-            r, g, b, a
-        }
+        ColorRGBA { r, g, b, a }
     }
 }
 
@@ -127,13 +131,15 @@ pub fn read_transform2d(reader: &mut dyn Read, fmt: TotemFormat) -> io::Result<T
     let mut buf = [0.0f32; 9];
     fmt.read_f32_into(reader, &mut buf)?;
     Ok(Transform2D::new(
-        buf[0], buf[1],
-        buf[3], buf[4],
-        buf[6], buf[7],
+        buf[0], buf[1], buf[3], buf[4], buf[6], buf[7],
     ))
 }
 
-pub fn write_transform2d(tx: &Transform2D, writer: &mut dyn Write, fmt: TotemFormat) -> io::Result<()> {
+pub fn write_transform2d(
+    tx: &Transform2D,
+    writer: &mut dyn Write,
+    fmt: TotemFormat,
+) -> io::Result<()> {
     fmt.write_f32(writer, tx.m11)?;
     fmt.write_f32(writer, tx.m12)?;
     fmt.write_f32(writer, 0.0)?;
@@ -150,14 +156,16 @@ pub fn read_transform3d(reader: &mut dyn Read, fmt: TotemFormat) -> io::Result<T
     let mut buf = [0.0f32; 16];
     fmt.read_f32_into(reader, &mut buf)?;
     Ok(Transform3D::new(
-        buf[0], buf[1], buf[2], buf[3],
-        buf[4], buf[5], buf[6], buf[7],
-        buf[8], buf[9], buf[10], buf[11],
-        buf[12], buf[13], buf[14], buf[15]
+        buf[0], buf[1], buf[2], buf[3], buf[4], buf[5], buf[6], buf[7], buf[8], buf[9], buf[10],
+        buf[11], buf[12], buf[13], buf[14], buf[15],
     ))
 }
 
-pub fn write_transform3d(tx: &Transform3D, writer: &mut dyn Write, fmt: TotemFormat) -> io::Result<()> {
+pub fn write_transform3d(
+    tx: &Transform3D,
+    writer: &mut dyn Write,
+    fmt: TotemFormat,
+) -> io::Result<()> {
     fmt.write_f32(writer, tx.m11)?;
     fmt.write_f32(writer, tx.m12)?;
     fmt.write_f32(writer, tx.m13)?;
@@ -408,12 +416,16 @@ pub fn read_color_rgba(reader: &mut dyn Read, fmt: TotemFormat) -> io::Result<Co
         r: buf[0],
         g: buf[1],
         b: buf[2],
-        a: buf[3]
+        a: buf[3],
     })
 }
 
 /// Write an RGBA float-based color to a file (16 bytes)
-pub fn write_color_rgba(col: &ColorRGBA, writer: &mut dyn Write, fmt: TotemFormat) -> io::Result<()> {
+pub fn write_color_rgba(
+    col: &ColorRGBA,
+    writer: &mut dyn Write,
+    fmt: TotemFormat,
+) -> io::Result<()> {
     fmt.write_f32(writer, col.r)?;
     fmt.write_f32(writer, col.g)?;
     fmt.write_f32(writer, col.b)?;

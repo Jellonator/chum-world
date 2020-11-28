@@ -186,12 +186,12 @@ macro_rules! chum_struct_get_type {
     // special override rules
     ([ignore $type:tt $default:expr]) => {()};
     ([
-        custom_structure $type:tt 
+        custom_structure $type:tt
         structure: $structure:expr;
         destructure: $destructure:expr;
     ]) => {chum_struct_get_type!($type)};
     ([
-        custom_binary $type:tt 
+        custom_binary $type:tt
         read: $structure:expr;
         write: $destructure:expr;
     ]) => {chum_struct_get_type!($type)};
@@ -313,58 +313,80 @@ macro_rules! chum_struct_structure {
 
 /// Determines how to destructure each type.
 macro_rules! chum_struct_destructure {
-    ([u8],$value:expr) => {$value.get_i64().unwrap() as ::std::primitive::u8};
-    ([i8],$value:expr) => {$value.get_i64().unwrap() as ::std::primitive::i8};
-    ([u16],$value:expr) => {$value.get_i64().unwrap() as ::std::primitive::u16};
-    ([i16],$value:expr) => {$value.get_i64().unwrap() as ::std::primitive::i16};
-    ([u32],$value:expr) => {$value.get_i64().unwrap() as ::std::primitive::u32};
-    ([i32],$value:expr) => {$value.get_i64().unwrap() as ::std::primitive::i32};
-    ([enum [$repr:tt] $name:ty],$value:expr) => {
-        {
-            use $crate::structure::ChumEnum;
-            <$name>::from_u32($value.get_i64().unwrap() as u32).unwrap()
-        }
+    ([u8],$value:expr) => {
+        $value.get_i64().unwrap() as ::std::primitive::u8
     };
-    ([flags [$repr:tt] {$($name:ident),*}],$value:expr) => {$value.get_i64().unwrap() as $repr};
-    ([int_custom [$repr:tt] $min:expr, $max:expr],$value:expr) => {$value.get_i64().unwrap() as $repr};
-    ([f32],$value:expr) => {$value.get_f32().unwrap()};
-    ([Transform3D],$value:expr) => {*$value.get_transform3d().unwrap()};
-    ([Transform2D],$value:expr) => {*$value.get_transform2d().unwrap()};
-    ([Vector2],$value:expr) => {*$value.get_vec2().unwrap()};
-    ([Vector3],$value:expr) => {*$value.get_vec3().unwrap()};
-    ([Vector3 rgb],$value:expr) => {
-        {
-            let col = $value.get_color().unwrap();
-            $crate::common::Vector3::new(
-                col.r, col.g, col.b
-            )
-        }
+    ([i8],$value:expr) => {
+        $value.get_i64().unwrap() as ::std::primitive::i8
     };
-    ([Color],$value:expr) => {*$value.get_color().unwrap()};
-    ([Quaternion],$value:expr) => {
-        {
-            let vec = *$value.get_vec3().unwrap();
-            $crate::common::Quaternion::from_euler(vec)
-        }
+    ([u16],$value:expr) => {
+        $value.get_i64().unwrap() as ::std::primitive::u16
     };
-    ([reference],$value:expr) => {$value.get_reference_id().unwrap()};
-    ([reference $typename:ident],$value:expr) => {$value.get_reference_id().unwrap()};
-    ([fixed array $type:tt $len:literal],$value:expr) => {
-        {
-            use ::std::mem::{self, MaybeUninit};
-            unsafe {
-                let mut arr: [MaybeUninit<chum_struct_get_type!($type)>; $len] = {
-                    MaybeUninit::uninit().assume_init()
-                };
-                for i in 0..$len {
-                    arr[i] = MaybeUninit::new(chum_struct_destructure!(
-                        $type,
-                        $value.get_array_item(i).unwrap()));
-                }
-                mem::transmute::<_, [chum_struct_get_type!($type); $len]>(arr)
+    ([i16],$value:expr) => {
+        $value.get_i64().unwrap() as ::std::primitive::i16
+    };
+    ([u32],$value:expr) => {
+        $value.get_i64().unwrap() as ::std::primitive::u32
+    };
+    ([i32],$value:expr) => {
+        $value.get_i64().unwrap() as ::std::primitive::i32
+    };
+    ([enum [$repr:tt] $name:ty],$value:expr) => {{
+        use $crate::structure::ChumEnum;
+        <$name>::from_u32($value.get_i64().unwrap() as u32).unwrap()
+    }};
+    ([flags [$repr:tt] {$($name:ident),*}],$value:expr) => {
+        $value.get_i64().unwrap() as $repr
+    };
+    ([int_custom [$repr:tt] $min:expr, $max:expr],$value:expr) => {
+        $value.get_i64().unwrap() as $repr
+    };
+    ([f32],$value:expr) => {
+        $value.get_f32().unwrap()
+    };
+    ([Transform3D],$value:expr) => {
+        *$value.get_transform3d().unwrap()
+    };
+    ([Transform2D],$value:expr) => {
+        *$value.get_transform2d().unwrap()
+    };
+    ([Vector2],$value:expr) => {
+        *$value.get_vec2().unwrap()
+    };
+    ([Vector3],$value:expr) => {
+        *$value.get_vec3().unwrap()
+    };
+    ([Vector3 rgb],$value:expr) => {{
+        let col = $value.get_color().unwrap();
+        $crate::common::Vector3::new(col.r, col.g, col.b)
+    }};
+    ([Color],$value:expr) => {
+        *$value.get_color().unwrap()
+    };
+    ([Quaternion],$value:expr) => {{
+        let vec = *$value.get_vec3().unwrap();
+        $crate::common::Quaternion::from_euler(vec)
+    }};
+    ([reference],$value:expr) => {
+        $value.get_reference_id().unwrap()
+    };
+    ([reference $typename:ident],$value:expr) => {
+        $value.get_reference_id().unwrap()
+    };
+    ([fixed array $type:tt $len:literal],$value:expr) => {{
+        use ::std::mem::{self, MaybeUninit};
+        unsafe {
+            let mut arr: [MaybeUninit<chum_struct_get_type!($type)>; $len] =
+                { MaybeUninit::uninit().assume_init() };
+            for i in 0..$len {
+                arr[i] = MaybeUninit::new(chum_struct_destructure!(
+                    $type,
+                    $value.get_array_item(i).unwrap()
+                ));
             }
+            mem::transmute::<_, [chum_struct_get_type!($type); $len]>(arr)
         }
-    };
+    }};
     ([dynamic array [$lentype:tt] $type:tt $default:expr],$value:expr) => {
         $value
             .get_array()
@@ -373,39 +395,44 @@ macro_rules! chum_struct_destructure {
             .map(|x| chum_struct_destructure!($type, x))
             .collect()
     };
-    ([struct $t:ty],$value:expr) => {
-        {
-            $crate::structure::ChumStruct::destructure($value).unwrap()
-        }
-    };
+    ([struct $t:ty],$value:expr) => {{
+        $crate::structure::ChumStruct::destructure($value).unwrap()
+    }};
     ([option $type:tt $default:expr],$value:expr) => {
-        $value.get_optional_value().unwrap().map(|x| chum_struct_destructure!($type,x))
+        $value
+            .get_optional_value()
+            .unwrap()
+            .map(|x| chum_struct_destructure!($type, x))
     };
 }
 
 /// Process a structure function.
 /// Results in `None` if the value is ignored.
 macro_rules! process_structure {
-    ($name:ident,[void],$value:expr,$self:expr) => {None};
-    ($name:ident,[ignore $type:tt $default:expr],$value:expr,$self:expr) => {None};
+    ($name:ident,[void],$value:expr,$self:expr) => {
+        None
+    };
+    ($name:ident,[ignore $type:tt $default:expr],$value:expr,$self:expr) => {
+        None
+    };
     ($name:ident,[
-        custom_structure $type:tt 
+        custom_structure $type:tt
         structure: $structure:expr;
         destructure: $destructure:expr;
     ],$value:expr,$self:expr) => {
         $structure($self)
     };
     ($name:ident,[
-        custom_binary $type:tt 
+        custom_binary $type:tt
         read: $structure:expr;
         write: $destructure:expr;
     ],$value:expr,$self:expr) => {
-        process_structure!($name,$type,$value,$self)
+        process_structure!($name, $type, $value, $self)
     };
     ($name:ident,$type:tt,$value:expr,$self:expr) => {
         Some((
             stringify!($name).to_owned(),
-            chum_struct_structure!($type,$value)
+            chum_struct_structure!($type, $value),
         ))
     };
 }
@@ -413,27 +440,28 @@ macro_rules! process_structure {
 /// Process a destructure function.
 /// Results in `()` if the value is ignored.
 macro_rules! process_destructure {
-    ($name:ident,$data:expr,[void]) => {()};
-    ($name:ident,$data:expr,[ignore $type:tt $default:expr]) => {()};
+    ($name:ident,$data:expr,[void]) => {
+        ()
+    };
+    ($name:ident,$data:expr,[ignore $type:tt $default:expr]) => {
+        ()
+    };
     ($name:ident,$data:expr,[
-        custom_structure $type:tt 
+        custom_structure $type:tt
         structure: $structure:expr;
         destructure: $destructure:expr;
     ]) => {
         $destructure($data)
     };
     ($name:ident,$data:expr,[
-        custom_binary $type:tt 
+        custom_binary $type:tt
         read: $structure:expr;
         write: $destructure:expr;
     ]) => {
-        process_destructure!($name,$data,$type)
+        process_destructure!($name, $data, $type)
     };
     ($name:ident,$data:expr,$type:tt) => {
-        chum_struct_destructure!(
-            $type,
-            $data.get_struct_item(stringify!($name)).unwrap()
-        )
+        chum_struct_destructure!($type, $data.get_struct_item(stringify!($name)).unwrap())
     };
 }
 
@@ -623,20 +651,20 @@ macro_rules! chum_enum {
 #[macro_export]
 macro_rules! chum_struct_binary_read {
     ([ignore $type:tt $default:expr],$file:expr,$fmt:expr,$struct:expr,$path:expr,$self:expr) => {
-        chum_struct_binary_read!($type,$file,$fmt,$struct,$path,$self).map(|_| ())
+        chum_struct_binary_read!($type, $file, $fmt, $struct, $path, $self).map(|_| ())
     };
     ([void],$file:expr,$fmt:expr,$struct:expr,$path:expr,$self:expr) => {
         Ok(())
     };
     ([
-        custom_structure $type:tt 
+        custom_structure $type:tt
         structure: $structure:expr;
         destructure: $destructure:expr;
     ],$file:expr,$fmt:expr,$struct:expr,$path:expr,$self:expr) => {
-        chum_struct_binary_read!($type,$file,$fmt,$struct,$path,$self)
+        chum_struct_binary_read!($type, $file, $fmt, $struct, $path, $self)
     };
     ([
-        custom_binary $type:tt 
+        custom_binary $type:tt
         read: $read:expr;
         write: $write:expr;
     ],$file:expr,$fmt:expr,$struct:expr,$path:expr,$self:expr) => {
@@ -644,242 +672,247 @@ macro_rules! chum_struct_binary_read {
     };
     ([u8],$file:expr,$fmt:expr,$struct:expr,$path:expr,$self:expr) => {
         $fmt.read_u8($file)
-        .map_err(|e| $crate::util::error::StructUnpackError {
-            structname: $struct.to_owned(),
-            structpath: $path.to_owned(),
-            error: Box::new(e)
-        })
+            .map_err(|e| $crate::util::error::StructUnpackError {
+                structname: $struct.to_owned(),
+                structpath: $path.to_owned(),
+                error: Box::new(e),
+            })
     };
     ([i8],$file:expr,$fmt:expr,$struct:expr,$path:expr,$self:expr) => {
         $fmt.read_i8($file)
-        .map_err(|e| $crate::util::error::StructUnpackError {
-            structname: $struct.to_owned(),
-            structpath: $path.to_owned(),
-            error: Box::new(e)
-        })
+            .map_err(|e| $crate::util::error::StructUnpackError {
+                structname: $struct.to_owned(),
+                structpath: $path.to_owned(),
+                error: Box::new(e),
+            })
     };
     ([u16],$file:expr,$fmt:expr,$struct:expr,$path:expr,$self:expr) => {
         $fmt.read_u16($file)
-        .map_err(|e| $crate::util::error::StructUnpackError {
-            structname: $struct.to_owned(),
-            structpath: $path.to_owned(),
-            error: Box::new(e)
-        })
+            .map_err(|e| $crate::util::error::StructUnpackError {
+                structname: $struct.to_owned(),
+                structpath: $path.to_owned(),
+                error: Box::new(e),
+            })
     };
     ([i16],$file:expr,$fmt:expr,$struct:expr,$path:expr,$self:expr) => {
         $fmt.read_i16($file)
-        .map_err(|e| $crate::util::error::StructUnpackError {
-            structname: $struct.to_owned(),
-            structpath: $path.to_owned(),
-            error: Box::new(e)
-        })
+            .map_err(|e| $crate::util::error::StructUnpackError {
+                structname: $struct.to_owned(),
+                structpath: $path.to_owned(),
+                error: Box::new(e),
+            })
     };
     ([u32],$file:expr,$fmt:expr,$struct:expr,$path:expr,$self:expr) => {
         $fmt.read_u32($file)
-        .map_err(|e| $crate::util::error::StructUnpackError {
-            structname: $struct.to_owned(),
-            structpath: $path.to_owned(),
-            error: Box::new(e)
-        })
+            .map_err(|e| $crate::util::error::StructUnpackError {
+                structname: $struct.to_owned(),
+                structpath: $path.to_owned(),
+                error: Box::new(e),
+            })
     };
     ([i32],$file:expr,$fmt:expr,$struct:expr,$path:expr,$self:expr) => {
         $fmt.read_i32($file)
-        .map_err(|e| $crate::util::error::StructUnpackError {
-            structname: $struct.to_owned(),
-            structpath: $path.to_owned(),
-            error: Box::new(e)
-        })
+            .map_err(|e| $crate::util::error::StructUnpackError {
+                structname: $struct.to_owned(),
+                structpath: $path.to_owned(),
+                error: Box::new(e),
+            })
     };
-    ([enum [$repr:tt] $name:ty],$file:expr,$fmt:expr,$struct:expr,$path:expr,$self:expr) => {
-        {
-            use $crate::structure::ChumEnum;
-            chum_struct_binary_read!([$repr],$file,$fmt,$struct,$path,$self)
-                .map_err(|e| Box::<dyn ::std::error::Error>::from(Box::new(e)))
-                .and_then(|x|
-                    <$name>::from_u32(x as u32)
-                        .ok_or_else(|| Box::new($crate::util::error::EnumerationError {
-                            enum_name: stringify!($name).to_owned(),
-                            value: x as i64
-                        }).into())
-                )
-                .map_err(|e| $crate::util::error::StructUnpackError {
-                    structname: $struct.to_owned(),
-                    structpath: $path.to_owned(),
-                    error: e
+    ([enum [$repr:tt] $name:ty],$file:expr,$fmt:expr,$struct:expr,$path:expr,$self:expr) => {{
+        use $crate::structure::ChumEnum;
+        chum_struct_binary_read!([$repr], $file, $fmt, $struct, $path, $self)
+            .map_err(|e| Box::<dyn ::std::error::Error>::from(Box::new(e)))
+            .and_then(|x| {
+                <$name>::from_u32(x as u32).ok_or_else(|| {
+                    Box::new($crate::util::error::EnumerationError {
+                        enum_name: stringify!($name).to_owned(),
+                        value: x as i64,
+                    })
+                    .into()
                 })
-        }
-    };
+            })
+            .map_err(|e| $crate::util::error::StructUnpackError {
+                structname: $struct.to_owned(),
+                structpath: $path.to_owned(),
+                error: e,
+            })
+    }};
     ([flags [$repr:tt] {$($name:ident),*}],$file:expr,$fmt:expr,$struct:expr,$path:expr,$self:expr) => {
-        chum_struct_binary_read!([$repr],$file,$fmt,$struct,$path,$self)
+        chum_struct_binary_read!([$repr], $file, $fmt, $struct, $path, $self)
     };
     ([int_custom [$repr:tt] $min:expr, $max:expr],$file:expr,$fmt:expr,$struct:expr,$path:expr,$self:expr) => {
-        chum_struct_binary_read!([$repr],$file,$fmt,$struct,$path,$self)
+        chum_struct_binary_read!([$repr], $file, $fmt, $struct, $path, $self)
     };
     ([f32],$file:expr,$fmt:expr,$struct:expr,$path:expr,$self:expr) => {
         $fmt.read_f32($file)
-        .map_err(|e| $crate::util::error::StructUnpackError {
-            structname: $struct.to_owned(),
-            structpath: $path.to_owned(),
-            error: Box::new(e)
-        })
+            .map_err(|e| $crate::util::error::StructUnpackError {
+                structname: $struct.to_owned(),
+                structpath: $path.to_owned(),
+                error: Box::new(e),
+            })
     };
     ([Transform3D],$file:expr,$fmt:expr,$struct:expr,$path:expr,$self:expr) => {
-        $crate::common::read_transform3d($file, $fmt)
-        .map_err(|e| $crate::util::error::StructUnpackError {
-            structname: $struct.to_owned(),
-            structpath: $path.to_owned(),
-            error: Box::new(e)
+        $crate::common::read_transform3d($file, $fmt).map_err(|e| {
+            $crate::util::error::StructUnpackError {
+                structname: $struct.to_owned(),
+                structpath: $path.to_owned(),
+                error: Box::new(e),
+            }
         })
     };
     ([Transform2D],$file:expr,$fmt:expr,$struct:expr,$path:expr,$self:expr) => {
-        $crate::common::read_transform2d($file, $fmt)
-        .map_err(|e| $crate::util::error::StructUnpackError {
-            structname: $struct.to_owned(),
-            structpath: $path.to_owned(),
-            error: Box::new(e)
+        $crate::common::read_transform2d($file, $fmt).map_err(|e| {
+            $crate::util::error::StructUnpackError {
+                structname: $struct.to_owned(),
+                structpath: $path.to_owned(),
+                error: Box::new(e),
+            }
         })
     };
     ([Vector2],$file:expr,$fmt:expr,$struct:expr,$path:expr,$self:expr) => {
-        $crate::common::read_vec2($file, $fmt)
-        .map_err(|e| $crate::util::error::StructUnpackError {
+        $crate::common::read_vec2($file, $fmt).map_err(|e| $crate::util::error::StructUnpackError {
             structname: $struct.to_owned(),
             structpath: $path.to_owned(),
-            error: Box::new(e)
+            error: Box::new(e),
         })
     };
     ([Vector3],$file:expr,$fmt:expr,$struct:expr,$path:expr,$self:expr) => {
-        $crate::common::read_vec3($file, $fmt)
-        .map_err(|e| $crate::util::error::StructUnpackError {
+        $crate::common::read_vec3($file, $fmt).map_err(|e| $crate::util::error::StructUnpackError {
             structname: $struct.to_owned(),
             structpath: $path.to_owned(),
-            error: Box::new(e)
+            error: Box::new(e),
         })
     };
     ([Vector3 rgb],$file:expr,$fmt:expr,$struct:expr,$path:expr,$self:expr) => {
-        $crate::common::read_vec3($file, $fmt)
-        .map_err(|e| $crate::util::error::StructUnpackError {
+        $crate::common::read_vec3($file, $fmt).map_err(|e| $crate::util::error::StructUnpackError {
             structname: $struct.to_owned(),
             structpath: $path.to_owned(),
-            error: Box::new(e)
+            error: Box::new(e),
         })
     };
     ([Color],$file:expr,$fmt:expr,$struct:expr,$path:expr,$self:expr) => {
-        $crate::common::read_color_rgba($file, $fmt)
-        .map_err(|e| $crate::util::error::StructUnpackError {
-            structname: $struct.to_owned(),
-            structpath: $path.to_owned(),
-            error: Box::new(e)
+        $crate::common::read_color_rgba($file, $fmt).map_err(|e| {
+            $crate::util::error::StructUnpackError {
+                structname: $struct.to_owned(),
+                structpath: $path.to_owned(),
+                error: Box::new(e),
+            }
         })
     };
     ([Quaternion],$file:expr,$fmt:expr,$struct:expr,$path:expr,$self:expr) => {
-        $crate::common::read_quat($file, $fmt)
-        .map_err(|e| $crate::util::error::StructUnpackError {
+        $crate::common::read_quat($file, $fmt).map_err(|e| $crate::util::error::StructUnpackError {
             structname: $struct.to_owned(),
             structpath: $path.to_owned(),
-            error: Box::new(e)
+            error: Box::new(e),
         })
     };
     ([reference],$file:expr,$fmt:expr,$struct:expr,$path:expr,$self:expr) => {
         $fmt.read_i32($file)
-        .map_err(|e| $crate::util::error::StructUnpackError {
-            structname: $struct.to_owned(),
-            structpath: $path.to_owned(),
-            error: Box::new(e)
-        })
+            .map_err(|e| $crate::util::error::StructUnpackError {
+                structname: $struct.to_owned(),
+                structpath: $path.to_owned(),
+                error: Box::new(e),
+            })
     };
     ([reference $typename:ident],$file:expr,$fmt:expr,$struct:expr,$path:expr,$self:expr) => {
         $fmt.read_i32($file)
-        .map_err(|e| $crate::util::error::StructUnpackError {
-            structname: $struct.to_owned(),
-            structpath: $path.to_owned(),
-            error: Box::new(e)
-        })
-    };
-    ([fixed array $type:tt $len:literal],$file:expr,$fmt:expr,$struct:expr,$path:expr,$self:expr) => {
-        {
-            use ::std::mem::{self, MaybeUninit};
-            unsafe {
-                let mut arr: [MaybeUninit<chum_struct_get_type!($type)>; $len] = {
-                    MaybeUninit::uninit().assume_init()
-                };
-                for i in 0..$len {
-                    arr[i] = MaybeUninit::new(
-                        chum_struct_binary_read!($type,$file,$fmt,$struct,format!("{}[{}]",$path,i),$self)?
-                    );
-                }
-                Ok(mem::transmute::<_, [chum_struct_get_type!($type); $len]>(arr))
-            }
-        }
-    };
-    ([dynamic array [$lentype:tt] $type:tt $default:expr],$file:expr,$fmt:expr,$struct:expr,$path:expr,$self:expr) => {
-        {
-            chum_struct_binary_read!([$lentype],$file,$fmt,$struct,$path,$self)
             .map_err(|e| $crate::util::error::StructUnpackError {
                 structname: $struct.to_owned(),
                 structpath: $path.to_owned(),
-                error: Box::new(e)
-            }).and_then(|size| {
-                let mut vec = Vec::with_capacity((size as usize).min($crate::common::SAFE_CAPACITY_BIG));
+                error: Box::new(e),
+            })
+    };
+    ([fixed array $type:tt $len:literal],$file:expr,$fmt:expr,$struct:expr,$path:expr,$self:expr) => {{
+        use ::std::mem::{self, MaybeUninit};
+        unsafe {
+            let mut arr: [MaybeUninit<chum_struct_get_type!($type)>; $len] =
+                { MaybeUninit::uninit().assume_init() };
+            for i in 0..$len {
+                arr[i] = MaybeUninit::new(chum_struct_binary_read!(
+                    $type,
+                    $file,
+                    $fmt,
+                    $struct,
+                    format!("{}[{}]", $path, i),
+                    $self
+                )?);
+            }
+            Ok(mem::transmute::<_, [chum_struct_get_type!($type); $len]>(
+                arr,
+            ))
+        }
+    }};
+    ([dynamic array [$lentype:tt] $type:tt $default:expr],$file:expr,$fmt:expr,$struct:expr,$path:expr,$self:expr) => {{
+        chum_struct_binary_read!([$lentype], $file, $fmt, $struct, $path, $self)
+            .map_err(|e| $crate::util::error::StructUnpackError {
+                structname: $struct.to_owned(),
+                structpath: $path.to_owned(),
+                error: Box::new(e),
+            })
+            .and_then(|size| {
+                let mut vec =
+                    Vec::with_capacity((size as usize).min($crate::common::SAFE_CAPACITY_BIG));
                 for i in 0..size {
-                    vec.push(chum_struct_binary_read!($type,$file,$fmt,$struct,format!("{}[{}]",$path,i),$self)?)
+                    vec.push(chum_struct_binary_read!(
+                        $type,
+                        $file,
+                        $fmt,
+                        $struct,
+                        format!("{}[{}]", $path, i),
+                        $self
+                    )?)
                 }
                 Ok(vec)
             })
-        }
-    };
+    }};
     ([struct $t:ty],$file:expr,$fmt:expr,$struct:expr,$path:expr,$self:expr) => {
-        match <$t>::read_from($file,$fmt) {
+        match <$t>::read_from($file, $fmt) {
             Ok(value) => Ok(value),
-            Err(e) => Err(e.structuralize($struct,&$path))
+            Err(e) => Err(e.structuralize($struct, &$path)),
         }
     };
-    ([option $type:tt $default:expr],$file:expr,$fmt:expr,$struct:expr,$path:expr,$self:expr) => {
-        {
-            let has_value = $fmt.read_u8($file)
-            .map_err(|e| $crate::util::error::StructUnpackError {
+    ([option $type:tt $default:expr],$file:expr,$fmt:expr,$struct:expr,$path:expr,$self:expr) => {{
+        let has_value =
+            $fmt.read_u8($file)
+                .map_err(|e| $crate::util::error::StructUnpackError {
+                    structname: $struct.to_owned(),
+                    structpath: $path.to_owned(),
+                    error: Box::new(e),
+                })?;
+        match has_value {
+            0 => Ok(None),
+            1 => Ok(Some(chum_struct_binary_read!(
+                $type, $file, $fmt, $struct, $path, $self
+            )?)),
+            o => Err($crate::util::error::StructUnpackError {
                 structname: $struct.to_owned(),
                 structpath: $path.to_owned(),
-                error: Box::new(e)
-            })?;
-            match has_value {
-                0 => Ok(None),
-                1 => Ok(Some(
-                    chum_struct_binary_read!($type,$file,$fmt,$struct,$path,$self)?
-                )),
-                o => {
-                    Err(
-                        $crate::util::error::StructUnpackError {
-                            structname: $struct.to_owned(),
-                            structpath: $path.to_owned(),
-                            error: Box::new($crate::util::error::EnumerationError {
-                                enum_name: "Optional".to_string(),
-                                value: o as i64,
-                            })
-                        }
-                    )
-                }
-            }
+                error: Box::new($crate::util::error::EnumerationError {
+                    enum_name: "Optional".to_string(),
+                    value: o as i64,
+                }),
+            }),
         }
-    };
+    }};
 }
 
 #[macro_export]
 macro_rules! chum_struct_binary_write {
     ([ignore $type:tt $default:expr],$file:expr,$fmt:expr,$value:expr,$this:expr) => {
-        chum_struct_binary_write!($type,$file,$fmt,&$default,$this)
+        chum_struct_binary_write!($type, $file, $fmt, &$default, $this)
     };
     ([void],$file:expr,$fmt:expr,$value:expr,$this:expr) => {
         ::std::io::Result::<()>::Ok(())
     };
     ([
-        custom_structure $type:tt 
+        custom_structure $type:tt
         structure: $structure:expr;
         destructure: $destructure:expr;
     ],$file:expr,$fmt:expr,$value:expr,$this:expr) => {
-        chum_struct_binary_write!($type,$file,$fmt,$value,$this)
+        chum_struct_binary_write!($type, $file, $fmt, $value, $this)
     };
     ([
-        custom_binary $type:tt 
+        custom_binary $type:tt
         read: $read:expr;
         write: $write:expr;
     ],$file:expr,$fmt:expr,$value:expr,$this:expr) => {
@@ -903,17 +936,15 @@ macro_rules! chum_struct_binary_write {
     ([i32],$file:expr,$fmt:expr,$value:expr,$this:expr) => {
         $fmt.write_i32($file, *$value)
     };
-    ([enum [$repr:tt] $name:ty],$file:expr,$fmt:expr,$value:expr,$this:expr) => {
-        {
-            let ivalue = $crate::structure::ChumEnum::to_u32($value) as $repr;
-            chum_struct_binary_write!([$repr],$file,$fmt,&ivalue,$this)
-        }
-    };
+    ([enum [$repr:tt] $name:ty],$file:expr,$fmt:expr,$value:expr,$this:expr) => {{
+        let ivalue = $crate::structure::ChumEnum::to_u32($value) as $repr;
+        chum_struct_binary_write!([$repr], $file, $fmt, &ivalue, $this)
+    }};
     ([flags [$repr:tt] {$($name:ident),*}],$file:expr,$fmt:expr,$value:expr,$this:expr) => {
-        chum_struct_binary_write!([$repr],$file,$fmt,$value,$this)
+        chum_struct_binary_write!([$repr], $file, $fmt, $value, $this)
     };
     ([int_custom [$repr:tt] $min:expr, $max:expr],$file:expr,$fmt:expr,$value:expr,$this:expr) => {
-        chum_struct_binary_write!([$repr],$file,$fmt,$value,$this)
+        chum_struct_binary_write!([$repr], $file, $fmt, $value, $this)
     };
     ([f32],$file:expr,$fmt:expr,$value:expr,$this:expr) => {
         $fmt.write_f32($file, *$value)
@@ -945,42 +976,34 @@ macro_rules! chum_struct_binary_write {
     ([reference $typename:ident],$file:expr,$fmt:expr,$value:expr,$this:expr) => {
         $fmt.write_i32($file, *$value)
     };
-    ([fixed array $type:tt $len:literal],$file:expr,$fmt:expr,$value:expr,$this:expr) => {
-        {
-            for i in 0..$len {
-                chum_struct_binary_write!($type,$file,$fmt,&$value[i],$this)?;
-            }
-            // fun cheat
-            ::std::io::Result::<()>::Ok(())
+    ([fixed array $type:tt $len:literal],$file:expr,$fmt:expr,$value:expr,$this:expr) => {{
+        for i in 0..$len {
+            chum_struct_binary_write!($type, $file, $fmt, &$value[i], $this)?;
         }
-    };
-    ([dynamic array [$lentype:tt] $type:tt $default:expr],$file:expr,$fmt:expr,$value:expr,$this:expr) => {
-        {
-            let lenval = $value.len() as $lentype;
-            chum_struct_binary_write!([$lentype], $file, $fmt, &lenval,$this)?;
-            for value in $value.iter() {
-                chum_struct_binary_write!($type, $file, $fmt, value,$this)?;
-            }
-            // fun cheat again
-            ::std::io::Result::<()>::Ok(())
+        // fun cheat
+        ::std::io::Result::<()>::Ok(())
+    }};
+    ([dynamic array [$lentype:tt] $type:tt $default:expr],$file:expr,$fmt:expr,$value:expr,$this:expr) => {{
+        let lenval = $value.len() as $lentype;
+        chum_struct_binary_write!([$lentype], $file, $fmt, &lenval, $this)?;
+        for value in $value.iter() {
+            chum_struct_binary_write!($type, $file, $fmt, value, $this)?;
         }
-    };
+        // fun cheat again
+        ::std::io::Result::<()>::Ok(())
+    }};
     ([struct $t:ty],$file:expr,$fmt:expr,$value:expr,$this:expr) => {
         <$t as $crate::binary::ChumBinary>::write_to($value, $file, $fmt)
     };
-    ([option $type:tt $default:expr],$file:expr,$fmt:expr,$value:expr,$this:expr) => {
-        {
-            match $value {
-                Some(ref x) => {
-                    $fmt.write_u8($file, 1)?;
-                    chum_struct_binary_write!($type,$file,$fmt,x,$this)
-                },
-                None => {
-                    $fmt.write_u8($file, 0)
-                }
+    ([option $type:tt $default:expr],$file:expr,$fmt:expr,$value:expr,$this:expr) => {{
+        match $value {
+            Some(ref x) => {
+                $fmt.write_u8($file, 1)?;
+                chum_struct_binary_write!($type, $file, $fmt, x, $this)
             }
+            None => $fmt.write_u8($file, 0),
         }
-    };
+    }};
 }
 
 /// Generate a ChumStruct with the ability to read from/write to
@@ -1027,7 +1050,7 @@ macro_rules! chum_struct_binary_impl_private {
         }
     ) => {
         impl $crate::binary::ChumBinary for $structname {
-            fn read_from(file: &mut dyn ::std::io::Read, fmt: $crate::format::TotemFormat) 
+            fn read_from(file: &mut dyn ::std::io::Read, fmt: $crate::format::TotemFormat)
             -> $crate::util::error::StructUnpackResult<Self> {
                 // well this is stupid :)
                 // Declaring another struct with the same name, purely so that
@@ -1203,7 +1226,7 @@ macro_rules! chum_struct_enum {
             }
         }
         impl $crate::binary::ChumBinary for $enumname {
-            fn read_from(file: &mut dyn ::std::io::Read, fmt: $crate::format::TotemFormat) 
+            fn read_from(file: &mut dyn ::std::io::Read, fmt: $crate::format::TotemFormat)
             -> $crate::util::error::StructUnpackResult<Self> {
                 let invariant = chum_struct_binary_read!($enumtype,file,fmt,stringify!($enumname),"",())?;
                 Ok(match invariant {

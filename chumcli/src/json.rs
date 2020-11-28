@@ -1,5 +1,4 @@
-use crate::util;
-use libchum::{format::TotemFormat, ChumArchive, ChumFile};
+use libchum::{format::TotemFormat, ChumArchive, ChumFile, util};
 use serde_json;
 use std::error::Error;
 use std::fs::{self, File};
@@ -37,25 +36,6 @@ pub struct JsonDataFile {
     pub file_name: String,
 }
 
-/// Get the output file name for the given file string and id
-pub fn get_file_string(s: &str, id: u32) -> Vec<String> {
-    let fullpath = if let Some(pos) = s.rfind('.') {
-        let (left, right) = s.split_at(pos);
-        format!("{}[{:08X}]{}", left, id, right)
-    } else {
-        format!("{}[{:08X}]", s, id)
-    };
-    let fullpath: &str = if s.starts_with("DB:>") {
-        &fullpath[4..]
-    } else {
-        &fullpath
-    };
-    fullpath
-        .split('>')
-        .map(|s| s.replace(|c: char| !c.is_alphanumeric() && c != '.', "_"))
-        .collect()
-}
-
 /// Extract the given archive into the given output folder.
 pub fn extract_archive(
     archive: &ChumArchive,
@@ -74,7 +54,7 @@ pub fn extract_archive(
     // Iterate files
     for file in archive.get_files() {
         // create data file
-        let fname = get_file_string(file.get_name_id(), util::hash_name_u32(file.get_name_id()));
+        let fname = util::get_file_string(file.get_name_id(), util::hash_name_u32(file.get_name_id()));
         let fpath = output_folder.join(fname.iter().collect::<PathBuf>());
         fs::create_dir_all(fpath.parent().unwrap())?;
         let mut fh = File::create(fpath)?;

@@ -21,8 +21,14 @@ pub fn read_collisionvol(
         }
     };
     let data = Dictionary::new();
-    data.insert("local_transform", util::transform3d_to_godot(&volume.local_transform));
-    data.insert("local_transform_inv", util::transform3d_to_godot(&volume.local_transform_inv));
+    data.insert(
+        "local_transform",
+        util::transform3d_to_godot(&volume.local_transform),
+    );
+    data.insert(
+        "local_transform_inv",
+        util::transform3d_to_godot(&volume.local_transform_inv),
+    );
     Some(data)
 }
 

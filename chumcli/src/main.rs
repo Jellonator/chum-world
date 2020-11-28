@@ -6,10 +6,9 @@ use std::path::Path;
 extern crate clap;
 #[macro_use]
 extern crate serde_derive;
-use libchum::{format::TotemFormat, ChumArchive};
+use libchum::{format::TotemFormat, ChumArchive, util};
 
 pub mod json;
-pub mod util;
 
 fn load_archive_raw(
     matches: &clap::ArgMatches,

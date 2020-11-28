@@ -1,7 +1,7 @@
 use crate::chumfile::ChumFile;
 use crate::reader::ChumReader;
-use gdnative::prelude::*;
 use gdnative::api::ShaderMaterial;
+use gdnative::prelude::*;
 use libchum::reader::materialanim;
 
 pub fn read_materialanim(
@@ -14,7 +14,11 @@ pub fn read_materialanim(
     let matanimdata = match materialanim::MaterialAnimation::read_from(&mut data.as_slice(), fmt) {
         Ok(x) => x,
         Err(err) => {
-            display_err!("Error loading MATERIALANIM: {}\n{}", file.get_name_str(), err);
+            display_err!(
+                "Error loading MATERIALANIM: {}\n{}",
+                file.get_name_str(),
+                err
+            );
             return None;
         }
     };
@@ -27,21 +31,16 @@ pub fn read_materialanim(
             {
                 let materialdict = reader.read_material_nodeless_nocache(materialfile.clone());
                 if materialdict.get("exists").to_bool() == true {
-                    let res: Ref<ShaderMaterial, Shared> = materialdict
-                        .get("material")
-                        .try_to_object()
-                        .unwrap();
-                    reader.add_materialanim(
-                        res.clone(),
-                        matanimdata,
-                        archive,
-                        archiveres,
-                    );
+                    let res: Ref<ShaderMaterial, Shared> =
+                        materialdict.get("material").try_to_object().unwrap();
+                    reader.add_materialanim(res.clone(), matanimdata, archive, archiveres);
                     Some(res)
                 } else {
                     display_warn!(
                         "Could not apply material {} to materialanim {}.",
-                        unsafe { materialfile.assume_safe() }.map(|x,_| x.get_name_str().to_owned()).unwrap(),
+                        unsafe { materialfile.assume_safe() }
+                            .map(|x, _| x.get_name_str().to_owned())
+                            .unwrap(),
                         file.get_name_str()
                     );
                     None

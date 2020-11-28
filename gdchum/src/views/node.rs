@@ -1,8 +1,8 @@
-use gdnative::prelude::*;
-use gdnative::api::Resource;
-use libchum::reader::node;
 use crate::chumfile::ChumFile;
 use crate::util;
+use gdnative::api::Resource;
+use gdnative::prelude::*;
+use libchum::reader::node;
 use std::error::Error;
 
 #[derive(NativeClass)]
@@ -16,7 +16,7 @@ pub struct NodeView {
 impl NodeView {
     fn new(_owner: &Resource) -> Self {
         NodeView {
-            inner: node::Node::default()
+            inner: node::Node::default(),
         }
     }
 
@@ -58,10 +58,12 @@ impl NodeView {
     pub fn save(&self, _owner: &Resource, data: Instance<ChumFile, Shared>) {
         use libchum::binary::ChumBinary;
         let mut v: Vec<u8> = Vec::new();
-        unsafe{data.assume_safe()}.map_mut(|chumfile,_| {
-            self.inner.write_to(&mut v, chumfile.get_format()).unwrap();
-            chumfile.replace_data_with_vec(v);
-        }).unwrap();
+        unsafe { data.assume_safe() }
+            .map_mut(|chumfile, _| {
+                self.inner.write_to(&mut v, chumfile.get_format()).unwrap();
+                chumfile.replace_data_with_vec(v);
+            })
+            .unwrap();
     }
 
     pub fn load_from(&mut self, data: Instance<ChumFile, Shared>) -> Result<(), Box<dyn Error>> {
@@ -82,7 +84,7 @@ impl NodeView {
         self.inner.global_transform = util::godot_to_transform3d(&value);
         let inverse = Transform {
             basis: value.basis.inverted(),
-            origin: -value.origin
+            origin: -value.origin,
         };
         self.inner.global_transform_inverse = util::godot_to_transform3d(&inverse);
     }

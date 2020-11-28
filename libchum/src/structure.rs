@@ -74,13 +74,13 @@ pub enum ChumStructVariant {
     Struct(Vec<(String, ChumStructVariant)>),
     Optional {
         value: Option<Box<ChumStructVariant>>,
-        default_value: ChumStructDefaultValue
+        default_value: ChumStructDefaultValue,
     },
     Variant {
         current: String,
         value: Box<ChumStructVariant>,
-        options: Vec<VariantOption>
-    }
+        options: Vec<VariantOption>,
+    },
 }
 
 #[derive(Debug, Clone)]
@@ -249,17 +249,13 @@ impl ChumStructVariant {
         }
     }
     pub fn get_optional_value(&self) -> Option<Option<&ChumStructVariant>> {
-        use ChumStructVariant::*;
         use std::borrow::Borrow;
+        use ChumStructVariant::*;
         match self {
             Optional {
                 ref value,
                 default_value: _,
-            } => {
-                Some(
-                    value.as_ref().map(|x|x.borrow())
-                )
-            }
+            } => Some(value.as_ref().map(|x| x.borrow())),
             _ => None,
         }
     }
@@ -269,9 +265,7 @@ impl ChumStructVariant {
             Optional {
                 value: _,
                 ref default_value,
-            } => {
-                Some(*default_value)
-            }
+            } => Some(*default_value),
             _ => None,
         }
     }
@@ -282,23 +276,19 @@ impl ChumStructVariant {
                 value: _,
                 options: _,
                 ref current,
-            } => {
-                Some(current)
-            }
+            } => Some(current),
             _ => None,
         }
     }
     pub fn get_variant_data(&self) -> Option<&ChumStructVariant> {
-        use ChumStructVariant::*;
         use std::borrow::Borrow;
+        use ChumStructVariant::*;
         match self {
             Variant {
                 ref value,
                 options: _,
                 current: _,
-            } => {
-                Some(value.borrow())
-            }
+            } => Some(value.borrow()),
             _ => None,
         }
     }

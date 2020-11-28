@@ -97,8 +97,10 @@ impl StructUnpackError {
         }
     }
 
-    pub fn structuralize<S>(self, structname: S, pathname: &str) -> StructUnpackError 
-    where S: Into<String> {
+    pub fn structuralize<S>(self, structname: S, pathname: &str) -> StructUnpackError
+    where
+        S: Into<String>,
+    {
         StructUnpackError {
             structname: structname.into(),
             structpath: format!("{}.{}", pathname, self.structpath),
@@ -177,7 +179,7 @@ where
 #[derive(Debug, Clone)]
 pub struct ChumStructVariantError {
     pub expected: Vec<String>,
-    pub value: String
+    pub value: String,
 }
 
 impl fmt::Display for ChumStructVariantError {

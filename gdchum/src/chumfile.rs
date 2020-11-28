@@ -1,8 +1,8 @@
 use crate::bytedata::ByteData;
 use crate::util;
 use crate::ChumArchive;
-use gdnative::prelude::*;
 use gdnative::api::Resource;
+use gdnative::prelude::*;
 use libchum::{
     self, reader,
     scene::{self, collada},
@@ -22,7 +22,7 @@ pub struct ChumFile {
     namestr: String,
     typestr: String,
     subtypestr: String,
-    parent: Option<Instance<ChumArchive,Shared>>,
+    parent: Option<Instance<ChumArchive, Shared>>,
     format: libchum::format::TotemFormat,
 }
 
@@ -69,12 +69,12 @@ impl ChumFile {
     }
 
     #[export]
-    pub fn get_archive(&self, _owner: &Resource) -> Instance<ChumArchive,Shared> {
+    pub fn get_archive(&self, _owner: &Resource) -> Instance<ChumArchive, Shared> {
         self.parent.clone().unwrap()
     }
 
     #[export]
-    pub fn get_data(&self, _owner: TRef<Resource>) -> Instance<ByteData,Shared> {
+    pub fn get_data(&self, _owner: TRef<Resource>) -> Instance<ByteData, Shared> {
         self.get_data_as_bytedata()
     }
 
@@ -101,7 +101,7 @@ impl ChumFile {
 
     /// Get the hadh ID for this file without an owner
     pub fn get_hash_id_ownerless(&self) -> i32 {
-        libchum::hash_name(&self.namestr)
+        libchum::util::hash_name_i32(&self.namestr)
     }
 
     /// Get this file's name
@@ -120,7 +120,7 @@ impl ChumFile {
     }
 
     /// Get an Instance of this file's containing ChumArchive
-    pub fn get_archive_instance(&self) -> &Instance<ChumArchive,Shared> {
+    pub fn get_archive_instance(&self) -> &Instance<ChumArchive, Shared> {
         self.parent.as_ref().unwrap()
     }
 
@@ -129,7 +129,7 @@ impl ChumFile {
         &mut self,
         file: &libchum::ChumFile,
         fmt: libchum::format::TotemFormat,
-        parent: Instance<ChumArchive,Shared>,
+        parent: Instance<ChumArchive, Shared>,
     ) {
         self.nameid = GodotString::from_str(file.get_name_id());
         self.typeid = GodotString::from_str(file.get_type_id());
@@ -147,68 +147,75 @@ impl ChumFile {
     }
 
     /// Read this file's data as a ByteData instance
-    pub fn get_data_as_bytedata(&self) -> Instance<ByteData,Shared> {
+    pub fn get_data_as_bytedata(&self) -> Instance<ByteData, Shared> {
         let archive_instance = self.get_archive_instance();
-        unsafe {archive_instance.assume_safe()}.map(|archive,_| {
-            let file = archive
-                .archive
-                .get_file_from_name(&self.namestr)
+        unsafe { archive_instance.assume_safe() }
+            .map(|archive, _| {
+                let file = archive.archive.get_file_from_name(&self.namestr).unwrap();
+                let f = Instance::<ByteData, Unique>::new();
+                f.map_mut(|script, _| {
+                    script.set_data(file.get_data().to_vec());
+                })
                 .unwrap();
-            let f = Instance::<ByteData, Unique>::new();
-            f.map_mut(|script, _| {
-                script.set_data(file.get_data().to_vec());
+                f.into_shared()
             })
-            .unwrap();
-            f.into_shared()
-        })
-        .unwrap()
+            .unwrap()
     }
 
     /// Get this file's data as a Vec<u8>
     pub fn get_data_as_vec(&self) -> Vec<u8> {
         let archive_instance = self.get_archive_instance();
-        unsafe {archive_instance.assume_safe()}.map(|archive, _| {
-            let file = archive
-                .archive
-                .get_file_from_name(&self.namestr)
-                .unwrap();
-            file.get_data().to_owned()
-        })
-        .unwrap()
+        unsafe { archive_instance.assume_safe() }
+            .map(|archive, _| {
+                let file = archive.archive.get_file_from_name(&self.namestr).unwrap();
+                file.get_data().to_owned()
+            })
+            .unwrap()
     }
 
     pub fn borrow_data<F, G>(&self, func: F) -> G
-    where F: Fn(&[u8]) -> G {
+    where
+        F: Fn(&[u8]) -> G,
+    {
         let archive_instance = self.get_archive_instance();
-        unsafe {archive_instance.assume_safe()}.map(|archive, _| {
-            let file: &libchum::ChumFile = archive.archive.get_file_from_name(&self.namestr).unwrap();
-            func(file.get_data())
-        })
-        .unwrap()
+        unsafe { archive_instance.assume_safe() }
+            .map(|archive, _| {
+                let file: &libchum::ChumFile =
+                    archive.archive.get_file_from_name(&self.namestr).unwrap();
+                func(file.get_data())
+            })
+            .unwrap()
     }
 
     pub fn borrow_data_mut<F, G>(&mut self, func: F) -> G
-    where F: Fn(&mut Vec<u8>) -> G {
+    where
+        F: Fn(&mut Vec<u8>) -> G,
+    {
         let archive_instance = self.get_archive_instance();
-        unsafe {archive_instance.assume_safe()}.map_mut(|archive, _| {
-            let file: &mut libchum::ChumFile = archive.archive.get_file_from_name_mut(&self.namestr).unwrap();
-            func(file.get_data_mut())
-        })
-        .unwrap()
+        unsafe { archive_instance.assume_safe() }
+            .map_mut(|archive, _| {
+                let file: &mut libchum::ChumFile = archive
+                    .archive
+                    .get_file_from_name_mut(&self.namestr)
+                    .unwrap();
+                func(file.get_data_mut())
+            })
+            .unwrap()
     }
 
     /// Replace this file's data with the given Vec<u8>
     pub fn replace_data_with_vec(&mut self, data: Vec<u8>) {
         let archive_instance = self.get_archive_instance();
-        unsafe {archive_instance.assume_safe()}.map_mut(|archive, _| {
-            archive
-                .archive
-                .get_file_from_name_mut(&self.namestr)
-                .unwrap()
-                .replace_data(data);
-            godot_print!("WROTE TO ARCHIVE");
-        })
-        .unwrap();
+        unsafe { archive_instance.assume_safe() }
+            .map_mut(|archive, _| {
+                archive
+                    .archive
+                    .get_file_from_name_mut(&self.namestr)
+                    .unwrap()
+                    .replace_data(data);
+                godot_print!("WROTE TO ARCHIVE");
+            })
+            .unwrap();
     }
 
     ///////////////////////////////////////////////////////////////////////////
@@ -237,8 +244,7 @@ impl ChumFile {
     /// Export a MESH file as a .obj
     fn export_mesh_to_obj(&mut self, path: &str) {
         let mut buffer = File::create(path).unwrap();
-        let mesh = match reader::mesh::Mesh::read_data(&mut self.get_data_as_vec(), self.format)
-        {
+        let mesh = match reader::mesh::Mesh::read_data(&mut self.get_data_as_vec(), self.format) {
             Ok(x) => x,
             Err(err) => {
                 panic!("MESH file invalid: {}", err);
@@ -249,8 +255,7 @@ impl ChumFile {
 
     fn export_mesh_to_collada(&mut self, path: &str) {
         let mut buffer = File::create(path).unwrap();
-        let mesh = match reader::mesh::Mesh::read_data(&mut self.get_data_as_vec(), self.format)
-        {
+        let mesh = match reader::mesh::Mesh::read_data(&mut self.get_data_as_vec(), self.format) {
             Ok(x) => x,
             Err(err) => {
                 panic!("MESH file invalid: {}", err);
@@ -271,44 +276,46 @@ impl ChumFile {
         };
         let mut scene = scene::Scene::new_empty();
         let archiveinstance = self.get_archive_instance();
-        unsafe{ archiveinstance.assume_safe() }.map(|archive, res| {
-            let names: Vec<String> = skin
-                .vertex_groups
-                .iter()
-                .map(|group| archive.maybe_get_name_from_hash_str(group.group_id))
-                .collect();
-            for meshid in skin.meshes.iter() {
-                if let Some(meshfile) = archive.get_file_from_hash(&res, *meshid) {
-                    unsafe { meshfile.assume_safe() }.map(|meshscript,_| match meshscript.typestr.as_str() {
-                        "MESH" => {
-                            let mesh = match reader::mesh::Mesh::read_data(
-                                &mut meshscript.get_data_as_vec(),
-                                self.format,
-                            ) {
-                                Ok(x) => x,
-                                Err(err) => {
-                                    panic!("MESH file invalid: {}", err);
+        unsafe { archiveinstance.assume_safe() }
+            .map(|archive, res| {
+                let names: Vec<String> = skin
+                    .vertex_groups
+                    .iter()
+                    .map(|group| archive.maybe_get_name_from_hash_str(group.group_id))
+                    .collect();
+                for meshid in skin.meshes.iter() {
+                    if let Some(meshfile) = archive.get_file_from_hash(&res, *meshid) {
+                        unsafe { meshfile.assume_safe() }
+                            .map(|meshscript, _| match meshscript.typestr.as_str() {
+                                "MESH" => {
+                                    let mesh = match reader::mesh::Mesh::read_data(
+                                        &mut meshscript.get_data_as_vec(),
+                                        self.format,
+                                    ) {
+                                        Ok(x) => x,
+                                        Err(err) => {
+                                            panic!("MESH file invalid: {}", err);
+                                        }
+                                    };
+                                    let mut trimesh = mesh.create_scene_mesh(
+                                        util::get_basename(&meshscript.namestr).to_owned(),
+                                    );
+                                    trimesh.skin = Some(skin.generate_scene_skin_for_mesh(
+                                        names.as_slice(),
+                                        *meshid,
+                                        mesh.vertices.len(),
+                                    ));
+                                    scene.add_trimesh(trimesh);
                                 }
-                            };
-                            let mut trimesh = mesh.create_scene_mesh(
-                                util::get_basename(&meshscript.namestr).to_owned(),
-                            );
-                            trimesh.skin = Some(skin.generate_scene_skin_for_mesh(
-                                names.as_slice(),
-                                *meshid,
-                                mesh.vertices.len(),
-                            ));
-                            scene.add_trimesh(trimesh);
-                        }
-                        _ => {}
-                    })
-                    .unwrap();
-                } else {
-                    godot_warn!("Mesh {} does not exist!", meshid);
+                                _ => {}
+                            })
+                            .unwrap();
+                    } else {
+                        godot_warn!("Mesh {} does not exist!", meshid);
+                    }
                 }
-            }
-        })
-        .unwrap();
+            })
+            .unwrap();
         if merge_models {
             let mut data = Vec::new();
             data.append(&mut scene.trimeshes);
@@ -485,7 +492,7 @@ impl ChumFile {
                 let voldata: Vec<u8> = self.get_data_as_vec();
                 let vol = match reader::collisionvol::CollisionVol::read_from(
                     &mut voldata.as_slice(),
-                    self.format
+                    self.format,
                 ) {
                     Ok(x) => x,
                     Err(err) => {
@@ -497,15 +504,13 @@ impl ChumFile {
             }
             "WARP" => {
                 let warpdata: Vec<u8> = self.get_data_as_vec();
-                let warp = match reader::warp::Warp::read_from(
-                    &mut warpdata.as_slice(),
-                    self.format
-                ) {
-                    Ok(x) => x,
-                    Err(err) => {
-                        panic!("WARP file invalid: {}", err);
-                    }
-                };
+                let warp =
+                    match reader::warp::Warp::read_from(&mut warpdata.as_slice(), self.format) {
+                        Ok(x) => x,
+                        Err(err) => {
+                            panic!("WARP file invalid: {}", err);
+                        }
+                    };
                 let data = warp.structure();
                 util::struct_to_dict(&data).into_shared().to_variant()
             }
@@ -513,7 +518,7 @@ impl ChumFile {
                 let vecdata: Vec<u8> = self.get_data_as_vec();
                 let data = match reader::rotshape::RotShape::read_from(
                     &mut vecdata.as_slice(),
-                    self.format
+                    self.format,
                 ) {
                     Ok(x) => x,
                     Err(err) => {
@@ -525,10 +530,8 @@ impl ChumFile {
             }
             "OMNI" => {
                 let vecdata: Vec<u8> = self.get_data_as_vec();
-                let data = match reader::omni::Omni::read_from(
-                    &mut vecdata.as_slice(),
-                    self.format
-                ) {
+                let data = match reader::omni::Omni::read_from(&mut vecdata.as_slice(), self.format)
+                {
                     Ok(x) => x,
                     Err(err) => {
                         panic!("OMNI file invalid: {}", err);
@@ -539,24 +542,19 @@ impl ChumFile {
             }
             "LIGHT" => {
                 let vecdata: Vec<u8> = self.get_data_as_vec();
-                let data = match reader::light::Light::read_from(
-                    &mut vecdata.as_slice(),
-                    self.format
-                ) {
-                    Ok(x) => x,
-                    Err(err) => {
-                        panic!("LIGHT file invalid: {}", err);
-                    }
-                };
+                let data =
+                    match reader::light::Light::read_from(&mut vecdata.as_slice(), self.format) {
+                        Ok(x) => x,
+                        Err(err) => {
+                            panic!("LIGHT file invalid: {}", err);
+                        }
+                    };
                 let structure = data.structure();
                 util::struct_to_dict(&structure).into_shared().to_variant()
             }
             "LOD" => {
                 let vecdata: Vec<u8> = self.get_data_as_vec();
-                let data = match reader::lod::Lod::read_from(
-                    &mut vecdata.as_slice(),
-                    self.format
-                ) {
+                let data = match reader::lod::Lod::read_from(&mut vecdata.as_slice(), self.format) {
                     Ok(x) => x,
                     Err(err) => {
                         panic!("LOD file invalid: {}", err);
@@ -569,7 +567,7 @@ impl ChumFile {
                 let vecdata: Vec<u8> = self.get_data_as_vec();
                 let data = match reader::materialanim::MaterialAnimation::read_from(
                     &mut vecdata.as_slice(),
-                    self.format
+                    self.format,
                 ) {
                     Ok(x) => x,
                     Err(err) => {
@@ -581,10 +579,8 @@ impl ChumFile {
             }
             "NODE" => {
                 let vecdata: Vec<u8> = self.get_data_as_vec();
-                let data = match reader::node::Node::read_from(
-                    &mut vecdata.as_slice(),
-                    self.format
-                ) {
+                let data = match reader::node::Node::read_from(&mut vecdata.as_slice(), self.format)
+                {
                     Ok(x) => x,
                     Err(err) => {
                         panic!("NODE file invalid: {}", err);
@@ -613,12 +609,11 @@ impl ChumFile {
                     }
                 };
                 let bitmapstruct = reader::bitmap::BitmapStruct::destructure(&structure).unwrap();
-                let bitmapdata = reader::bitmap::Bitmap::from_struct(&bitmapstruct)
-                    .with_bitmap(
-                        bitmap.get_data().clone(),
-                        bitmap.get_width(),
-                        bitmap.get_height(),
-                    );
+                let bitmapdata = reader::bitmap::Bitmap::from_struct(&bitmapstruct).with_bitmap(
+                    bitmap.get_data().clone(),
+                    bitmap.get_width(),
+                    bitmap.get_height(),
+                );
                 let mut outdata = Vec::new();
                 bitmapdata.write_to(&mut outdata, self.format).unwrap();
                 self.replace_data_with_vec(outdata);
@@ -666,7 +661,8 @@ impl ChumFile {
                 self.replace_data_with_vec(outdata);
             }
             "MATERIALANIM" => {
-                let data = reader::materialanim::MaterialAnimation::destructure(&structure).unwrap();
+                let data =
+                    reader::materialanim::MaterialAnimation::destructure(&structure).unwrap();
                 let mut outdata = Vec::new();
                 data.write_to(&mut outdata, self.format).unwrap();
                 self.replace_data_with_vec(outdata);

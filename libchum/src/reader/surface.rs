@@ -2,8 +2,8 @@
 
 use crate::common::*;
 use crate::format::TotemFormat;
-use crate::util::bezierpatch;
 use crate::scene;
+use crate::util::bezierpatch;
 use std::collections::HashMap;
 use std::error::Error;
 use std::io::{self, Read, Write};
@@ -421,13 +421,11 @@ impl SurfaceObject {
             for quad in mesh.quads.iter() {
                 for point in quad.points.iter() {
                     let nvert = vertices.len();
-                    if insert_if_not_exist(&mut vertices, reinterpret_vec3(&point.vertex), nvert)
-                    {
+                    if insert_if_not_exist(&mut vertices, reinterpret_vec3(&point.vertex), nvert) {
                         trimesh.vertices.push(point.vertex);
                     }
                     let nnorm = normals.len();
-                    if insert_if_not_exist(&mut normals, reinterpret_vec3(&point.normal), nnorm)
-                    {
+                    if insert_if_not_exist(&mut normals, reinterpret_vec3(&point.normal), nnorm) {
                         trimesh.normals.push(point.normal);
                     }
                     let ntex = texcoords.len();
@@ -445,18 +443,18 @@ impl SurfaceObject {
                         (
                             vertices[&reinterpret_vec3(&tri.points[0].vertex)],
                             texcoords[&reinterpret_vec2(&tri.points[0].texcoord)],
-                            normals[&reinterpret_vec3(&tri.points[0].normal)]
+                            normals[&reinterpret_vec3(&tri.points[0].normal)],
                         ),
                         (
                             vertices[&reinterpret_vec3(&tri.points[1].vertex)],
                             texcoords[&reinterpret_vec2(&tri.points[1].texcoord)],
-                            normals[&reinterpret_vec3(&tri.points[1].normal)]
+                            normals[&reinterpret_vec3(&tri.points[1].normal)],
                         ),
                         (
                             vertices[&reinterpret_vec3(&tri.points[2].vertex)],
                             texcoords[&reinterpret_vec2(&tri.points[2].texcoord)],
-                            normals[&reinterpret_vec3(&tri.points[2].normal)]
-                        )
+                            normals[&reinterpret_vec3(&tri.points[2].normal)],
+                        ),
                     ])
                 }
             }

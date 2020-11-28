@@ -62,13 +62,13 @@ func _on_SceneExportDialog_confirmed():
 			if resfile == null:
 				continue
 			if include_mesh and resfile.type == "MESH":
-				scene.add_mesh(resfile, node_name, node_view.global_transform)
+				scene.add_mesh(node_name, resfile, node_view.global_transform)
 			if include_surface and resfile.type == "SURFACE":
-				scene.add_surface(resfile, node_name, node_view.global_transform, surface_quality)
+				scene.add_surface(node_name, resfile, node_view.global_transform, surface_quality)
 			if include_lod and resfile.type == "LOD":
-				pass
+				scene.add_lod(node_name, resfile, node_view.global_transform, surface_quality, false)
 			if include_skin and resfile.type == "SKIN":
-				pass
+				scene.add_skin(node_name, resfile, node_view.global_transform, surface_quality, false)
 			if include_rotshape and resfile.type == "ROTSHAPE":
 				pass
 			if include_light and resfile.type == "LIGHT":

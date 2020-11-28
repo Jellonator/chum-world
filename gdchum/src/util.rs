@@ -1,20 +1,20 @@
-use gdnative::prelude::*;
-use gdnative::api::Resource;
 use gdnative::api::Engine;
+use gdnative::api::Resource;
+use gdnative::prelude::*;
 use libchum::common;
-use libchum::structure::{ArrayData, ChumStructVariant, IntType, ColorInfo};
+use libchum::structure::{ArrayData, ChumStructVariant, ColorInfo, IntType};
 
 #[derive(NativeClass)]
 #[inherit(Resource)]
 pub struct StructGenerator {
-    pub generator: fn() -> ChumStructVariant
+    pub generator: fn() -> ChumStructVariant,
 }
 
 #[methods]
 impl StructGenerator {
     fn new(_owner: &Resource) -> Self {
         StructGenerator {
-            generator: || ChumStructVariant::Struct(vec![])
+            generator: || ChumStructVariant::Struct(vec![]),
         }
     }
 
@@ -78,10 +78,9 @@ pub fn push_message(value: &str, level: MessageLevel) {
         let scenetree: &SceneTree = mainloop.cast().unwrap();
         let root = scenetree.root().unwrap();
         let lognode = root.assume_safe().get_node("MessageOverlay").unwrap();
-        lognode.assume_safe().call(
-            "push",
-            &[value.to_variant(), level.to_i64().to_variant()],
-        );
+        lognode
+            .assume_safe()
+            .call("push", &[value.to_variant(), level.to_i64().to_variant()]);
     }
 }
 
@@ -92,7 +91,6 @@ macro_rules! display_info {
         push_message(&format!($($arg)*), MessageLevel::Information)
     };
 }
-
 
 #[macro_export]
 macro_rules! display_warn {
@@ -284,9 +282,7 @@ pub fn dict_to_struct(dict: &Dictionary) -> ChumStructVariant {
             let alpha = dict.get("has_alpha").try_to_bool().unwrap();
             ChumStructVariant::Color(
                 common::ColorRGBA::new(value.r, value.g, value.b, value.a),
-                ColorInfo {
-                    has_alpha: alpha
-                }
+                ColorInfo { has_alpha: alpha },
             )
         }
         "reference" => {
@@ -304,9 +300,7 @@ pub fn dict_to_struct(dict: &Dictionary) -> ChumStructVariant {
             let can_resize = dict.get("can_resize").try_to_bool().unwrap();
             let mut values = Vec::new();
             for i in 0..array.len() {
-                values.push(dict_to_struct(
-                    &array.get(i).try_to_dictionary().unwrap(),
-                ));
+                values.push(dict_to_struct(&array.get(i).try_to_dictionary().unwrap()));
             }
             ChumStructVariant::Array(ArrayData {
                 data: values,
@@ -338,16 +332,16 @@ pub fn dict_to_struct(dict: &Dictionary) -> ChumStructVariant {
             };
             ChumStructVariant::Optional {
                 value,
-                default_value: || unimplemented!()
+                default_value: || unimplemented!(),
             }
         }
-        "variant" => {
-            ChumStructVariant::Variant {
-                current: dict.get("current").try_to_string().unwrap(),
-                options: vec![],
-                value: Box::new(dict_to_struct(&dict.get("value").try_to_dictionary().unwrap()))
-            }
-        }
+        "variant" => ChumStructVariant::Variant {
+            current: dict.get("current").try_to_string().unwrap(),
+            options: vec![],
+            value: Box::new(dict_to_struct(
+                &dict.get("value").try_to_dictionary().unwrap(),
+            )),
+        },
         other => panic!("Invalid variant type {}", other),
     }
 }
@@ -474,19 +468,13 @@ pub fn struct_to_dict(value: &ChumStructVariant) -> Dictionary<Unique> {
         ChumStructVariant::Vec2(value) => {
             let dict = Dictionary::new();
             dict.insert("type", "vec2");
-            dict.insert(
-                "value",
-                Vector2::new(value.x, value.y),
-            );
+            dict.insert("value", Vector2::new(value.x, value.y));
             dict
         }
         ChumStructVariant::Vec3(value) => {
             let dict = Dictionary::new();
             dict.insert("type", "vec3");
-            dict.insert(
-                "value",
-                Vector3::new(value.x, value.y, value.z),
-            );
+            dict.insert("value", Vector3::new(value.x, value.y, value.z));
             dict
         }
         ChumStructVariant::Transform3D(value) => {
@@ -506,10 +494,7 @@ pub fn struct_to_dict(value: &ChumStructVariant) -> Dictionary<Unique> {
             let dict = Dictionary::new();
             dict.insert("type", "color");
             dict.insert("has_alpha", info.has_alpha);
-            dict.insert(
-                "value",
-                Color::rgba(color.r, color.g, color.b, color.a),
-            );
+            dict.insert("value", Color::rgba(color.r, color.g, color.b, color.a));
             dict
         }
         ChumStructVariant::Reference(value, ref typename) => {
@@ -527,8 +512,10 @@ pub fn struct_to_dict(value: &ChumStructVariant) -> Dictionary<Unique> {
         }
         ChumStructVariant::Array(ref data) => {
             let dict = Dictionary::new();
-            let default_value = Instance::<StructGenerator,Unique>::new();
-            default_value.map_mut(|gen, _| gen.set_generator(data.default_value)).unwrap();
+            let default_value = Instance::<StructGenerator, Unique>::new();
+            default_value
+                .map_mut(|gen, _| gen.set_generator(data.default_value))
+                .unwrap();
             let array: VariantArray<Unique> = VariantArray::new();
             for value in data.data.iter() {
                 let valuedict = struct_to_dict(value);
@@ -560,11 +547,13 @@ pub fn struct_to_dict(value: &ChumStructVariant) -> Dictionary<Unique> {
         }
         ChumStructVariant::Optional {
             ref value,
-            default_value
+            default_value,
         } => {
             let dict = Dictionary::new();
-            let default_value_generator = Instance::<StructGenerator,Unique>::new();
-            default_value_generator.map_mut(|gen, _| gen.set_generator(*default_value)).unwrap();
+            let default_value_generator = Instance::<StructGenerator, Unique>::new();
+            default_value_generator
+                .map_mut(|gen, _| gen.set_generator(*default_value))
+                .unwrap();
             dict.insert("type", "option");
             dict.insert("default", default_value_generator);
             if let Some(ref inner) = value {
@@ -572,11 +561,11 @@ pub fn struct_to_dict(value: &ChumStructVariant) -> Dictionary<Unique> {
                 dict.insert("value", inner_dict);
             }
             dict
-        },
+        }
         ChumStructVariant::Variant {
             ref current,
             ref value,
-            ref options
+            ref options,
         } => {
             let dict = Dictionary::new();
             dict.insert("type", "variant");
@@ -586,8 +575,10 @@ pub fn struct_to_dict(value: &ChumStructVariant) -> Dictionary<Unique> {
             let option_dict = Dictionary::new();
             let order = VariantArray::new();
             for option in options.iter() {
-                let default_value = Instance::<StructGenerator,Unique>::new();
-                default_value.map_mut(|gen, _| gen.set_generator(option.default_value)).unwrap();
+                let default_value = Instance::<StructGenerator, Unique>::new();
+                default_value
+                    .map_mut(|gen, _| gen.set_generator(option.default_value))
+                    .unwrap();
                 option_dict.insert(&option.name, default_value);
                 order.push(&option.name);
             }

@@ -1,7 +1,7 @@
 use crate::chumfile::ChumFile;
 use crate::reader::ChumReader;
-use gdnative::prelude::*;
 use gdnative::api::{ArrayMesh, Material, Mesh};
+use gdnative::prelude::*;
 use libchum::common;
 use libchum::reader::rotshape;
 use libchum::structure::ChumEnum;
@@ -65,20 +65,18 @@ pub fn read_rotshape(
     let archiveinstance = unsafe { unsafe_archive_instance.assume_safe() };
     archiveinstance
         .map(|archive, res| {
-            if let Some(materialfile) =
-                archive.get_file_from_hash(&res, rsdata.materialanim_id)
-            {
+            if let Some(materialfile) = archive.get_file_from_hash(&res, rsdata.materialanim_id) {
                 let materialdict = reader.read_materialanim_nodeless(materialfile.clone());
                 if materialdict.get("exists").to_bool() == true {
-                    let material: Ref<Material,Shared> = materialdict
-                        .get("material")
-                        .try_to_object()
-                        .unwrap();
+                    let material: Ref<Material, Shared> =
+                        materialdict.get("material").try_to_object().unwrap();
                     mesh.surface_set_material(0, material);
                 } else {
                     display_warn!(
                         "Could not apply material {} to rotshape {}.",
-                        unsafe { materialfile.assume_safe() }.map(|x, _| x.get_name_str().to_owned()).unwrap(),
+                        unsafe { materialfile.assume_safe() }
+                            .map(|x, _| x.get_name_str().to_owned())
+                            .unwrap(),
                         file.get_name_str()
                     );
                 }

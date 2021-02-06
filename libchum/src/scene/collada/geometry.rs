@@ -72,7 +72,7 @@ impl_tag_tree!(
 pub struct Triangles {
     pub count: usize,
     pub name: Option<String>,
-    // material
+    pub material: Option<String>,
     pub input: Vec<InputShared>,
     pub p: Option<TriangleData>,
 }
@@ -94,7 +94,7 @@ pub struct InstanceGeometry {
     pub sid: Option<String>,
     pub name: Option<String>,
     pub url: String,
-    // pub bind_material: Option<BindMaterial>
+    pub bind_material: Option<BindMaterial>
 }
 
 impl XMLTag for InstanceGeometry {
@@ -113,6 +113,48 @@ impl XMLTag for InstanceGeometry {
 }
 
 impl_tag_content!(TriangleData, "p", data);
+
+#[derive(Clone, Debug)]
+pub struct BindMaterial {
+    // param
+    pub technique_common: BindMaterialTechniqueCommon
+    // technique
+}
+
+impl_tag_tree!(
+    BindMaterial,
+    "bind_material",
+    attr => [],
+    tags => [technique_common]
+);
+
+#[derive(Clone, Debug)]
+pub struct BindMaterialTechniqueCommon {
+    pub instance_material: Vec<InstanceMaterial>
+}
+
+impl_tag_tree!(
+    BindMaterialTechniqueCommon,
+    "technique_common",
+    attr => [],
+    tags => [instance_material]
+);
+
+
+#[derive(Clone, Debug)]
+pub struct InstanceMaterial {
+    pub symbol: String,
+    pub target: String,
+    pub name: Option<String>,
+    pub sid: Option<String>
+}
+
+impl_tag_tree!(
+    InstanceMaterial,
+    "instance_material",
+    attr => [("symbol", symbol), ("target", target), ("name", name), ("sid", sid)],
+    tags => []
+);
 
 pub fn trimesh_to_geometry(mesh: &scene::SceneTriMesh) -> Geometry {
     let id_mesh = format!("{}-mesh", mesh.name);
@@ -259,42 +301,50 @@ pub fn trimesh_to_geometry(mesh: &scene::SceneTriMesh) -> Geometry {
                     source: format!("#{}", id_positions),
                 }],
             },
-            triangles: vec![Triangles {
-                count: mesh.elements.len(),
-                name: None,
-                input: vec![
-                    InputShared {
-                        semantic: "VERTEX".to_owned(),
-                        source: format!("#{}", id_vertices),
-                        offset: 0,
-                        set: None,
-                    },
-                    InputShared {
-                        semantic: "TEXCOORD".to_owned(),
-                        source: format!("#{}", id_texcoords),
-                        offset: 1,
-                        set: Some(0),
-                    },
-                    InputShared {
-                        semantic: "NORMAL".to_owned(),
-                        source: format!("#{}", id_normals),
-                        offset: 2,
-                        set: None,
-                    },
-                ],
-                p: Some(TriangleData {
-                    data: mesh
-                        .elements
-                        .iter()
-                        .flat_map(|x| {
-                            vec![
-                                x[0].0, x[0].1, x[0].2, x[1].0, x[1].1, x[1].2, x[2].0, x[2].1,
-                                x[2].2,
-                            ]
-                        })
-                        .collect(),
-                }),
-            }],
+            triangles: mesh.materials.iter().map(|mat| {
+                Triangles {
+                    count: mat.elements.len(),
+                    name: None,
+                    input: vec![
+                        InputShared {
+                            semantic: "VERTEX".to_owned(),
+                            source: format!("#{}", id_vertices),
+                            offset: 0,
+                            set: None,
+                        },
+                        InputShared {
+                            semantic: "TEXCOORD".to_owned(),
+                            source: format!("#{}", id_texcoords),
+                            offset: 1,
+                            set: Some(0),
+                        },
+                        InputShared {
+                            semantic: "NORMAL".to_owned(),
+                            source: format!("#{}", id_normals),
+                            offset: 2,
+                            set: None,
+                        },
+                    ],
+                    p: Some(TriangleData {
+                        data: mat
+                            .elements
+                            .iter()
+                            .flat_map(|x| {
+                                vec![
+                                    x[0].vertex, x[0].texcoord, x[0].normal,
+                                    x[1].vertex, x[1].texcoord, x[1].normal,
+                                    x[2].vertex, x[2].texcoord, x[2].normal,
+                                ]
+                            })
+                            .collect(),
+                    }),
+                    material: Some(mat.material.clone())
+                }
+            }).collect()
+            // triangles: vec![Triangles {
+            //     count: mesh.elements.len(),
+            //     name: None,
+            // }],
         },
     }
 }

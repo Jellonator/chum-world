@@ -46,14 +46,26 @@ pub struct SceneSkin {
 }
 
 #[derive(Clone, Debug)]
+pub struct SceneTriMeshElement {
+    pub vertex: usize,
+    pub texcoord: usize,
+    pub normal: usize
+}
+
+#[derive(Clone, Debug)]
+pub struct SceneTriMeshMaterial {
+    pub material: String,
+    pub elements: Vec<[SceneTriMeshElement; 3]>
+}
+
+#[derive(Clone, Debug)]
 pub struct SceneTriMesh {
     pub name: String,
     pub transform: common::Transform3D,
     pub vertices: Vec<common::Vector3>,
     pub texcoords: Vec<common::Vector2>,
     pub normals: Vec<common::Vector3>,
-    // in (vertex, texcoord, normal) order
-    pub elements: Vec<[(usize, usize, usize); 3]>,
+    pub materials: Vec<SceneTriMeshMaterial>,
     pub skin: Option<SceneSkin>,
 }
 
@@ -123,20 +135,48 @@ pub fn merge_meshes(mut a: SceneTriMesh, mut b: SceneTriMesh) -> SceneTriMesh {
     a.vertices.append(&mut b.vertices);
     a.texcoords.append(&mut b.texcoords);
     a.normals.append(&mut b.normals);
-    a.elements.extend(b.elements.into_iter().map(|elem| {
-        [
-            (elem[0].0 + averts, elem[0].1 + atex, elem[0].2 + anorm),
-            (elem[1].0 + averts, elem[1].1 + atex, elem[1].2 + anorm),
-            (elem[2].0 + averts, elem[2].1 + atex, elem[2].2 + anorm),
-        ]
-    }));
+    for material in b.materials.iter_mut() {
+        for element in material.elements.iter_mut() {
+            for e in element.iter_mut() {
+                e.vertex += averts;
+                e.texcoord += atex;
+                e.normal += anorm;
+            }
+        }
+    }
+    // Sort in reverse order that way popping is in normal order
+    a.materials.sort_unstable_by(|a, b| b.material.cmp(&a.material));
+    b.materials.sort_unstable_by(|a, b| b.material.cmp(&a.material));
+    let mut materials = Vec::new();
+    while a.materials.len() > 0 && b.materials.len() > 0 {
+        let a_last = a.materials.last().unwrap();
+        let b_last = b.materials.last().unwrap();
+        if a_last.material == b_last.material {
+            let mut a_value = a.materials.pop().unwrap();
+            let b_value = b.materials.pop().unwrap();
+            a_value.elements.extend(b_value.elements.into_iter());
+            materials.push(
+                SceneTriMeshMaterial {
+                    material: a_value.material,
+                    elements: a_value.elements
+                }
+            );
+        } else if a_last.material < b_last.material {
+            // A comes first, so push that
+            materials.push(a.materials.pop().unwrap());
+        } else {
+            materials.push(b.materials.pop().unwrap());
+        }
+    }
+    materials.append(&mut a.materials);
+    materials.append(&mut b.materials);
     SceneTriMesh {
         name: a.name,
         transform: common::Transform3D::identity(),
         vertices: a.vertices,
         texcoords: a.texcoords,
         normals: a.normals,
-        elements: a.elements,
+        materials,
         skin,
     }
 }
@@ -180,16 +220,27 @@ pub fn try_determine_group_transforms(mesh: &mut SceneTriMesh) {
 #[derive(Clone, Debug)]
 pub struct Scene {
     pub trimeshes: Vec<SceneTriMesh>,
+    pub materials: Vec<SceneMaterial>
 }
 
 impl Scene {
     pub fn new_empty() -> Scene {
         Scene {
             trimeshes: Vec::new(),
+            materials: Vec::new()
         }
     }
 
     pub fn add_trimesh(&mut self, mesh: SceneTriMesh) {
         self.trimeshes.push(mesh)
     }
+}
+
+#[derive(Clone, Debug)]
+pub struct SceneMaterial {
+    pub texture: Option<String>,
+    pub alpha: f32,
+    pub diffuse: common::Vector3,
+    pub emission: common::Vector3,
+    pub transform: common::Transform2D
 }

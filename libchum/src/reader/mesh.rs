@@ -1,6 +1,7 @@
 use crate::common::*;
 use crate::format::TotemFormat;
 use crate::scene;
+use std::collections::HashMap;
 use std::io::{self, Read, Write};
 
 #[derive(Clone, Debug)]
@@ -400,7 +401,8 @@ impl Mesh {
         Ok(())
     }
 
-    pub fn create_scene_mesh(&self, name: String) -> scene::SceneTriMesh {
+    pub fn create_scene_mesh(&self, name: String, names: &HashMap<i32,String>) -> scene::SceneTriMesh {
+        let mesh_materials = self.get_materials();
         scene::SceneTriMesh {
             name,
             // Mesh.transform.transform is NOT actually applied to this mesh
@@ -408,16 +410,33 @@ impl Mesh {
             vertices: self.vertices.clone(),
             normals: self.normals.clone(),
             texcoords: self.texcoords.clone(),
-            elements: self
-                .gen_triangle_indices()
+            materials: self
+                .gen_triangles()
                 .into_iter()
-                .flat_map(|x| x)
-                .map(|x| {
-                    [
-                        (x[0].0 as usize, x[0].1 as usize, x[0].2 as usize),
-                        (x[2].0 as usize, x[2].1 as usize, x[2].2 as usize),
-                        (x[1].0 as usize, x[1].1 as usize, x[1].2 as usize),
-                    ]
+                .map(|surface| {
+                    let matid = mesh_materials[surface.material_index as usize % mesh_materials.len()];
+                    scene::SceneTriMeshMaterial {
+                        material: names.get(&matid).unwrap().clone(),
+                        elements: surface.tris.into_iter().map(|tri| {
+                            [
+                                scene::SceneTriMeshElement {
+                                    vertex: tri.points[0].vertex_id as usize,
+                                    texcoord: tri.points[0].texcoord_id as usize,
+                                    normal: tri.points[0].normal_id as usize,
+                                },
+                                scene::SceneTriMeshElement {
+                                    vertex: tri.points[1].vertex_id as usize,
+                                    texcoord: tri.points[1].texcoord_id as usize,
+                                    normal: tri.points[1].normal_id as usize,
+                                },
+                                scene::SceneTriMeshElement {
+                                    vertex: tri.points[2].vertex_id as usize,
+                                    texcoord: tri.points[2].texcoord_id as usize,
+                                    normal: tri.points[2].normal_id as usize,
+                                },
+                            ]
+                        }).collect()
+                    }
                 })
                 .collect(),
             skin: None,

@@ -7,6 +7,7 @@ use std::io;
 
 pub mod controller;
 pub mod geometry;
+pub mod material;
 
 pub fn make_asset() -> xml::TagStruct {
     let utc: chrono::DateTime<chrono::Utc> = chrono::Utc::now();
@@ -433,6 +434,18 @@ pub fn trimesh_to_geometry_node(mesh: &scene::SceneTriMesh) -> (geometry::Geomet
                 url: format!("#{}", id_mesh),
                 name: Some(mesh.name.clone()),
                 sid: None,
+                bind_material: Some(geometry::BindMaterial {
+                    technique_common: geometry::BindMaterialTechniqueCommon {
+                        instance_material: mesh.materials.iter().map(|mat| {
+                            geometry::InstanceMaterial {
+                                symbol: mat.material.clone(),
+                                target: format!("#{}", mat.material),
+                                name: None,
+                                sid: None
+                            }
+                        }).collect()
+                    }
+                })
             }],
             node: vec![],
             controller: vec![],
@@ -587,7 +600,7 @@ mod test {
     pub fn test_to_string_empty() {
         use crate::scene;
         use crate::scene::collada;
-        let scene = scene::Scene { trimeshes: vec![] };
+        let scene = scene::Scene { trimeshes: vec![], materials: vec![] };
         println!("{}", collada::scene_to_string_dae(&scene).unwrap());
     }
     // #[test]

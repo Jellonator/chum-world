@@ -402,7 +402,7 @@ impl SurfaceObject {
         }
     }
 
-    pub fn generate_trimesh(&self, name: String, mode: SurfaceGenMode) -> scene::SceneTriMesh {
+    pub fn generate_trimesh(&self, name: String, mode: SurfaceGenMode, names: &HashMap<i32, String>) -> scene::SceneTriMesh {
         let mut trimesh = scene::SceneTriMesh {
             name,
             // Mesh.transform.transform is NOT actually applied to this mesh
@@ -410,7 +410,7 @@ impl SurfaceObject {
             vertices: Vec::new(),
             normals: Vec::new(),
             texcoords: Vec::new(),
-            elements: Vec::new(),
+            materials: Vec::new(),
             skin: None,
         };
         let mut vertices = HashMap::<[u32; 3], usize>::new();
@@ -436,29 +436,37 @@ impl SurfaceObject {
                 }
             }
         }
+        let mut materials = HashMap::<i32, scene::SceneTriMeshMaterial>::new();
         for mesh in gen.iter() {
+            let mat = materials
+                .entry(mesh.material_index)
+                .or_insert(scene::SceneTriMeshMaterial {
+                    elements: Vec::new(),
+                    material: names.get(&mesh.material_index).unwrap().clone()
+                });
             for quad in mesh.quads.iter() {
                 for tri in quad.tris().iter() {
-                    trimesh.elements.push([
-                        (
-                            vertices[&reinterpret_vec3(&tri.points[0].vertex)],
-                            texcoords[&reinterpret_vec2(&tri.points[0].texcoord)],
-                            normals[&reinterpret_vec3(&tri.points[0].normal)],
-                        ),
-                        (
-                            vertices[&reinterpret_vec3(&tri.points[1].vertex)],
-                            texcoords[&reinterpret_vec2(&tri.points[1].texcoord)],
-                            normals[&reinterpret_vec3(&tri.points[1].normal)],
-                        ),
-                        (
-                            vertices[&reinterpret_vec3(&tri.points[2].vertex)],
-                            texcoords[&reinterpret_vec2(&tri.points[2].texcoord)],
-                            normals[&reinterpret_vec3(&tri.points[2].normal)],
-                        ),
+                    mat.elements.push([
+                        scene::SceneTriMeshElement {
+                            vertex: vertices[&reinterpret_vec3(&tri.points[0].vertex)],
+                            texcoord: texcoords[&reinterpret_vec2(&tri.points[0].texcoord)],
+                            normal: normals[&reinterpret_vec3(&tri.points[0].normal)],
+                        },
+                        scene::SceneTriMeshElement {
+                            vertex: vertices[&reinterpret_vec3(&tri.points[1].vertex)],
+                            texcoord: texcoords[&reinterpret_vec2(&tri.points[1].texcoord)],
+                            normal: normals[&reinterpret_vec3(&tri.points[1].normal)],
+                        },
+                        scene::SceneTriMeshElement {
+                            vertex: vertices[&reinterpret_vec3(&tri.points[2].vertex)],
+                            texcoord: texcoords[&reinterpret_vec2(&tri.points[2].texcoord)],
+                            normal: normals[&reinterpret_vec3(&tri.points[2].normal)],
+                        },
                     ])
                 }
             }
         }
+        trimesh.materials = materials.into_iter().map(|x| x.1).collect();
         trimesh
     }
 }

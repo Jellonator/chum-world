@@ -153,6 +153,7 @@ impl Skin {
         Skin::read_from(&mut data.as_ref(), fmt)
     }
 
+    /*
     pub fn generate_scene_skin_for_mesh(
         &self,
         names: &[String],
@@ -198,5 +199,5 @@ impl Skin {
             groups: out_group_names,
             vertices: out_group_vertices,
         }
-    }
+    }*/
 }

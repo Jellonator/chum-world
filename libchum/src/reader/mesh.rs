@@ -58,29 +58,54 @@ pub struct Mesh {
     pub normals: Vec<Vector3>,
     pub strips: Vec<StripData>,
     pub materials: Vec<i32>,
-    pub unk1: Vec<Footer1>,
-    pub unk2: Vec<Footer2>,
-    pub unk3: Vec<Footer3>,
+    pub unk1: Vec<SphereShape>,
+    pub unk2: Vec<CuboidShape>,
+    pub unk3: Vec<CylinderShape>,
     pub strip_order: Vec<u32>,
 }
 
+/// A simple triangle mesh that strips away non-exportable data
 #[derive(Clone, Debug)]
-pub struct Footer1 {
+pub struct MeshSimple {
+    pub vertices: Vec<Vector3>,
+    pub texcoords: Vec<Vector2>,
+    pub normals: Vec<Vector3>,
+    pub strips: Vec<StripSimple>
+}
+
+/// A simpler version of StripData
+#[derive(Clone, Debug)]
+pub struct StripSimple {
+    pub elements: Vec<StripSimpleElement>,
+    pub material: i32,
+    pub tri_order: TriStripOrder
+}
+
+#[derive(Clone, Debug)]
+pub struct StripSimpleElement {
+    pub vertex_id: u16,
+    pub texcoord_id: u16,
+    pub normal_id: u16
+}
+
+#[derive(Clone, Debug)]
+pub struct SphereShape {
     pub pos: Vector3,
     pub radius: f32,
 }
 
 #[derive(Clone, Debug)]
-pub struct Footer2 {
+pub struct CuboidShape {
     pub transform: Transform3D,
 }
 
 #[derive(Clone, Debug)]
-pub struct Footer3 {
-    pub unk1: [f32; 4],
+pub struct CylinderShape {
+    pub position: Vector3,
+    pub height: f32,
     pub normal: Vector3,
-    pub junk: u32,
-    pub unk2: f32,
+    // pub junk: [u8; 4],
+    pub radius: f32,
 }
 
 /// Read in a triangle strip from a reader
@@ -302,32 +327,37 @@ impl Mesh {
             .collect::<io::Result<_>>()?;
         // read unknown data
         let num_unk1: u32 = fmt.read_u32(file)?;
-        let footer1: Vec<Footer1> = (0..num_unk1)
+        let footer1: Vec<SphereShape> = (0..num_unk1)
             .map(|_| {
-                Ok(Footer1 {
+                Ok(SphereShape {
                     pos: read_vec3(file, fmt)?,
                     radius: fmt.read_f32(file)?,
                 })
             })
             .collect::<io::Result<_>>()?;
         let num_unk2: u32 = fmt.read_u32(file)?;
-        let footer2: Vec<Footer2> = (0..num_unk2)
+        let footer2: Vec<CuboidShape> = (0..num_unk2)
             .map(|_| {
                 let transform = read_transform3d(file, fmt)?;
                 fmt.skip_n_bytes(file, 16)?;
-                Ok(Footer2 { transform })
+                Ok(CuboidShape { transform })
             })
             .collect::<io::Result<_>>()?;
         let num_unk3: u32 = fmt.read_u32(file)?;
-        let footer3: Vec<Footer3> = (0..num_unk3)
+        let footer3: Vec<CylinderShape> = (0..num_unk3)
             .map(|_| {
-                let mut unk1 = [0.0f32; 4];
-                fmt.read_f32_into(file, &mut unk1)?;
-                Ok(Footer3 {
-                    unk1,
-                    normal: read_vec3(file, fmt)?,
-                    junk: fmt.read_u32(file)?,
-                    unk2: fmt.read_f32(file)?,
+                // let mut unk1 = [0.0f32; 4];
+                // fmt.read_f32_into(file, &mut unk1)?;
+                let position = read_vec3(file, fmt)?;
+                let height = fmt.read_f32(file)?;
+                let normal = read_vec3(file, fmt)?;
+                fmt.skip_n_bytes(file, 4)?;
+                let radius = fmt.read_f32(file)?;
+                Ok(CylinderShape {
+                    position,
+                    height,
+                    normal,
+                    radius
                 })
             })
             .collect::<io::Result<_>>()?;
@@ -401,7 +431,44 @@ impl Mesh {
         Ok(())
     }
 
-    pub fn create_scene_mesh(&self, name: String, names: &HashMap<i32,String>) -> scene::SceneTriMesh {
+    pub fn create_simple_mesh(&self) -> MeshSimple {
+        MeshSimple {
+            vertices: self.vertices.clone(),
+            normals: self.normals.clone(),
+            texcoords: self.texcoords.clone(),
+            strips: self.strips.iter().map(|strip| {
+                let material = self.materials[strip.strip.material as usize % self.materials.len()];
+                let tri_order = match strip.strip.tri_order {
+                    1 => TriStripOrder::CounterClockWise,
+                    2 => TriStripOrder::ClockWise,
+                    i => panic!("Invalid strip order {}!", i)
+                };
+                StripSimple {
+                    elements: match &strip.ext {
+                        Some(ext) => strip.strip.vertex_ids.iter()
+                            .zip(ext.elements.iter())
+                            .map(|(id, edata)| {
+                                StripSimpleElement {
+                                    vertex_id: *id,
+                                    texcoord_id: edata.texcoord_id,
+                                    normal_id: edata.normal_id,
+                                }
+                            }).collect(),
+                        None => strip.strip.vertex_ids.iter().map(|id| {
+                            StripSimpleElement {
+                                vertex_id: *id,
+                                texcoord_id: 0,
+                                normal_id: 0
+                            }
+                        }).collect()
+                    },
+                    material,
+                    tri_order,
+                }
+            }).collect()
+        }
+    }
+    /* pub fn create_scene_mesh(&self, name: String, names: &HashMap<i32,String>) -> scene::SceneTriMesh {
         let mesh_materials = self.get_materials();
         scene::SceneTriMesh {
             name,
@@ -441,7 +508,7 @@ impl Mesh {
                 .collect(),
             skin: None,
         }
-    }
+    }*/
 
     pub fn transform(&mut self, tx: &Transform3D) {
         for point in self.vertices.iter_mut() {

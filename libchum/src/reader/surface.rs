@@ -4,11 +4,13 @@ use crate::common::*;
 use crate::format::TotemFormat;
 use crate::scene;
 use crate::util::bezierpatch;
+use crate::reader::mesh;
 use std::collections::HashMap;
 use std::error::Error;
 use std::io::{self, Read, Write};
 
 /// A surface object; contains entire surface object information
+#[derive(Clone)]
 pub struct SurfaceObject {
     pub transform: THeaderTyped,
     pub vertices: Vec<Vector3>,
@@ -18,6 +20,7 @@ pub struct SurfaceObject {
 }
 
 /// A single surface.
+#[derive(Clone)]
 pub struct Surface {
     pub texcoords: [Vector2; 4],
     /// indices into normals
@@ -29,6 +32,7 @@ pub struct Surface {
 }
 
 /// A single curve (indices into vertices)
+#[derive(Clone)]
 pub struct Curve {
     pub p1: u16,
     pub p2: u16,
@@ -402,6 +406,20 @@ impl SurfaceObject {
         }
     }
 
+    pub fn generate_simple_mesh(&self, mode: SurfaceGenMode) -> mesh::MeshSimple {
+        let mut vertex_indices: HashMap<Vector3, usize> = HashMap::new();
+        let mut normal_indices: HashMap<Vector3, usize> = HashMap::new();
+        let mut texcoord_indices: HashMap<Vector2, usize> = HashMap::new();
+        let mut out = mesh::MeshSimple {
+            vertices: Vec::new(),
+            normals: Vec::new(),
+            texcoords: Vec::new(),
+            strips: Vec::new()
+        };
+        out
+    }
+
+    /*
     pub fn generate_trimesh(&self, name: String, mode: SurfaceGenMode, names: &HashMap<i32, String>) -> scene::SceneTriMesh {
         let mut trimesh = scene::SceneTriMesh {
             name,
@@ -468,7 +486,7 @@ impl SurfaceObject {
         }
         trimesh.materials = materials.into_iter().map(|x| x.1).collect();
         trimesh
-    }
+    }*/
 }
 
 /// Surface export mode

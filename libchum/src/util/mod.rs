@@ -1,6 +1,8 @@
 pub mod bezierpatch;
 pub mod error;
 pub mod xml;
+pub mod idmap;
+
 use crc::crc32;
 
 pub fn round_up(value: usize, mult: usize) -> usize {

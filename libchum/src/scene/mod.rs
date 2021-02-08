@@ -3,7 +3,54 @@
 //! of 3D scenes.
 
 use crate::common;
-// use std::collections::HashMap;
+use crate::reader;
+use crate::util::idmap::IdMap;
+
+/// A single texture
+#[derive(Clone)]
+pub struct STexture {
+    pub data: reader::bitmap::Bitmap,
+}
+
+/// A single material
+#[derive(Clone, Debug)]
+pub struct SMaterial {
+    pub texture: Option<String>,
+    pub alpha: f32,
+    pub diffuse: common::Vector3,
+    pub emission: common::Vector3,
+    pub transform: common::Transform2D
+}
+
+/// A single visual instance
+#[derive(Clone)]
+pub enum SVisualInstance {
+    Mesh {
+        mesh: reader::mesh::Mesh
+    },
+    /*Surface {
+        surface: reader::surface::SurfaceObject
+    }*/
+}
+
+/// A single node
+#[derive(Clone, Debug)]
+pub struct SNode {
+    pub name: String,
+    pub children: Vec<SNode>,
+    pub visual_instance: Option<String>
+}
+
+/// A full scene
+#[derive(Clone)]
+pub struct Scene {
+    pub textures: IdMap<STexture>,
+    pub materials: IdMap<SMaterial>,
+    pub visual_instances: IdMap<SVisualInstance>,
+    pub node: SNode
+}
+
+/*
 
 pub mod collada;
 
@@ -244,3 +291,4 @@ pub struct SceneMaterial {
     pub emission: common::Vector3,
     pub transform: common::Transform2D
 }
+*/

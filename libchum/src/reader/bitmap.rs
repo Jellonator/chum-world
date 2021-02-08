@@ -837,6 +837,9 @@ fn palettize(data: &[Color], n: i32, width: u32, height: u32) -> (Vec<u8>, Vec<C
     let mut liq = imagequant::new();
     liq.set_max_colors(n);
     liq.set_quality(0, 100);
+    use std::mem;
+    // This is fine. Color and RGBA are both in the same format; RGBA8888.
+    let data = unsafe { mem::transmute::<&[Color], &[imagequant::RGBA]>(data) };
     let mut liq_image = liq
         .new_image(data, width as usize, height as usize, 0.0)
         .unwrap();

@@ -818,7 +818,7 @@ impl Bitmap {
     where
         W: Write,
     {
-        let encoder = image::png::PNGEncoder::new(writer);
+        let encoder = image::png::PngEncoder::new(writer);
         unsafe {
             let data = self.get_data_as_vec();
             let ptr = data.as_ptr() as *const u8;
@@ -943,7 +943,7 @@ where
     } else {
         image
     };
-    let image = image.to_rgba();
+    let image = image.to_rgba8();
     let (width, height) = image.dimensions();
     let mut buf = Vec::with_capacity(width as usize * height as usize);
     for iy in 0..height {

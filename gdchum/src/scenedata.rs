@@ -3,7 +3,6 @@ use crate::util;
 use gdnative::prelude::*;
 use libchum::reader;
 use libchum::scene;
-use libchum::scene::collada;
 use std::fs::File;
 
 #[derive(NativeClass)]
@@ -19,7 +18,7 @@ impl SceneData {
             scene: scene::Scene::new_empty(),
         }
     }
-
+/*
     #[export]
     pub fn add_mesh(
         &mut self,
@@ -209,4 +208,5 @@ impl SceneData {
         let mut buffer = File::create(path.to_utf8().as_str()).unwrap();
         collada::scene_to_writer_dae(&self.scene, &mut buffer).unwrap();
     }
+    */
 }

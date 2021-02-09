@@ -2,6 +2,7 @@ use crate::format::TotemFormat;
 use euclid;
 use std::io::{self, Read, Write};
 use std::mem;
+use std::hash::{Hash, Hasher};
 
 pub type Vector3 = euclid::Vector3D<f32, euclid::UnknownUnit>;
 pub type Vector2 = euclid::Vector2D<f32, euclid::UnknownUnit>;
@@ -228,6 +229,14 @@ pub fn reinterpret_vec2(v: &Vector2) -> [u32; 2] {
     }
 }
 
+/// Reinterpret a Point as eight u32. Used so that Point can be a HashMap key.
+pub fn reinterpret_point(p: &Point) -> [u32; 8] {
+    let v = reinterpret_vec3(&p.vertex);
+    let t = reinterpret_vec2(&p.texcoord);
+    let n = reinterpret_vec3(&p.normal);
+    [v[0], v[1], v[2], t[0], t[1], n[0], n[1], n[2]]
+}
+
 /// Linear interpolation between four Vector3
 pub fn qlerp_vec3(values: &[[Vector3; 2]; 2], t_x: f32, t_y: f32) -> Vector3 {
     values[0][0] * (1.0 - t_x) * (1.0 - t_y)
@@ -257,13 +266,24 @@ pub fn qlerp_vec2(values: &[[Vector2; 2]; 2], t_x: f32, t_y: f32) -> Vector2 {
 }
 
 /// A point
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 #[repr(C)]
 pub struct Point {
     pub vertex: Vector3,
     pub texcoord: Vector2,
     pub normal: Vector3,
 }
+
+// Gotta do what we gotta do
+impl Hash for Point {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        for x in &reinterpret_point(self) {
+            x.hash(state);
+        }
+    }
+}
+
+impl Eq for Point {}
 
 /// A triangle (three points)
 #[derive(Clone, Debug)]

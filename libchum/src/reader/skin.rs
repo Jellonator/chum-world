@@ -3,7 +3,7 @@ use crate::common::*;
 use crate::format::TotemFormat;
 use crate::structure::ChumEnum;
 // use std::error::Error;
-use crate::scene;
+// use crate::scene;
 use std::io::{self, Read};
 
 #[derive(Clone, Debug)]

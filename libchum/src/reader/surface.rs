@@ -4,7 +4,6 @@ use crate::common::*;
 use crate::format::TotemFormat;
 use crate::scene;
 use crate::util::bezierpatch;
-use crate::reader::mesh;
 use std::collections::HashMap;
 use std::error::Error;
 use std::io::{self, Read, Write};
@@ -406,87 +405,68 @@ impl SurfaceObject {
         }
     }
 
-    pub fn generate_simple_mesh(&self, mode: SurfaceGenMode) -> mesh::MeshSimple {
-        let mut vertex_indices: HashMap<Vector3, usize> = HashMap::new();
-        let mut normal_indices: HashMap<Vector3, usize> = HashMap::new();
-        let mut texcoord_indices: HashMap<Vector2, usize> = HashMap::new();
-        let mut out = mesh::MeshSimple {
+    pub fn generate_simple_mesh(&self, mode: SurfaceGenMode) -> scene::Mesh {
+        let mut vertex_indices: HashMap<[u32; 3], u32> = HashMap::new();
+        let mut normal_indices: HashMap<[u32; 3], u32> = HashMap::new();
+        let mut texcoord_indices: HashMap<[u32; 2], u32> = HashMap::new();
+        let mut out = scene::Mesh {
             vertices: Vec::new(),
             normals: Vec::new(),
             texcoords: Vec::new(),
-            strips: Vec::new()
+            data: scene::MeshFormat::Triangles { data: HashMap::new() }
         };
-        out
-    }
-
-    /*
-    pub fn generate_trimesh(&self, name: String, mode: SurfaceGenMode, names: &HashMap<i32, String>) -> scene::SceneTriMesh {
-        let mut trimesh = scene::SceneTriMesh {
-            name,
-            // Mesh.transform.transform is NOT actually applied to this mesh
-            transform: Transform3D::identity(),
-            vertices: Vec::new(),
-            normals: Vec::new(),
-            texcoords: Vec::new(),
-            materials: Vec::new(),
-            skin: None,
-        };
-        let mut vertices = HashMap::<[u32; 3], usize>::new();
-        let mut normals = HashMap::<[u32; 3], usize>::new();
-        let mut texcoords = HashMap::<[u32; 2], usize>::new();
+        let mut data = HashMap::new();
         let gen = self.generate_meshes(mode);
         for mesh in gen.iter() {
             for quad in mesh.quads.iter() {
                 for point in quad.points.iter() {
-                    let nvert = vertices.len();
-                    if insert_if_not_exist(&mut vertices, reinterpret_vec3(&point.vertex), nvert) {
-                        trimesh.vertices.push(point.vertex);
+                    let nvert = vertex_indices.len() as u32;
+                    if insert_if_not_exist(&mut vertex_indices, reinterpret_vec3(&point.vertex), nvert) {
+                        out.vertices.push(point.vertex);
                     }
-                    let nnorm = normals.len();
-                    if insert_if_not_exist(&mut normals, reinterpret_vec3(&point.normal), nnorm) {
-                        trimesh.normals.push(point.normal);
+                    let nnorm = normal_indices.len() as u32;
+                    if insert_if_not_exist(&mut normal_indices, reinterpret_vec3(&point.normal), nnorm) {
+                        out.normals.push(point.normal);
                     }
-                    let ntex = texcoords.len();
-                    if insert_if_not_exist(&mut texcoords, reinterpret_vec2(&point.texcoord), ntex)
+                    let ntex = texcoord_indices.len() as u32;
+                    if insert_if_not_exist(&mut texcoord_indices, reinterpret_vec2(&point.texcoord), ntex)
                     {
-                        trimesh.texcoords.push(point.texcoord);
+                        out.texcoords.push(point.texcoord);
                     }
                 }
             }
         }
-        let mut materials = HashMap::<i32, scene::SceneTriMeshMaterial>::new();
         for mesh in gen.iter() {
-            let mat = materials
-                .entry(mesh.material_index)
-                .or_insert(scene::SceneTriMeshMaterial {
-                    elements: Vec::new(),
-                    material: names.get(&mesh.material_index).unwrap().clone()
-                });
+            let vec = data.entry(mesh.material_index).or_insert(Vec::new());
             for quad in mesh.quads.iter() {
                 for tri in quad.tris().iter() {
-                    mat.elements.push([
-                        scene::SceneTriMeshElement {
-                            vertex: vertices[&reinterpret_vec3(&tri.points[0].vertex)],
-                            texcoord: texcoords[&reinterpret_vec2(&tri.points[0].texcoord)],
-                            normal: normals[&reinterpret_vec3(&tri.points[0].normal)],
-                        },
-                        scene::SceneTriMeshElement {
-                            vertex: vertices[&reinterpret_vec3(&tri.points[1].vertex)],
-                            texcoord: texcoords[&reinterpret_vec2(&tri.points[1].texcoord)],
-                            normal: normals[&reinterpret_vec3(&tri.points[1].normal)],
-                        },
-                        scene::SceneTriMeshElement {
-                            vertex: vertices[&reinterpret_vec3(&tri.points[2].vertex)],
-                            texcoord: texcoords[&reinterpret_vec2(&tri.points[2].texcoord)],
-                            normal: normals[&reinterpret_vec3(&tri.points[2].normal)],
-                        },
-                    ])
+                    vec.push(
+                        scene::MeshTriangle {
+                            corners: [
+                                scene::MeshPoint {
+                                    vertex_id: vertex_indices[&reinterpret_vec3(&tri.points[0].vertex)],
+                                    texcoord_id: texcoord_indices[&reinterpret_vec2(&tri.points[0].texcoord)],
+                                    normal_id: normal_indices[&reinterpret_vec3(&tri.points[0].normal)],
+                                },
+                                scene::MeshPoint {
+                                    vertex_id: vertex_indices[&reinterpret_vec3(&tri.points[1].vertex)],
+                                    texcoord_id: texcoord_indices[&reinterpret_vec2(&tri.points[1].texcoord)],
+                                    normal_id: normal_indices[&reinterpret_vec3(&tri.points[1].normal)],
+                                },
+                                scene::MeshPoint {
+                                    vertex_id: vertex_indices[&reinterpret_vec3(&tri.points[2].vertex)],
+                                    texcoord_id: texcoord_indices[&reinterpret_vec2(&tri.points[2].texcoord)],
+                                    normal_id: normal_indices[&reinterpret_vec3(&tri.points[2].normal)],
+                                },
+                            ]
+                        }
+                    )
                 }
             }
         }
-        trimesh.materials = materials.into_iter().map(|x| x.1).collect();
-        trimesh
-    }*/
+        out.data = scene::MeshFormat::Triangles { data };
+        out
+    }
 }
 
 /// Surface export mode

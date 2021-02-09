@@ -1,6 +1,6 @@
 pub mod bezierpatch;
 pub mod error;
-pub mod xml;
+// pub mod xml;
 pub mod idmap;
 
 use crc::crc32;

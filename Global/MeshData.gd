@@ -185,23 +185,23 @@ func load_mesh_from_file(file, node_owner):
 					"original": mat,
 					"focus": generate_mesh_focus_material(mat),
 				})
-		for unk in data["unk1"]:
+		for unk in data["sphere_shapes"]:
 			var sphere := MeshInstance.new()
 			sphere.mesh = get_sphere_mesh()
 			sphere.translation = unk["pos"]
 			sphere.scale *= unk["radius"]
 			sphere.add_to_group("vis_collision")
 			node_mesh.add_child(sphere)
-		for unk in data["unk2"]:
+		for unk in data["cuboid_shapes"]:
 			var cube := MeshInstance.new()
 			cube.mesh = get_cube_mesh()
 			cube.transform = unk["transform"]
 			cube.add_to_group("vis_collision")
 			node_mesh.add_child(cube)
-		for unk in data["unk3"]:
-			var radius = unk["unk2"]
-			var pos = Vector3(unk["unk1"][0], unk["unk1"][1], unk["unk1"][2])
-			var height = unk["unk1"][3]
+		for unk in data["cylinder_shapes"]:
+			var radius = unk["radius"]
+			var pos = unk["position"]
+			var height = unk["height"]
 			var normal = unk["normal"]
 			var sphere := MeshInstance.new()
 			sphere.rotation = Vector3(

@@ -1,7 +1,6 @@
 use crate::common::*;
 use crate::format::TotemFormat;
 use crate::scene;
-use std::collections::HashMap;
 use std::io::{self, Read, Write};
 
 #[derive(Clone, Debug)]
@@ -58,34 +57,10 @@ pub struct Mesh {
     pub normals: Vec<Vector3>,
     pub strips: Vec<StripData>,
     pub materials: Vec<i32>,
-    pub unk1: Vec<SphereShape>,
-    pub unk2: Vec<CuboidShape>,
-    pub unk3: Vec<CylinderShape>,
+    pub sphere_shapes: Vec<SphereShape>,
+    pub cuboid_shapes: Vec<CuboidShape>,
+    pub cylinder_shapes: Vec<CylinderShape>,
     pub strip_order: Vec<u32>,
-}
-
-/// A simple triangle mesh that strips away non-exportable data
-#[derive(Clone, Debug)]
-pub struct MeshSimple {
-    pub vertices: Vec<Vector3>,
-    pub texcoords: Vec<Vector2>,
-    pub normals: Vec<Vector3>,
-    pub strips: Vec<StripSimple>
-}
-
-/// A simpler version of StripData
-#[derive(Clone, Debug)]
-pub struct StripSimple {
-    pub elements: Vec<StripSimpleElement>,
-    pub material: i32,
-    pub tri_order: TriStripOrder
-}
-
-#[derive(Clone, Debug)]
-pub struct StripSimpleElement {
-    pub vertex_id: u16,
-    pub texcoord_id: u16,
-    pub normal_id: u16
 }
 
 #[derive(Clone, Debug)]
@@ -396,9 +371,9 @@ impl Mesh {
             normals,
             strips,
             materials,
-            unk1: footer1,
-            unk2: footer2,
-            unk3: footer3,
+            sphere_shapes: footer1,
+            cuboid_shapes: footer2,
+            cylinder_shapes: footer3,
             strip_order,
         })
     }
@@ -431,41 +406,43 @@ impl Mesh {
         Ok(())
     }
 
-    pub fn create_simple_mesh(&self) -> MeshSimple {
-        MeshSimple {
+    pub fn create_scene_mesh(&self) -> scene::Mesh {
+        scene::Mesh {
             vertices: self.vertices.clone(),
             normals: self.normals.clone(),
             texcoords: self.texcoords.clone(),
-            strips: self.strips.iter().map(|strip| {
-                let material = self.materials[strip.strip.material as usize % self.materials.len()];
-                let tri_order = match strip.strip.tri_order {
-                    1 => TriStripOrder::CounterClockWise,
-                    2 => TriStripOrder::ClockWise,
-                    i => panic!("Invalid strip order {}!", i)
-                };
-                StripSimple {
-                    elements: match &strip.ext {
-                        Some(ext) => strip.strip.vertex_ids.iter()
-                            .zip(ext.elements.iter())
-                            .map(|(id, edata)| {
-                                StripSimpleElement {
-                                    vertex_id: *id,
-                                    texcoord_id: edata.texcoord_id,
-                                    normal_id: edata.normal_id,
+            data: scene::MeshFormat::Strips {
+                strips: self.strips.iter().map(|strip| {
+                    let material = self.materials[strip.strip.material as usize % self.materials.len()];
+                    let tri_order = match strip.strip.tri_order {
+                        1 => TriStripOrder::CounterClockWise,
+                        2 => TriStripOrder::ClockWise,
+                        i => panic!("Invalid strip order {}!", i)
+                    };
+                    scene::MeshStrip {
+                        elements: match &strip.ext {
+                            Some(ext) => strip.strip.vertex_ids.iter()
+                                .zip(ext.elements.iter())
+                                .map(|(id, edata)| {
+                                    scene::MeshPoint {
+                                        vertex_id: *id as u32,
+                                        texcoord_id: edata.texcoord_id as u32,
+                                        normal_id: edata.normal_id as u32,
+                                    }
+                                }).collect(),
+                            None => strip.strip.vertex_ids.iter().map(|id| {
+                                scene::MeshPoint {
+                                    vertex_id: *id as u32,
+                                    texcoord_id: 0,
+                                    normal_id: 0
                                 }
-                            }).collect(),
-                        None => strip.strip.vertex_ids.iter().map(|id| {
-                            StripSimpleElement {
-                                vertex_id: *id,
-                                texcoord_id: 0,
-                                normal_id: 0
-                            }
-                        }).collect()
-                    },
-                    material,
-                    tri_order,
-                }
-            }).collect()
+                            }).collect()
+                        },
+                        material,
+                        tri_order,
+                    }
+                }).collect()
+            }
         }
     }
     /* pub fn create_scene_mesh(&self, name: String, names: &HashMap<i32,String>) -> scene::SceneTriMesh {

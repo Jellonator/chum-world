@@ -18,9 +18,9 @@ pub struct MeshResult {
     pub mesh: Ref<ArrayMesh, Unique>,
     pub surfaces: Vec<MeshResultSurface>,
     pub transform: common::Transform3D,
-    pub unk1: Vec<mesh::Footer1>,
-    pub unk2: Vec<mesh::Footer2>,
-    pub unk3: Vec<mesh::Footer3>,
+    pub sphere_shapes: Vec<mesh::SphereShape>,
+    pub cuboid_shapes: Vec<mesh::CuboidShape>,
+    pub cylinder_shapes: Vec<mesh::CylinderShape>,
     pub strip_order: Vec<u32>,
 }
 
@@ -110,9 +110,9 @@ pub fn read_mesh(
         mesh: array_mesh,
         surfaces,
         transform: mesh.transform.transform.clone(),
-        unk1: mesh.unk1.clone(),
-        unk2: mesh.unk2.clone(),
-        unk3: mesh.unk3.clone(),
+        sphere_shapes: mesh.sphere_shapes.clone(),
+        cuboid_shapes: mesh.cuboid_shapes.clone(),
+        cylinder_shapes: mesh.cylinder_shapes.clone(),
         strip_order: mesh.strip_order.clone(),
     })
 }
@@ -147,8 +147,8 @@ pub fn read_mesh_from_res(data: &ChumFile, reader: &mut ChumReader) -> Dictionar
             dict.insert("surfaces", surfaces);
             dict.insert("transform", util::transform3d_to_godot(&mesh.transform));
             dict.insert(
-                "unk1",
-                mesh.unk1
+                "sphere_shapes",
+                mesh.sphere_shapes
                     .into_iter()
                     .map(|x| {
                         let dict = Dictionary::new();
@@ -159,8 +159,8 @@ pub fn read_mesh_from_res(data: &ChumFile, reader: &mut ChumReader) -> Dictionar
                     .collect::<Vec<_>>(),
             );
             dict.insert(
-                "unk2",
-                mesh.unk2
+                "cuboid_shapes",
+                mesh.cuboid_shapes
                     .into_iter()
                     .map(|x| {
                         let dict = Dictionary::new();
@@ -170,16 +170,19 @@ pub fn read_mesh_from_res(data: &ChumFile, reader: &mut ChumReader) -> Dictionar
                     .collect::<Vec<_>>(),
             );
             dict.insert(
-                "unk3",
+                "cylinder_shapes",
                 &mesh
-                    .unk3
+                    .cylinder_shapes
                     .into_iter()
                     .map(|x| {
                         let dict = Dictionary::new();
-                        dict.insert("unk1", &(&x.unk1[..]).to_owned());
+                        // dict.insert("unk1", &(&x.unk1[..]).to_owned());
+                        dict.insert("position", x.position);
+                        dict.insert("height", x.height);
                         dict.insert("normal", x.normal);
-                        dict.insert("junk", x.junk);
-                        dict.insert("unk2", x.unk2);
+                        dict.insert("radius", x.radius);
+                        // dict.insert("junk", x.junk);
+                        // dict.insert("unk2", x.unk2);
                         dict.into_shared()
                     })
                     .collect::<Vec<_>>(),

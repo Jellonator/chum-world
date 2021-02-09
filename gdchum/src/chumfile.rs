@@ -5,11 +5,14 @@ use gdnative::api::Resource;
 use gdnative::prelude::*;
 use libchum::{
     self, reader,
-    scene::{self, collada},
+    scene,
     structure::ChumStruct,
+    common
 };
 use std::fs::File;
 use std::io::{BufReader, Write};
+use gltf_json;
+use libchum::scene::gltf as chumgltf;
 
 /// A File resource derived from a ChumArchive.
 #[derive(NativeClass)]
@@ -253,6 +256,35 @@ impl ChumFile {
         mesh.export_obj(&mut buffer).unwrap();
     }
 
+    fn export_skin_to_gltf(&self, path: &str) {
+        unimplemented!()
+    }
+
+    fn export_mesh_to_gltf(&self, path: &str) {
+        let mesh = match reader::mesh::Mesh::read_data(&mut self.get_data_as_vec(), self.format) {
+            Ok(x) => x,
+            Err(err) => {
+                panic!("MESH file invalid: {}", err);
+            }
+        };
+        let mut scene = scene::Scene::new_empty();
+        scene.visual_instances.insert(
+            self.namestr.to_string(),
+            scene::SVisualInstance::Mesh {
+                mesh: mesh.create_scene_mesh()
+            }
+        );
+        scene.node = scene::SNode {
+            name: util::get_basename(&self.namestr).to_owned(),
+            children: Vec::new(),
+            transform: common::Transform3D::identity(),
+            visual_instance: Some(self.namestr.to_string())
+        };
+        let gltfroot = chumgltf::export_scene(&scene);
+        let writer = File::create(path).expect("I/O Error");
+        gltf_json::serialize::to_writer_pretty(writer, &gltfroot).expect("Serialization Error");
+    }
+/*
     fn export_mesh_to_collada(&mut self, path: &str) {
         let mut buffer = File::create(path).unwrap();
         let mesh = match reader::mesh::Mesh::read_data(&mut self.get_data_as_vec(), self.format) {
@@ -330,7 +362,7 @@ impl ChumFile {
         }
         collada::scene_to_writer_dae(&scene, &mut buffer).unwrap();
     }
-
+*/
     /// Export a SURFACE file as a .obj
     fn export_surface_to_obj(&mut self, path: &str) {
         let mut buffer = File::create(path).unwrap();
@@ -372,8 +404,8 @@ impl ChumFile {
                 }
             },
             EXPORT_ID_COLLADA => match &self.typestr.as_str() {
-                &"MESH" => self.export_mesh_to_collada(&pathstr),
-                &"SKIN" => self.export_skin_to_collada(&pathstr, true),
+                &"MESH" => self.export_mesh_to_gltf(&pathstr),
+                &"SKIN" => self.export_skin_to_gltf(&pathstr),
                 other => {
                     panic!("Unexpected type for OBJ export {}", other);
                 }

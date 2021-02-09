@@ -1,3 +1,4 @@
+/*
 #[macro_export]
 macro_rules! impl_tag_content {
     ($x:ty, $y:expr, $data: ident) => {
@@ -156,7 +157,7 @@ macro_rules! impl_xml {
         }
     };
 }
-
+*/
 #[allow(unused_macros)]
 macro_rules! chum_path_element {
     ( [$x:expr] ) => {

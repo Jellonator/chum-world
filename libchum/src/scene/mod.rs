@@ -5,6 +5,51 @@
 use crate::common;
 use crate::reader;
 use crate::util::idmap::IdMap;
+use std::collections::HashMap;
+
+pub mod gltf;
+
+/// A simple triangle mesh that strips away non-exportable data
+#[derive(Clone, Debug)]
+pub struct Mesh {
+    pub vertices: Vec<common::Vector3>,
+    pub texcoords: Vec<common::Vector2>,
+    pub normals: Vec<common::Vector3>,
+    pub data: MeshFormat
+}
+
+/// The internal format of the Mesh
+#[derive(Clone, Debug)]
+pub enum MeshFormat {
+    Triangles {
+        data: HashMap<i32, Vec<MeshTriangle>>
+    },
+    Strips {
+        strips: Vec<MeshStrip>
+    }
+}
+
+/// A single triangle in a mesh
+#[derive(Clone, Debug)]
+pub struct MeshTriangle {
+    pub corners: [MeshPoint; 3]
+}
+
+/// A simpler version of StripData
+#[derive(Clone, Debug)]
+pub struct MeshStrip {
+    pub elements: Vec<MeshPoint>,
+    pub material: i32,
+    pub tri_order: common::TriStripOrder
+}
+
+/// A single point in a Mesh
+#[derive(Clone, Debug)]
+pub struct MeshPoint {
+    pub vertex_id: u32,
+    pub texcoord_id: u32,
+    pub normal_id: u32 
+}
 
 /// A single texture
 #[derive(Clone)]
@@ -26,7 +71,7 @@ pub struct SMaterial {
 #[derive(Clone)]
 pub enum SVisualInstance {
     Mesh {
-        mesh: reader::mesh::Mesh
+        mesh: Mesh
     },
     /*Surface {
         surface: reader::surface::SurfaceObject
@@ -38,7 +83,19 @@ pub enum SVisualInstance {
 pub struct SNode {
     pub name: String,
     pub children: Vec<SNode>,
+    pub transform: common::Transform3D,
     pub visual_instance: Option<String>
+}
+
+impl SNode {
+    pub fn new(name: String) -> SNode {
+        SNode {
+            name,
+            children: Vec::new(),
+            transform: common::Transform3D::identity(),
+            visual_instance: None
+        }
+    }
 }
 
 /// A full scene
@@ -48,6 +105,17 @@ pub struct Scene {
     pub materials: IdMap<SMaterial>,
     pub visual_instances: IdMap<SVisualInstance>,
     pub node: SNode
+}
+
+impl Scene {
+    pub fn new_empty() -> Scene {
+        Scene {
+            textures: IdMap::new(),
+            materials: IdMap::new(),
+            visual_instances: IdMap::new(),
+            node: SNode::new("".to_string())
+        }
+    }
 }
 
 /*

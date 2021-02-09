@@ -30,7 +30,7 @@ margin_right = 111.0
 margin_bottom = 22.0
 text = "Export File As..."
 flat = false
-items = [ "Raw Binary (.bin)", null, 0, false, false, 0, 0, null, "", false, "Text (.txt)", null, 0, false, false, 1, 0, null, "", false, "Model (.obj)", null, 0, false, false, 2, 0, null, "", false, "Texture (.png)", null, 0, false, false, 3, 0, null, "", false, "Scene (.dae)", null, 0, false, false, 4, 0, null, "", false ]
+items = [ "Raw Binary (.bin)", null, 0, false, false, 0, 0, null, "", false, "Text (.txt)", null, 0, false, false, 1, 0, null, "", false, "Model (.obj)", null, 0, false, false, 2, 0, null, "", false, "Texture (.png)", null, 0, false, false, 3, 0, null, "", false, "Scene (.gltf)", null, 0, false, false, 4, 0, null, "", false ]
 
 [node name="Split" type="HSplitContainer" parent="."]
 margin_top = 26.0

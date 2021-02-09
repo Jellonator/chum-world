@@ -15,24 +15,24 @@ pub struct Mesh {
     pub vertices: Vec<common::Vector3>,
     pub texcoords: Vec<common::Vector2>,
     pub normals: Vec<common::Vector3>,
-    pub data: MeshFormat
+    pub data: MeshFormat,
 }
 
 /// The internal format of the Mesh
 #[derive(Clone, Debug)]
 pub enum MeshFormat {
     Triangles {
-        data: HashMap<i32, Vec<MeshTriangle>>
+        data: HashMap<i32, Vec<MeshTriangle>>,
     },
     Strips {
-        strips: Vec<MeshStrip>
-    }
+        strips: Vec<MeshStrip>,
+    },
 }
 
 /// A single triangle in a mesh
 #[derive(Clone, Debug)]
 pub struct MeshTriangle {
-    pub corners: [MeshPoint; 3]
+    pub corners: [MeshPoint; 3],
 }
 
 /// A simpler version of StripData
@@ -40,7 +40,34 @@ pub struct MeshTriangle {
 pub struct MeshStrip {
     pub elements: Vec<MeshPoint>,
     pub material: i32,
-    pub tri_order: common::TriStripOrder
+    pub tri_order: common::TriStripOrder,
+}
+
+impl MeshStrip {
+    pub fn iterate_triangles<'a>(
+        &'a self,
+    ) -> std::iter::Map<
+        std::iter::Zip<
+            std::ops::Range<usize>,
+            std::iter::Repeat<(&Vec<MeshPoint>, common::TriStripOrder)>,
+        >,
+        fn((usize, (&Vec<MeshPoint>, common::TriStripOrder))) -> [&MeshPoint; 3],
+    > {
+        let n = self.elements.len();
+        let v = &self.elements;
+        let o = self.tri_order;
+        // have to start at two because 0..(n-2) has the (very unlikely) chance to overflow
+        (2..n).zip(std::iter::repeat((v, o))).map(|(i, (v, o))| {
+            let i1 = i-2;
+            let a = (i1 % 2) + 1;
+            let b = 3 - a;
+            let (i2, i3) = match o {
+                common::TriStripOrder::ClockWise => (i1 + a, i1 + b),
+                common::TriStripOrder::CounterClockWise => (i1 + b, i1 + a),
+            };
+            [&v[i1], &v[i2], &v[i3]]
+        })
+    }
 }
 
 /// A single point in a Mesh
@@ -48,7 +75,7 @@ pub struct MeshStrip {
 pub struct MeshPoint {
     pub vertex_id: u32,
     pub texcoord_id: u32,
-    pub normal_id: u32 
+    pub normal_id: u32,
 }
 
 /// A single texture
@@ -64,15 +91,13 @@ pub struct SMaterial {
     pub alpha: f32,
     pub diffuse: common::Vector3,
     pub emission: common::Vector3,
-    pub transform: common::Transform2D
+    pub transform: common::Transform2D,
 }
 
 /// A single visual instance
 #[derive(Clone)]
 pub enum SVisualInstance {
-    Mesh {
-        mesh: Mesh
-    },
+    Mesh { mesh: Mesh },
     /*Surface {
         surface: reader::surface::SurfaceObject
     }*/
@@ -84,7 +109,7 @@ pub struct SNode {
     pub name: String,
     pub children: Vec<SNode>,
     pub transform: common::Transform3D,
-    pub visual_instance: Option<String>
+    pub visual_instance: Option<String>,
 }
 
 impl SNode {
@@ -93,7 +118,7 @@ impl SNode {
             name,
             children: Vec::new(),
             transform: common::Transform3D::identity(),
-            visual_instance: None
+            visual_instance: None,
         }
     }
 }
@@ -104,7 +129,7 @@ pub struct Scene {
     pub textures: IdMap<STexture>,
     pub materials: IdMap<SMaterial>,
     pub visual_instances: IdMap<SVisualInstance>,
-    pub node: SNode
+    pub node: SNode,
 }
 
 impl Scene {
@@ -113,7 +138,7 @@ impl Scene {
             textures: IdMap::new(),
             materials: IdMap::new(),
             visual_instances: IdMap::new(),
-            node: SNode::new("".to_string())
+            node: SNode::new("".to_string()),
         }
     }
 }

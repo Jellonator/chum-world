@@ -320,7 +320,7 @@ impl Quad {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Copy, Clone, Debug)]
 pub enum TriStripOrder {
     ClockWise,
     CounterClockWise,

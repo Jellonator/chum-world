@@ -18,7 +18,7 @@ impl SceneData {
             scene: scene::Scene::new_empty(),
         }
     }
-/*
+    /*
     #[export]
     pub fn add_mesh(
         &mut self,

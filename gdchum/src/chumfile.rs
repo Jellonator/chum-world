@@ -3,16 +3,11 @@ use crate::util;
 use crate::ChumArchive;
 use gdnative::api::Resource;
 use gdnative::prelude::*;
-use libchum::{
-    self, reader,
-    scene,
-    structure::ChumStruct,
-    common
-};
-use std::fs::File;
-use std::io::{BufReader, Write};
 use gltf_json;
 use libchum::scene::gltf as chumgltf;
+use libchum::{self, common, reader, scene, structure::ChumStruct};
+use std::fs::File;
+use std::io::{BufReader, Write};
 
 /// A File resource derived from a ChumArchive.
 #[derive(NativeClass)]
@@ -271,98 +266,98 @@ impl ChumFile {
         scene.visual_instances.insert(
             self.namestr.to_string(),
             scene::SVisualInstance::Mesh {
-                mesh: mesh.create_scene_mesh()
-            }
+                mesh: mesh.create_scene_mesh(),
+            },
         );
         scene.node = scene::SNode {
             name: util::get_basename(&self.namestr).to_owned(),
             children: Vec::new(),
             transform: common::Transform3D::identity(),
-            visual_instance: Some(self.namestr.to_string())
+            visual_instance: Some(self.namestr.to_string()),
         };
         let gltfroot = chumgltf::export_scene(&scene);
         let writer = File::create(path).expect("I/O Error");
         gltf_json::serialize::to_writer_pretty(writer, &gltfroot).expect("Serialization Error");
     }
-/*
-    fn export_mesh_to_collada(&mut self, path: &str) {
-        let mut buffer = File::create(path).unwrap();
-        let mesh = match reader::mesh::Mesh::read_data(&mut self.get_data_as_vec(), self.format) {
-            Ok(x) => x,
-            Err(err) => {
-                panic!("MESH file invalid: {}", err);
-            }
-        };
-        let mut scene = scene::Scene::new_empty();
-        scene.add_trimesh(mesh.create_scene_mesh(util::get_basename(&self.namestr).to_owned()));
-        collada::scene_to_writer_dae(&scene, &mut buffer).unwrap();
-    }
-
-    fn export_skin_to_collada(&mut self, path: &str, merge_models: bool) {
-        let mut buffer = File::create(path).unwrap();
-        let skin = match reader::skin::Skin::read_data(&mut self.get_data_as_vec(), self.format) {
-            Ok(x) => x,
-            Err(err) => {
-                panic!("MESH file invalid: {}", err);
-            }
-        };
-        let mut scene = scene::Scene::new_empty();
-        let archiveinstance = self.get_archive_instance();
-        unsafe { archiveinstance.assume_safe() }
-            .map(|archive, res| {
-                let names: Vec<String> = skin
-                    .vertex_groups
-                    .iter()
-                    .map(|group| archive.maybe_get_name_from_hash_str(group.group_id))
-                    .collect();
-                for meshid in skin.meshes.iter() {
-                    if let Some(meshfile) = archive.get_file_from_hash(&res, *meshid) {
-                        unsafe { meshfile.assume_safe() }
-                            .map(|meshscript, _| match meshscript.typestr.as_str() {
-                                "MESH" => {
-                                    let mesh = match reader::mesh::Mesh::read_data(
-                                        &mut meshscript.get_data_as_vec(),
-                                        self.format,
-                                    ) {
-                                        Ok(x) => x,
-                                        Err(err) => {
-                                            panic!("MESH file invalid: {}", err);
-                                        }
-                                    };
-                                    let mut trimesh = mesh.create_scene_mesh(
-                                        util::get_basename(&meshscript.namestr).to_owned(),
-                                    );
-                                    trimesh.skin = Some(skin.generate_scene_skin_for_mesh(
-                                        names.as_slice(),
-                                        *meshid,
-                                        mesh.vertices.len(),
-                                    ));
-                                    scene.add_trimesh(trimesh);
-                                }
-                                _ => {}
-                            })
-                            .unwrap();
-                    } else {
-                        godot_warn!("Mesh {} does not exist!", meshid);
-                    }
+    /*
+        fn export_mesh_to_collada(&mut self, path: &str) {
+            let mut buffer = File::create(path).unwrap();
+            let mesh = match reader::mesh::Mesh::read_data(&mut self.get_data_as_vec(), self.format) {
+                Ok(x) => x,
+                Err(err) => {
+                    panic!("MESH file invalid: {}", err);
                 }
-            })
-            .unwrap();
-        if merge_models {
-            let mut data = Vec::new();
-            data.append(&mut scene.trimeshes);
-            if let Some(mut realmodel) = scene::merge_mesh_vec(data) {
-                scene::try_determine_group_transforms(&mut realmodel);
-                scene.add_trimesh(realmodel);
-            }
-        } else {
-            for mesh in scene.trimeshes.iter_mut() {
-                scene::try_determine_group_transforms(mesh);
-            }
+            };
+            let mut scene = scene::Scene::new_empty();
+            scene.add_trimesh(mesh.create_scene_mesh(util::get_basename(&self.namestr).to_owned()));
+            collada::scene_to_writer_dae(&scene, &mut buffer).unwrap();
         }
-        collada::scene_to_writer_dae(&scene, &mut buffer).unwrap();
-    }
-*/
+
+        fn export_skin_to_collada(&mut self, path: &str, merge_models: bool) {
+            let mut buffer = File::create(path).unwrap();
+            let skin = match reader::skin::Skin::read_data(&mut self.get_data_as_vec(), self.format) {
+                Ok(x) => x,
+                Err(err) => {
+                    panic!("MESH file invalid: {}", err);
+                }
+            };
+            let mut scene = scene::Scene::new_empty();
+            let archiveinstance = self.get_archive_instance();
+            unsafe { archiveinstance.assume_safe() }
+                .map(|archive, res| {
+                    let names: Vec<String> = skin
+                        .vertex_groups
+                        .iter()
+                        .map(|group| archive.maybe_get_name_from_hash_str(group.group_id))
+                        .collect();
+                    for meshid in skin.meshes.iter() {
+                        if let Some(meshfile) = archive.get_file_from_hash(&res, *meshid) {
+                            unsafe { meshfile.assume_safe() }
+                                .map(|meshscript, _| match meshscript.typestr.as_str() {
+                                    "MESH" => {
+                                        let mesh = match reader::mesh::Mesh::read_data(
+                                            &mut meshscript.get_data_as_vec(),
+                                            self.format,
+                                        ) {
+                                            Ok(x) => x,
+                                            Err(err) => {
+                                                panic!("MESH file invalid: {}", err);
+                                            }
+                                        };
+                                        let mut trimesh = mesh.create_scene_mesh(
+                                            util::get_basename(&meshscript.namestr).to_owned(),
+                                        );
+                                        trimesh.skin = Some(skin.generate_scene_skin_for_mesh(
+                                            names.as_slice(),
+                                            *meshid,
+                                            mesh.vertices.len(),
+                                        ));
+                                        scene.add_trimesh(trimesh);
+                                    }
+                                    _ => {}
+                                })
+                                .unwrap();
+                        } else {
+                            godot_warn!("Mesh {} does not exist!", meshid);
+                        }
+                    }
+                })
+                .unwrap();
+            if merge_models {
+                let mut data = Vec::new();
+                data.append(&mut scene.trimeshes);
+                if let Some(mut realmodel) = scene::merge_mesh_vec(data) {
+                    scene::try_determine_group_transforms(&mut realmodel);
+                    scene.add_trimesh(realmodel);
+                }
+            } else {
+                for mesh in scene.trimeshes.iter_mut() {
+                    scene::try_determine_group_transforms(mesh);
+                }
+            }
+            collada::scene_to_writer_dae(&scene, &mut buffer).unwrap();
+        }
+    */
     /// Export a SURFACE file as a .obj
     fn export_surface_to_obj(&mut self, path: &str) {
         let mut buffer = File::create(path).unwrap();

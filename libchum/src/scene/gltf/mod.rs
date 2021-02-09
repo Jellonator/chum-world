@@ -187,7 +187,25 @@ fn export_mesh(mesh: &scene::Mesh, buffer: &mut Vec<u8>, root: &mut json::Root) 
                 let mut point_buf = Vec::<Point>::new();
                 let mut index_buf = Vec::<u32>::new();
                 let mut point_indices = HashMap::<Point, u32>::new();
-                match strip.tri_order {
+                for tri in strip.iterate_triangles() {
+                    for corner in tri.iter() {
+                        let point = Point {
+                            vertex: mesh.vertices[corner.vertex_id as usize],
+                            texcoord: mesh.texcoords[corner.texcoord_id as usize],
+                            normal: mesh.normals[corner.normal_id as usize]
+                        };
+                        let index = if let Some(index) = point_indices.get(&point) {
+                            *index
+                        } else {
+                            let index = point_buf.len() as u32;
+                            point_indices.insert(point.clone(), index);
+                            point_buf.push(point);
+                            index
+                        };
+                        index_buf.push(index);
+                    }
+                }
+                /*match strip.tri_order {
                     TriStripOrder::ClockWise => {
                         for corner in strip.elements.iter() {
                             let point = Point {
@@ -225,13 +243,14 @@ fn export_mesh(mesh: &scene::Mesh, buffer: &mut Vec<u8>, root: &mut json::Root) 
                             index_buf.push(index);
                         }
                     }
-                }
+                }*/
+
                 let primitive = generate_primitive(
                     buffer,
                     root,
                     point_buf.as_slice(),
                     index_buf.as_slice(),
-                    json::mesh::Mode::TriangleStrip,
+                    json::mesh::Mode::Triangles,
                 );
                 json_mesh.primitives.push(primitive);
             }

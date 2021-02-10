@@ -1,7 +1,7 @@
-use std::collections::HashMap;
-use std::collections::hash_map;
-use std::iter;
 use crate::util;
+use std::collections::hash_map;
+use std::collections::HashMap;
+use std::iter;
 
 /// An element from an IdMap.
 /// Contains the element's name and value.
@@ -9,7 +9,7 @@ use crate::util;
 #[derive(Clone, Debug)]
 pub struct Element<T> {
     name: String,
-    value: T
+    value: T,
 }
 
 impl<T> Element<T> {
@@ -39,7 +39,7 @@ impl<T> Element<T> {
 /// value instead of i32.
 #[derive(Clone, Default, Debug)]
 pub struct IdMap<T> {
-    data: HashMap<i32, Element<T>>
+    data: HashMap<i32, Element<T>>,
 }
 
 impl<T> IdMap<T> {
@@ -86,10 +86,7 @@ impl<T> IdMap<T> {
 
     pub fn insert(&mut self, k: String, v: T) -> Option<Element<T>> {
         let h = util::hash_name_i32(&k);
-        self.data.insert(h, Element {
-            name: k,
-            value: v
-        })
+        self.data.insert(h, Element { name: k, value: v })
     }
 
     pub fn remove(&mut self, k: i32) -> Option<Element<T>> {
@@ -114,7 +111,7 @@ impl<T> IdMap<T> {
 
     pub fn new() -> IdMap<T> {
         IdMap {
-            data: HashMap::new()
+            data: HashMap::new(),
         }
     }
 
@@ -126,7 +123,10 @@ impl<T> IdMap<T> {
         self.data.reserve(additional)
     }
 
-    pub fn retain<F>(&mut self, f: F) where F: FnMut(&i32, &mut Element<T>) -> bool {
+    pub fn retain<F>(&mut self, f: F)
+    where
+        F: FnMut(&i32, &mut Element<T>) -> bool,
+    {
         self.data.retain(f)
     }
 
@@ -138,7 +138,9 @@ impl<T> IdMap<T> {
         self.data.keys()
     }
 
-    pub fn keys_str(&self) -> iter::Map<hash_map::Values<i32, Element<T>>, fn(&Element<T>) -> &str>{
+    pub fn keys_str(
+        &self,
+    ) -> iter::Map<hash_map::Values<i32, Element<T>>, fn(&Element<T>) -> &str> {
         self.data.values().map(|x| &x.name.as_str())
     }
 
@@ -152,22 +154,19 @@ impl<T> IdMap<T> {
 
     pub fn with_capacity(capacity: usize) -> IdMap<T> {
         IdMap {
-            data: HashMap::with_capacity(capacity)
+            data: HashMap::with_capacity(capacity),
         }
     }
 }
 
 impl<T> iter::Extend<(String, T)> for IdMap<T> {
     fn extend<U>(&mut self, iter: U)
-    where U: iter::IntoIterator<Item=(String,T)> {
-        self.data.extend(iter.into_iter().map(|(k, v)| {
-            (
-                util::hash_name_i32(&k),
-                Element {
-                    name: k,
-                    value: v
-                }
-            )
-        }))
+    where
+        U: iter::IntoIterator<Item = (String, T)>,
+    {
+        self.data.extend(
+            iter.into_iter()
+                .map(|(k, v)| (util::hash_name_i32(&k), Element { name: k, value: v })),
+        )
     }
 }

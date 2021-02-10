@@ -41,15 +41,15 @@ const EXPORT_NAMES := {
 	EXPORT_ID_TEXT: "Text (.txt)",
 	EXPORT_ID_MODEL: "Model (.obj)",
 	EXPORT_ID_TEXTURE: "Texture (.png)",
-	EXPORT_ID_SCENE: "Scene (.gltf)",
+	EXPORT_ID_SCENE: "Scene (.glb/.gltf)",
 }
 
 const EXPORT_EXTENSIONS := {
-	EXPORT_ID_BIN: "bin",
-	EXPORT_ID_TEXT: "txt",
-	EXPORT_ID_MODEL: "obj",
-	EXPORT_ID_TEXTURE: "png",
-	EXPORT_ID_SCENE: "gltf",
+	EXPORT_ID_BIN: ["bin"],
+	EXPORT_ID_TEXT: ["txt"],
+	EXPORT_ID_MODEL: ["obj"],
+	EXPORT_ID_TEXTURE: ["png"],
+	EXPORT_ID_SCENE: ["glb", "gltf"],
 }
 
 const VALID_EXPORTS := {
@@ -60,11 +60,11 @@ const VALID_EXPORTS := {
 }
 
 const EXPORT_FILE_FILTERS := {
-	EXPORT_ID_BIN: "*.bin ; Binary Files",
-	EXPORT_ID_TEXT: "*.txt ; Text Files",
-	EXPORT_ID_MODEL: "*.obj ; Wavefront OBJ",
-	EXPORT_ID_TEXTURE: "*.png ; PNG Images",
-	EXPORT_ID_SCENE: "*.gltf; GLTF Scene"
+	EXPORT_ID_BIN: ["*.bin ; Binary Files"],
+	EXPORT_ID_TEXT: ["*.txt ; Text Files"],
+	EXPORT_ID_MODEL: ["*.obj ; Wavefront OBJ"],
+	EXPORT_ID_TEXTURE: ["*.png ; PNG Images"],
+	EXPORT_ID_SCENE: ["*.glb ; GLTF binary scene", "*.gltf ; GLTF text Scene"]
 }
 
 var EXPORTS_BY_TYPE := {}

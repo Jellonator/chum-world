@@ -44,7 +44,7 @@ func _on_BulkExport_confirmed():
 		print("Could not export!")
 		return
 	prints("EXPORT ALL", exportid)
-	var extension = ExportData.EXPORT_EXTENSIONS[exportid]
+	var extensions = ExportData.EXPORT_EXTENSIONS[exportid]
 	for file in carchive.get_file_list():
 		if file.type == typename:
 			var path := file.name as String
@@ -54,7 +54,7 @@ func _on_BulkExport_confirmed():
 			var b = path.find(".")
 			if b != -1:
 				path = path.substr(0, b)
-			path = exportpath + "/" + path + "." + extension
+			path = exportpath + "/" + path + "." + extensions[0]
 			file.export_to(exportid, path)
 
 func _on_FileType_item_selected(_index: int):

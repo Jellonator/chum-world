@@ -413,7 +413,9 @@ impl SurfaceObject {
             vertices: Vec::new(),
             normals: Vec::new(),
             texcoords: Vec::new(),
-            data: scene::MeshFormat::Triangles { data: HashMap::new() }
+            data: scene::MeshFormat::Triangles {
+                data: HashMap::new(),
+            },
         };
         let mut data = HashMap::new();
         let gen = self.generate_meshes(mode);
@@ -421,16 +423,27 @@ impl SurfaceObject {
             for quad in mesh.quads.iter() {
                 for point in quad.points.iter() {
                     let nvert = vertex_indices.len() as u32;
-                    if insert_if_not_exist(&mut vertex_indices, reinterpret_vec3(&point.vertex), nvert) {
+                    if insert_if_not_exist(
+                        &mut vertex_indices,
+                        reinterpret_vec3(&point.vertex),
+                        nvert,
+                    ) {
                         out.vertices.push(point.vertex);
                     }
                     let nnorm = normal_indices.len() as u32;
-                    if insert_if_not_exist(&mut normal_indices, reinterpret_vec3(&point.normal), nnorm) {
+                    if insert_if_not_exist(
+                        &mut normal_indices,
+                        reinterpret_vec3(&point.normal),
+                        nnorm,
+                    ) {
                         out.normals.push(point.normal);
                     }
                     let ntex = texcoord_indices.len() as u32;
-                    if insert_if_not_exist(&mut texcoord_indices, reinterpret_vec2(&point.texcoord), ntex)
-                    {
+                    if insert_if_not_exist(
+                        &mut texcoord_indices,
+                        reinterpret_vec2(&point.texcoord),
+                        ntex,
+                    ) {
                         out.texcoords.push(point.texcoord);
                     }
                 }
@@ -440,27 +453,28 @@ impl SurfaceObject {
             let vec = data.entry(mesh.material_index).or_insert(Vec::new());
             for quad in mesh.quads.iter() {
                 for tri in quad.tris().iter() {
-                    vec.push(
-                        scene::MeshTriangle {
-                            corners: [
-                                scene::MeshPoint {
-                                    vertex_id: vertex_indices[&reinterpret_vec3(&tri.points[0].vertex)],
-                                    texcoord_id: texcoord_indices[&reinterpret_vec2(&tri.points[0].texcoord)],
-                                    normal_id: normal_indices[&reinterpret_vec3(&tri.points[0].normal)],
-                                },
-                                scene::MeshPoint {
-                                    vertex_id: vertex_indices[&reinterpret_vec3(&tri.points[1].vertex)],
-                                    texcoord_id: texcoord_indices[&reinterpret_vec2(&tri.points[1].texcoord)],
-                                    normal_id: normal_indices[&reinterpret_vec3(&tri.points[1].normal)],
-                                },
-                                scene::MeshPoint {
-                                    vertex_id: vertex_indices[&reinterpret_vec3(&tri.points[2].vertex)],
-                                    texcoord_id: texcoord_indices[&reinterpret_vec2(&tri.points[2].texcoord)],
-                                    normal_id: normal_indices[&reinterpret_vec3(&tri.points[2].normal)],
-                                },
-                            ]
-                        }
-                    )
+                    vec.push(scene::MeshTriangle {
+                        corners: [
+                            scene::MeshPoint {
+                                vertex_id: vertex_indices[&reinterpret_vec3(&tri.points[0].vertex)],
+                                texcoord_id: texcoord_indices
+                                    [&reinterpret_vec2(&tri.points[0].texcoord)],
+                                normal_id: normal_indices[&reinterpret_vec3(&tri.points[0].normal)],
+                            },
+                            scene::MeshPoint {
+                                vertex_id: vertex_indices[&reinterpret_vec3(&tri.points[2].vertex)],
+                                texcoord_id: texcoord_indices
+                                    [&reinterpret_vec2(&tri.points[2].texcoord)],
+                                normal_id: normal_indices[&reinterpret_vec3(&tri.points[2].normal)],
+                            },
+                            scene::MeshPoint {
+                                vertex_id: vertex_indices[&reinterpret_vec3(&tri.points[1].vertex)],
+                                texcoord_id: texcoord_indices
+                                    [&reinterpret_vec2(&tri.points[1].texcoord)],
+                                normal_id: normal_indices[&reinterpret_vec3(&tri.points[1].normal)],
+                            },
+                        ],
+                    })
                 }
             }
         }

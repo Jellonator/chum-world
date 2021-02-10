@@ -75,6 +75,7 @@ func _on_SceneExportDialog_confirmed():
 				pass
 			if include_light and resfile.type == "OMNI":
 				pass
+	scene.add_required_materials(archive)
 	scene.export_to(file_name)
 
 func _on_FileSelect_pressed():

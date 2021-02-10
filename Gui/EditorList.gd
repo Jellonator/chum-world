@@ -63,7 +63,7 @@ func _on_export_pressed(id: int):
 		print("No file selected; could not export.")
 	else:
 		var dialog := owner.get_node("SaveDialog") as FileDialog
-		dialog.filters = PoolStringArray([ExportData.EXPORT_FILE_FILTERS[id]])
+		dialog.filters = PoolStringArray(ExportData.EXPORT_FILE_FILTERS[id])
 		owner.export_file = cfile
 		owner.export_mode = id
 		dialog.popup_centered()

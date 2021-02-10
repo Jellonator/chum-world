@@ -3,8 +3,6 @@ use crate::util;
 use crate::ChumArchive;
 use gdnative::api::Resource;
 use gdnative::prelude::*;
-use gltf_json;
-use libchum::scene::gltf as chumgltf;
 use libchum::{self, common, reader, scene, structure::ChumStruct};
 use std::fs::File;
 use std::io::{BufReader, Write};
@@ -275,9 +273,9 @@ impl ChumFile {
             transform: common::Transform3D::identity(),
             visual_instance: Some(self.namestr.to_string()),
         };
-        let gltfroot = chumgltf::export_scene(&scene);
-        let writer = File::create(path).expect("I/O Error");
-        gltf_json::serialize::to_writer_pretty(writer, &gltfroot).expect("Serialization Error");
+        scene.export_to(path).expect("Serialization Error");
+        // let gltfroot = chumgltf::export_scene(&scene);
+        // gltf_json::serialize::to_writer_pretty(writer, &gltfroot).expect("Serialization Error");
     }
     /*
         fn export_mesh_to_collada(&mut self, path: &str) {

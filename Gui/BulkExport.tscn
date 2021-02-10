@@ -86,6 +86,7 @@ window_title = "Open a Directory"
 resizable = true
 mode = 2
 access = 2
+show_hidden_files = true
 current_dir = "/home/jellonator/Workspace/Rust/ChumWorld"
 current_path = "/home/jellonator/Workspace/Rust/ChumWorld/"
 [connection signal="confirmed" from="." to="." method="_on_BulkExport_confirmed"]

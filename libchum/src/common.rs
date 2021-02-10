@@ -1,8 +1,8 @@
 use crate::format::TotemFormat;
 use euclid;
+use std::hash::{Hash, Hasher};
 use std::io::{self, Read, Write};
 use std::mem;
-use std::hash::{Hash, Hasher};
 
 pub type Vector3 = euclid::Vector3D<f32, euclid::UnknownUnit>;
 pub type Vector2 = euclid::Vector2D<f32, euclid::UnknownUnit>;
@@ -305,15 +305,15 @@ impl Quad {
         let a = Tri {
             points: [
                 self.points[0].clone(),
-                self.points[2].clone(),
                 self.points[1].clone(),
+                self.points[2].clone(),
             ],
         };
         let b = Tri {
             points: [
                 self.points[0].clone(),
-                self.points[3].clone(),
                 self.points[2].clone(),
+                self.points[3].clone(),
             ],
         };
         [a, b]

@@ -3,11 +3,49 @@
 //! of 3D scenes.
 
 use crate::common;
+use crate::gltf as gltf_rs;
 use crate::reader;
 use crate::util::idmap::IdMap;
 use std::collections::HashMap;
+use std::collections::HashSet;
+use std::fs;
 
 pub mod gltf;
+
+/// Simple skinning data
+#[derive(Clone, Debug)]
+pub struct Skin {
+    pub vertices: Vec<SkinVertex>,
+    pub joints: Vec<SkinJoint> // skins in ChumWorld have no hierarchy
+}
+
+impl Skin {
+    pub fn generate_from_skin_mesh(skin: &reader::skin::Skin, mesh: &reader::mesh::Mesh, meshid: i32) -> Skin {
+
+        /*let mut out = Skin {
+        }*/
+        unimplemented!()
+    }
+}
+
+/// Skin join
+#[derive(Clone, Debug)]
+pub struct SkinJoint {
+    pub transform: common::Transform3D, // inverse bind matrix is calculated on write
+}
+
+/// Skinning data per vertex
+#[derive(Clone, Debug)]
+pub struct SkinVertex {
+    pub elements: [SkinVertexElement; 4]
+}
+
+/// A single element in a skin vertex
+#[derive(Clone, Debug)]
+pub struct SkinVertexElement {
+    pub joint: u32,
+    pub weight: f32
+}
 
 /// A simple triangle mesh that strips away non-exportable data
 #[derive(Clone, Debug)]
@@ -58,7 +96,7 @@ impl MeshStrip {
         let o = self.tri_order;
         // have to start at two because 0..(n-2) has the (very unlikely) chance to overflow
         (2..n).zip(std::iter::repeat((v, o))).map(|(i, (v, o))| {
-            let i1 = i-2;
+            let i1 = i - 2;
             let a = (i1 % 2) + 1;
             let b = 3 - a;
             let (i2, i3) = match o {
@@ -87,17 +125,35 @@ pub struct STexture {
 /// A single material
 #[derive(Clone, Debug)]
 pub struct SMaterial {
-    pub texture: Option<String>,
+    pub texture: Option<i32>,
     pub alpha: f32,
     pub diffuse: common::Vector3,
     pub emission: common::Vector3,
     pub transform: common::Transform2D,
 }
 
+impl SMaterial {
+    pub fn from_material(mat: &reader::material::Material) -> SMaterial {
+        SMaterial {
+            texture: match mat.texture {
+                0 => None,
+                value => Some(value),
+            },
+            alpha: mat.color.a,
+            diffuse: common::Vector3::new(mat.color.r, mat.color.g, mat.color.b),
+            emission: mat.emission,
+            transform: mat.transform,
+        }
+    }
+}
+
 /// A single visual instance
 #[derive(Clone)]
 pub enum SVisualInstance {
-    Mesh { mesh: Mesh },
+    Mesh {
+        mesh: Mesh,
+        skin: Option<i32>
+    },
     /*Surface {
         surface: reader::surface::SurfaceObject
     }*/
@@ -121,11 +177,60 @@ impl SNode {
             visual_instance: None,
         }
     }
+
+    pub fn find_node_ref(&self, name: &str) -> Option<&SNode> {
+        for child in self.children.iter() {
+            if child.name == name {
+                return Some(child);
+            }
+        }
+        None
+    }
+
+    pub fn find_node_mut(&mut self, name: &str) -> Option<&mut SNode> {
+        for child in self.children.iter_mut() {
+            if child.name == name {
+                return Some(child);
+            }
+        }
+        None
+    }
+
+    pub fn make_parent_node(&mut self, name: &[&str]) -> &mut SNode {
+        if let Some(first) = name.first() {
+            let mut index = None;
+            {
+                for (i, child) in self.children.iter().enumerate() {
+                    if child.name == *first {
+                        index = Some(i);
+                        //return child.make_parent_node(&name[1..]);
+                    }
+                }
+            }
+            // fuck you borrow checker for making me do this :rage emoji:
+            if let Some(i) = index {
+                return self.children[i].make_parent_node(&name[1..]);
+            }
+            self.children.push(SNode {
+                name: first.to_string(),
+                children: Vec::new(),
+                visual_instance: None,
+                transform: common::Transform3D::identity(),
+            });
+            self.children
+                .last_mut()
+                .unwrap()
+                .make_parent_node(&name[1..])
+        } else {
+            self
+        }
+    }
 }
 
 /// A full scene
 #[derive(Clone)]
 pub struct Scene {
+    pub skins: IdMap<Skin>,
     pub textures: IdMap<STexture>,
     pub materials: IdMap<SMaterial>,
     pub visual_instances: IdMap<SVisualInstance>,
@@ -140,6 +245,58 @@ impl Scene {
             visual_instances: IdMap::new(),
             node: SNode::new("".to_string()),
         }
+    }
+
+    pub fn export_to(&self, name: &str) -> Result<(), Box<dyn std::error::Error>> {
+        use std::borrow::Cow;
+        let writer = fs::File::create(name)?;
+        if name.to_lowercase().ends_with("gltf") {
+            let (gltfroot, _buffer) = gltf::export_scene(&self, false);
+            gltf_json::serialize::to_writer_pretty(writer, &gltfroot)?;
+        } else {
+            let (gltfroot, buffer) = gltf::export_scene(&self, true);
+            let json_string = gltf_json::serialize::to_string(&gltfroot)?;
+            let mut json_offset = json_string.len() as u32;
+            json_offset = (json_offset + 3) & !3; // align to multiple of 3
+            let glb = gltf_rs::binary::Glb {
+                header: gltf_rs::binary::Header {
+                    magic: b"glTF".clone(),
+                    version: 2,
+                    length: json_offset + buffer.len() as u32,
+                },
+                bin: Some(Cow::Owned(buffer)),
+                json: Cow::Owned(json_string.into_bytes()),
+            };
+            glb.to_writer(writer)?;
+        }
+        Ok(())
+    }
+
+    pub fn get_required_materials(&self) -> HashSet<i32> {
+        let mut v = HashSet::new();
+        for (_i, vis) in self.visual_instances.iter() {
+            match vis.get_value_ref() {
+                SVisualInstance::Mesh { mesh } => match &mesh.data {
+                    MeshFormat::Triangles { data } => {
+                        v.extend(data.keys());
+                    }
+                    MeshFormat::Strips { strips } => {
+                        v.extend(strips.iter().map(|x| x.material));
+                    }
+                },
+            }
+        }
+        v
+    }
+
+    pub fn get_required_textures(&self) -> HashSet<i32> {
+        let mut v = HashSet::new();
+        for (_i, mat) in self.materials.iter() {
+            if let Some(id) = mat.get_value_ref().texture.as_ref() {
+                v.insert(*id);
+            }
+        }
+        v
     }
 }
 

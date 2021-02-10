@@ -332,7 +332,7 @@ impl Mesh {
                     position,
                     height,
                     normal,
-                    radius
+                    radius,
                 })
             })
             .collect::<io::Result<_>>()?;
@@ -412,37 +412,47 @@ impl Mesh {
             normals: self.normals.clone(),
             texcoords: self.texcoords.clone(),
             data: scene::MeshFormat::Strips {
-                strips: self.strips.iter().map(|strip| {
-                    let material = self.materials[strip.strip.material as usize % self.materials.len()];
-                    let tri_order = match strip.strip.tri_order {
-                        1 => TriStripOrder::CounterClockWise,
-                        2 => TriStripOrder::ClockWise,
-                        i => panic!("Invalid strip order {}!", i)
-                    };
-                    scene::MeshStrip {
-                        elements: match &strip.ext {
-                            Some(ext) => strip.strip.vertex_ids.iter()
-                                .zip(ext.elements.iter())
-                                .map(|(id, edata)| {
-                                    scene::MeshPoint {
+                strips: self
+                    .strips
+                    .iter()
+                    .map(|strip| {
+                        let material =
+                            self.materials[strip.strip.material as usize % self.materials.len()];
+                        let tri_order = match strip.strip.tri_order {
+                            1 => TriStripOrder::CounterClockWise,
+                            2 => TriStripOrder::ClockWise,
+                            i => panic!("Invalid strip order {}!", i),
+                        };
+                        scene::MeshStrip {
+                            elements: match &strip.ext {
+                                Some(ext) => strip
+                                    .strip
+                                    .vertex_ids
+                                    .iter()
+                                    .zip(ext.elements.iter())
+                                    .map(|(id, edata)| scene::MeshPoint {
                                         vertex_id: *id as u32,
                                         texcoord_id: edata.texcoord_id as u32,
                                         normal_id: edata.normal_id as u32,
-                                    }
-                                }).collect(),
-                            None => strip.strip.vertex_ids.iter().map(|id| {
-                                scene::MeshPoint {
-                                    vertex_id: *id as u32,
-                                    texcoord_id: 0,
-                                    normal_id: 0
-                                }
-                            }).collect()
-                        },
-                        material,
-                        tri_order,
-                    }
-                }).collect()
-            }
+                                    })
+                                    .collect(),
+                                None => strip
+                                    .strip
+                                    .vertex_ids
+                                    .iter()
+                                    .map(|id| scene::MeshPoint {
+                                        vertex_id: *id as u32,
+                                        texcoord_id: 0,
+                                        normal_id: 0,
+                                    })
+                                    .collect(),
+                            },
+                            material,
+                            tri_order,
+                        }
+                    })
+                    .collect(),
+            },
         }
     }
     /* pub fn create_scene_mesh(&self, name: String, names: &HashMap<i32,String>) -> scene::SceneTriMesh {

@@ -11,6 +11,7 @@ pub mod scene;
 pub mod structure;
 pub mod util;
 
+pub use gltf;
 use std::collections::{HashMap, HashSet};
 use std::error::Error;
 use std::fmt;

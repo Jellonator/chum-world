@@ -124,10 +124,10 @@ size_flags_horizontal = 3
 size_flags_vertical = 3
 
 [node name="Scroll" type="ScrollContainer" parent="Split/Margin/Panel"]
-margin_left = 6.0
-margin_top = 4.0
-margin_right = 417.0
-margin_bottom = 666.0
+margin_left = 1.0
+margin_top = 1.0
+margin_right = 422.0
+margin_bottom = 669.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
 scroll_horizontal_enabled = false
@@ -136,8 +136,8 @@ __meta__ = {
 }
 
 [node name="VBox" type="VBoxContainer" parent="Split/Margin/Panel/Scroll"]
-margin_right = 411.0
-margin_bottom = 662.0
+margin_right = 421.0
+margin_bottom = 668.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
 

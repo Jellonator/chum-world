@@ -36,7 +36,7 @@ func set_file(file):
 		if struct != null:
 			var instance = Structure.instance(struct)
 			node_struct.add_child(instance)
-			instance.set_data(struct)
+			instance.set_data(struct, true)
 			instance.connect("modified", self, "_on_struct_modified")
 			node_margin.show()
 		else:

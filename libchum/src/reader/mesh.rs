@@ -1,6 +1,8 @@
 use crate::common::*;
 use crate::format::TotemFormat;
+use crate::reader::skin;
 use crate::scene;
+use std::collections::HashMap;
 use std::io::{self, Read, Write};
 
 #[derive(Clone, Debug)]
@@ -406,96 +408,70 @@ impl Mesh {
         Ok(())
     }
 
+    pub fn generate_mesh_skin(&self, info: skin::SkinInfo) -> Option<scene::MeshSkin> {
+        if let None = info.skin.meshes.iter().find(|x| **x == info.mesh_id) {
+            return None;
+        }
+        let mut vertices = vec![scene::SkinVertex::default(); self.vertices.len()];
+        for (joint_index, group) in info.skin.vertex_groups.iter().enumerate() {
+            for section in group
+                .sections
+                .iter()
+                .filter(|x| info.skin.meshes[x.mesh_index as usize] == info.mesh_id)
+            {
+                for v in section.vertices.iter() {
+                    let elem = scene::SkinVertexElement {
+                        joint: joint_index as u16,
+                        weight: v.weight,
+                    };
+                    vertices[v.vertex_id as usize].push_element(elem);
+                }
+            }
+        }
+        for vertex in vertices.iter_mut() {
+            println!("{}", vertex.length());
+            vertex.normalize();
+        }
+        let out = scene::MeshSkin { vertices };
+        Some(out)
+    }
+
     pub fn create_scene_mesh(&self) -> scene::Mesh {
+        let gen = self.gen_triangles();
+        let mut triangles = HashMap::<i32, Vec<scene::MeshTriangle>>::new();
+        for surface in gen.iter() {
+            let mat = self.materials[surface.material_index as usize % self.materials.len()];
+            let tridata = triangles.entry(mat).or_default();
+            for tri in surface.tris.iter() {
+                tridata.push(scene::MeshTriangle {
+                    corners: [
+                        scene::MeshPoint {
+                            vertex_id: tri.points[0].vertex_id as u32,
+                            texcoord_id: tri.points[0].texcoord_id as u32,
+                            normal_id: tri.points[0].normal_id as u32,
+                        },
+                        scene::MeshPoint {
+                            vertex_id: tri.points[2].vertex_id as u32,
+                            texcoord_id: tri.points[2].texcoord_id as u32,
+                            normal_id: tri.points[2].normal_id as u32,
+                        },
+                        scene::MeshPoint {
+                            vertex_id: tri.points[1].vertex_id as u32,
+                            texcoord_id: tri.points[1].texcoord_id as u32,
+                            normal_id: tri.points[1].normal_id as u32,
+                        },
+                    ],
+                });
+            }
+        }
         scene::Mesh {
             vertices: self.vertices.clone(),
             normals: self.normals.clone(),
             texcoords: self.texcoords.clone(),
-            data: scene::MeshFormat::Strips {
-                strips: self
-                    .strips
-                    .iter()
-                    .map(|strip| {
-                        let material =
-                            self.materials[strip.strip.material as usize % self.materials.len()];
-                        let tri_order = match strip.strip.tri_order {
-                            1 => TriStripOrder::CounterClockWise,
-                            2 => TriStripOrder::ClockWise,
-                            i => panic!("Invalid strip order {}!", i),
-                        };
-                        scene::MeshStrip {
-                            elements: match &strip.ext {
-                                Some(ext) => strip
-                                    .strip
-                                    .vertex_ids
-                                    .iter()
-                                    .zip(ext.elements.iter())
-                                    .map(|(id, edata)| scene::MeshPoint {
-                                        vertex_id: *id as u32,
-                                        texcoord_id: edata.texcoord_id as u32,
-                                        normal_id: edata.normal_id as u32,
-                                    })
-                                    .collect(),
-                                None => strip
-                                    .strip
-                                    .vertex_ids
-                                    .iter()
-                                    .map(|id| scene::MeshPoint {
-                                        vertex_id: *id as u32,
-                                        texcoord_id: 0,
-                                        normal_id: 0,
-                                    })
-                                    .collect(),
-                            },
-                            material,
-                            tri_order,
-                        }
-                    })
-                    .collect(),
-            },
-        }
-    }
-    /* pub fn create_scene_mesh(&self, name: String, names: &HashMap<i32,String>) -> scene::SceneTriMesh {
-        let mesh_materials = self.get_materials();
-        scene::SceneTriMesh {
-            name,
-            // Mesh.transform.transform is NOT actually applied to this mesh
-            transform: Transform3D::identity(),
-            vertices: self.vertices.clone(),
-            normals: self.normals.clone(),
-            texcoords: self.texcoords.clone(),
-            materials: self
-                .gen_triangles()
-                .into_iter()
-                .map(|surface| {
-                    let matid = mesh_materials[surface.material_index as usize % mesh_materials.len()];
-                    scene::SceneTriMeshMaterial {
-                        material: names.get(&matid).unwrap().clone(),
-                        elements: surface.tris.into_iter().map(|tri| {
-                            [
-                                scene::SceneTriMeshElement {
-                                    vertex: tri.points[0].vertex_id as usize,
-                                    texcoord: tri.points[0].texcoord_id as usize,
-                                    normal: tri.points[0].normal_id as usize,
-                                },
-                                scene::SceneTriMeshElement {
-                                    vertex: tri.points[1].vertex_id as usize,
-                                    texcoord: tri.points[1].texcoord_id as usize,
-                                    normal: tri.points[1].normal_id as usize,
-                                },
-                                scene::SceneTriMeshElement {
-                                    vertex: tri.points[2].vertex_id as usize,
-                                    texcoord: tri.points[2].texcoord_id as usize,
-                                    normal: tri.points[2].normal_id as usize,
-                                },
-                            ]
-                        }).collect()
-                    }
-                })
-                .collect(),
+            triangles,
             skin: None,
         }
-    }*/
+    }
 
     pub fn transform(&mut self, tx: &Transform3D) {
         for point in self.vertices.iter_mut() {

@@ -42,7 +42,7 @@ step = 0.0
 allow_greater = true
 allow_lesser = true
 editable = false
-prefix = "x2"
+prefix = "x3"
 
 [node name="Y1" type="SpinBox" parent="."]
 margin_top = 26.0
@@ -77,7 +77,7 @@ step = 0.0
 allow_greater = true
 allow_lesser = true
 editable = false
-prefix = "y2"
+prefix = "y3"
 
 [node name="Z1" type="SpinBox" parent="."]
 margin_top = 52.0
@@ -88,7 +88,7 @@ step = 0.0
 allow_greater = true
 allow_lesser = true
 editable = false
-prefix = "y1"
+prefix = "z1"
 
 [node name="Z2" type="SpinBox" parent="."]
 margin_left = 428.0
@@ -100,7 +100,7 @@ step = 0.0
 allow_greater = true
 allow_lesser = true
 editable = false
-prefix = "y1"
+prefix = "z2"
 
 [node name="Z3" type="SpinBox" parent="."]
 margin_left = 856.0
@@ -112,7 +112,7 @@ step = 0.0
 allow_greater = true
 allow_lesser = true
 editable = false
-prefix = "y1"
+prefix = "z3"
 
 [node name="O1" type="SpinBox" parent="."]
 margin_top = 78.0
@@ -147,7 +147,7 @@ step = 0.0
 allow_greater = true
 allow_lesser = true
 editable = false
-prefix = "o2"
+prefix = "o3"
 [connection signal="value_changed" from="X1" to="." method="_on_X1_value_changed"]
 [connection signal="value_changed" from="X2" to="." method="_on_X2_value_changed"]
 [connection signal="value_changed" from="X3" to="." method="_on_X3_value_changed"]

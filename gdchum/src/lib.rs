@@ -181,6 +181,10 @@ impl ChumArchive {
     pub fn get_hash_of_name(&self, _owner: &Resource, name: GodotString) -> i32 {
         libchum::util::hash_name_i32(name.to_utf8().as_str())
     }
+
+    pub fn get_name_map(&self) -> &HashMap<i32, String> {
+        self.archive.get_name_map()
+    }
 }
 
 fn init(handle: InitHandle) {

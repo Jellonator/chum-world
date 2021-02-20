@@ -3,7 +3,8 @@ use crate::common::*;
 use crate::format::TotemFormat;
 use crate::structure::ChumEnum;
 // use std::error::Error;
-// use crate::scene;
+use crate::scene;
+use std::collections::HashMap;
 use std::io::{self, Read};
 
 #[derive(Clone, Debug)]
@@ -55,6 +56,15 @@ pub struct AnimEntry {
 pub struct UnknownEntry {
     pub vertices: Vec<u32>,
     pub normals: Vec<u32>,
+}
+
+/// specialized stucture used for skin export
+#[derive(Clone, Copy)]
+pub struct SkinInfo<'a, 'b> {
+    pub names: &'a HashMap<i32, String>,
+    pub skin: &'b Skin,
+    pub skin_id: i32,
+    pub mesh_id: i32,
 }
 
 impl Skin {
@@ -153,51 +163,19 @@ impl Skin {
         Skin::read_from(&mut data.as_ref(), fmt)
     }
 
-    /*
-    pub fn generate_scene_skin_for_mesh(
+    pub fn generate_scene_skin_joints(
         &self,
-        names: &[String],
-        meshid: i32,
-        num_vertices: usize,
-    ) -> scene::SceneSkin {
-        if names.len() != self.vertex_groups.len() {
-            panic!();
-        }
-        let mut out_group_names = Vec::new();
-        let mut usable_groups = Vec::new();
-        for (name, group) in names.iter().zip(self.vertex_groups.iter()) {
-            if group
-                .sections
-                .iter()
-                .any(|x| self.meshes[x.mesh_index as usize] == meshid)
-            {
-                out_group_names.push(scene::SceneGroup {
-                    name: name.clone(),
-                    transform: Transform3D::identity(),
-                });
-                usable_groups.push(group);
-            }
-        }
-        let mut out_group_vertices = vec![scene::SceneSkinVertex::new_empty(); num_vertices];
-        for (i, group) in usable_groups.iter().enumerate() {
-            for subsection in group
-                .sections
-                .iter()
-                .filter(|x| self.meshes[x.mesh_index as usize] == meshid)
-            {
-                for vertex in subsection.vertices.iter() {
-                    out_group_vertices[vertex.vertex_id as usize]
-                        .influences
-                        .push(scene::SceneSkinInfluence {
-                            joint: i,
-                            weight: vertex.weight,
-                        })
-                }
-            }
-        }
-        scene::SceneSkin {
-            groups: out_group_names,
-            vertices: out_group_vertices,
-        }
-    }*/
+        names: &HashMap<i32, String>,
+    ) -> Vec<scene::SkinJoint> {
+        self.vertex_groups
+            .iter()
+            .map(|x| scene::SkinJoint {
+                transform: Transform3D::identity(),
+                name: names
+                    .get(&x.group_id)
+                    .map(|x| x.to_string())
+                    .unwrap_or(format!("{}", x.group_id)),
+            })
+            .collect()
+    }
 }

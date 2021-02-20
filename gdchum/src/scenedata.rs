@@ -5,6 +5,8 @@ use gdnative::prelude::*;
 use libchum::binary::ChumBinary;
 use libchum::reader;
 use libchum::scene;
+use libchum::util as chumutil;
+use std::collections::HashMap;
 
 #[derive(NativeClass)]
 #[inherit(Reference)]
@@ -12,30 +14,110 @@ pub struct SceneData {
     pub scene: scene::Scene,
 }
 
-pub fn get_node_name(mut name: &str) -> &str {
-    if name.starts_with("DB:>") {
-        name = &name[4..];
-    }
-    if let Some(pos) = name.rfind('>') {
-        let (_name, e) = name.split_at(pos);
-        let e = &e[1..];
-        e
-    } else {
-        name
-    }
-}
-
-pub fn get_node_path(mut name: &str) -> (Vec<&str>, &str) {
-    if name.starts_with("DB:>") {
-        name = &name[4..];
-    }
-    if let Some(pos) = name.rfind('>') {
-        let (name, e) = name.split_at(pos);
-        let e = &e[1..];
-        (name.split('>').collect(), e)
-    } else {
-        (Vec::new(), name)
-    }
+pub fn add_required_materials(scene: &mut scene::Scene, archive: Instance<ChumArchive, Shared>) {
+    let archive = unsafe { archive.assume_safe() };
+    archive
+        .map(|inner, res| {
+            for matid in scene.get_required_materials().iter() {
+                if scene.materials.contains_key(*matid) {
+                    continue;
+                }
+                let materialanim_fh = match inner.get_file_from_hash(res.as_ref(), *matid) {
+                    Some(x) => x,
+                    None => continue,
+                };
+                // Can be MATERIAL or MATERIALANIM
+                let materialanim_fh = unsafe { materialanim_fh.assume_safe() };
+                materialanim_fh
+                    .map(|materialanim_data, _materialanim_res| {
+                        match materialanim_data.get_type_str() {
+                            "MATERIAL" => {
+                                let material = match reader::material::Material::read_from(
+                                    &mut materialanim_data.get_data_as_vec().as_slice(),
+                                    materialanim_data.get_format(),
+                                ) {
+                                    Ok(x) => x,
+                                    Err(err) => {
+                                        panic!("MATERIAL file invalid: {}", err);
+                                    }
+                                };
+                                scene.materials.insert(
+                                    materialanim_data.get_name_str().to_owned(),
+                                    scene::SMaterial::from_material(&material),
+                                );
+                            }
+                            "MATERIALANIM" => {
+                                let materialanim =
+                                    match reader::materialanim::MaterialAnimation::read_from(
+                                        &mut materialanim_data.get_data_as_vec().as_slice(),
+                                        materialanim_data.get_format(),
+                                    ) {
+                                        Ok(x) => x,
+                                        Err(err) => {
+                                            panic!("MATERIALANIM file invalid: {}", err);
+                                        }
+                                    };
+                                let material_id = materialanim.material_id;
+                                let material_fh =
+                                    match inner.get_file_from_hash(res.as_ref(), material_id) {
+                                        Some(x) => x,
+                                        None => return,
+                                    };
+                                let material_fh = unsafe { material_fh.assume_safe() };
+                                material_fh
+                                    .map(|material_data, _material_res| {
+                                        let material = match reader::material::Material::read_from(
+                                            &mut material_data.get_data_as_vec().as_slice(),
+                                            material_data.get_format(),
+                                        ) {
+                                            Ok(x) => x,
+                                            Err(err) => {
+                                                panic!("MATERIAL file invalid: {}", err);
+                                            }
+                                        };
+                                        // have to add it under the MATERIALANIM's name
+                                        // for it to be recognized
+                                        scene.materials.insert(
+                                            materialanim_data.get_name_str().to_owned(),
+                                            scene::SMaterial::from_material(&material),
+                                        );
+                                    })
+                                    .unwrap();
+                            }
+                            o => panic!("INVALID: {}", o),
+                        }
+                    })
+                    .unwrap();
+            }
+            for texture_id in scene.get_required_textures().iter() {
+                if scene.materials.contains_key(*texture_id) {
+                    continue;
+                }
+                let texture_fh = match inner.get_file_from_hash(res.as_ref(), *texture_id) {
+                    Some(x) => x,
+                    None => return,
+                };
+                let texture_fh = unsafe { texture_fh.assume_safe() };
+                texture_fh
+                    .map(|texture_data, _texture_res| {
+                        let texture = match reader::bitmap::Bitmap::read_from(
+                            &mut texture_data.get_data_as_vec().as_slice(),
+                            texture_data.get_format(),
+                        ) {
+                            Ok(x) => x,
+                            Err(err) => {
+                                panic!("BITMAP file invalid: {}", err);
+                            }
+                        };
+                        scene.textures.insert(
+                            texture_data.get_name_str().to_owned(),
+                            scene::STexture { data: texture },
+                        );
+                    })
+                    .unwrap();
+            }
+        })
+        .unwrap();
 }
 
 #[methods]
@@ -47,12 +129,35 @@ impl SceneData {
     }
 
     #[export]
-    pub fn add_mesh(
+    pub fn has_node(&self, _owner: &Reference, path: Vec<String>) -> bool {
+        self.scene.root.get_node_ref(path.as_slice()).is_some()
+    }
+
+    #[export]
+    pub fn add_node(
         &mut self,
         _owner: &Reference,
-        node_name: GodotString,
+        path: Vec<String>,
+        name: String,
+        local_transform: Transform,
+    ) {
+        let base = self.scene.root.get_node_mut(path.as_slice()).unwrap();
+        base.tree.insert(
+            name,
+            scene::SNode {
+                tree: HashMap::new(),
+                transform: util::godot_to_transform3d(&local_transform),
+                graphic: scene::NodeGraphic::None,
+            },
+        );
+    }
+
+    #[export]
+    pub fn set_node_mesh(
+        &mut self,
+        _owner: &Reference,
+        node_path: Vec<String>,
         fh: Instance<ChumFile, Shared>,
-        tx: Transform,
     ) {
         let fh = unsafe { fh.assume_safe() };
         fh.map(|chumfile, _res| {
@@ -64,33 +169,23 @@ impl SceneData {
                     }
                 }
             });
-            let name = node_name.to_utf8().to_string();
             let mesh_name = chumfile.get_name_str();
-            let (node_path, node_name) = get_node_path(&name);
-            let parent_node = self.scene.node.make_parent_node(&node_path);
             let trimesh = mesh.create_scene_mesh();
-            let node = scene::SNode {
-                name: node_name.to_string(),
-                children: Vec::new(),
-                transform: util::godot_to_transform3d(&tx),
-                visual_instance: Some(mesh_name.to_string()),
+            let node = self.scene.root.get_node_mut(node_path.as_slice()).unwrap();
+            node.graphic = scene::NodeGraphic::Mesh {
+                mesh: mesh_name.to_string(),
             };
-            parent_node.children.push(node);
-            self.scene.visual_instances.insert(
-                mesh_name.to_string(),
-                scene::SVisualInstance::Mesh { mesh: trimesh },
-            );
+            self.scene.meshes.insert(mesh_name.to_string(), trimesh);
         })
         .unwrap();
     }
 
     #[export]
-    pub fn add_surface(
+    pub fn set_node_surface(
         &mut self,
         _owner: &Reference,
-        node_name: GodotString,
+        node_path: Vec<String>,
         fh: Instance<ChumFile, Shared>,
-        tx: Transform,
         quality: i64,
     ) {
         let fh = unsafe { fh.assume_safe() };
@@ -107,41 +202,29 @@ impl SceneData {
                 reader::surface::SurfaceGenMode::BezierInterp(quality as usize),
             );
             let surface_name = chumfile.get_name_str();
-            let name = node_name.to_utf8().to_string();
-            let (node_path, node_name) = get_node_path(&name);
-            let parent_node = self.scene.node.make_parent_node(&node_path);
-            let node = scene::SNode {
-                name: node_name.to_string(),
-                children: Vec::new(),
-                transform: util::godot_to_transform3d(&tx),
-                visual_instance: Some(surface_name.to_string()),
+            let node = self.scene.root.get_node_mut(node_path.as_slice()).unwrap();
+            node.graphic = scene::NodeGraphic::Mesh {
+                mesh: surface_name.to_string(),
             };
-            parent_node.children.push(node);
-            self.scene.visual_instances.insert(
-                surface_name.to_string(),
-                scene::SVisualInstance::Mesh { mesh: trimesh },
-            );
-            /*let mut trimesh = surface.generate_trimesh(
-                name,
-                reader::surface::SurfaceGenMode::BezierInterp(quality as usize),
-            );
-            trimesh.transform = util::godot_to_transform3d(&tx);
-            self.scene.add_trimesh(trimesh);*/
+            self.scene.meshes.insert(surface_name.to_string(), trimesh);
         })
         .unwrap();
     }
 
     #[export]
-    pub fn add_skin(
+    pub fn set_node_skin(
         &mut self,
         _owner: &Reference,
-        node_name: GodotString,
+        node_path: Vec<String>,
         fh: Instance<ChumFile, Shared>,
-        tx: Transform,
         _quality: i64,
-        include_skin: bool,
+        _include_skin: bool,
     ) {
-        /*let fh = unsafe { fh.assume_safe() };
+        let fh = unsafe { fh.assume_safe() };
+        let node = self.scene.root.get_node_mut(node_path.as_slice()).unwrap();
+        // let visual_instances = &mut self.scene.visual_instances;
+        // let skins = &mut self.scene.skins;
+        let meshes = &mut self.scene.meshes;
         fh.map(|chumfile, _res| {
             let skin = chumfile.borrow_data(|mut data| {
                 match reader::skin::Skin::read_data(&mut data, chumfile.get_format()) {
@@ -151,70 +234,77 @@ impl SceneData {
                     }
                 }
             });
-            let name = node_name.to_utf8().to_string();
+            // add skin
             let archiveinstance = unsafe { chumfile.get_archive_instance().assume_safe() };
-            let mut trimeshes = Vec::new();
+            //let mut trimeshes = Vec::new();
             archiveinstance
                 .map(|archive, archive_res| {
-                    let names: Vec<String> = skin
-                        .vertex_groups
-                        .iter()
-                        .map(|group| archive.maybe_get_name_from_hash_str(group.group_id))
-                        .collect();
-                    for meshid in skin.meshes.iter() {
-                        if let Some(meshfile) = archive.get_file_from_hash(&archive_res, *meshid) {
+                    let mut skin_meshes = Vec::new();
+                    // create a child for each mesh in skin
+                    for mesh_id in skin.meshes.iter() {
+                        if let Some(meshfile) = archive.get_file_from_hash(&archive_res, *mesh_id) {
                             let meshfile = unsafe { meshfile.assume_safe() };
                             meshfile
-                                .map(|meshscript, _meshres| match meshscript.get_type_str() {
-                                    "MESH" => {
-                                        let mesh = match reader::mesh::Mesh::read_data(
-                                            &mut meshscript.get_data_as_vec(),
-                                            meshscript.get_format(),
-                                        ) {
-                                            Ok(x) => x,
-                                            Err(err) => {
-                                                panic!("MESH file invalid: {}", err);
+                                .map(|meshscript, _meshres| {
+                                    match meshscript.get_type_str() {
+                                        "MESH" => {
+                                            let mesh = match reader::mesh::Mesh::read_data(
+                                                &mut meshscript.get_data_as_vec(),
+                                                meshscript.get_format(),
+                                            ) {
+                                                Ok(x) => x,
+                                                Err(err) => {
+                                                    panic!("MESH file invalid: {}", err);
+                                                }
+                                            };
+                                            let new_name = format!(
+                                                "{}.skin{}",
+                                                meshscript.get_name_str(),
+                                                chumfile.get_hash_id_ownerless()
+                                            );
+                                            let new_name_hash = chumutil::hash_name_i32(&new_name);
+                                            // add mesh if not exists
+                                            if !meshes.contains_key(new_name_hash) {
+                                                let mut trimesh = mesh.create_scene_mesh();
+                                                trimesh.skin = mesh.generate_mesh_skin(
+                                                    reader::skin::SkinInfo {
+                                                        names: archive.get_name_map(),
+                                                        skin: &skin,
+                                                        skin_id: chumfile.get_hash_id_ownerless(),
+                                                        mesh_id: *mesh_id,
+                                                    },
+                                                );
+                                                meshes.insert(new_name.to_string(), trimesh);
                                             }
-                                        };
-                                        let mut trimesh = mesh.create_scene_mesh(
-                                            util::get_basename(meshscript.get_name_str())
-            .to_owned(),
-                                        );
-                                        if include_skin {
-                                            trimesh.skin = Some(skin.generate_scene_skin_for_mesh(
-                                                names.as_slice(),
-                                                *meshid,
-                                                mesh.vertices.len(),
-                                            ));
+                                            skin_meshes.push(new_name);
                                         }
-                                        trimeshes.push(trimesh);
+                                        _ => {}
                                     }
-                                    _ => {}
                                 })
                                 .unwrap();
                         } else {
-                            godot_warn!("Mesh {} does not exist!", meshid);
+                            godot_warn!("Mesh {} does not exist!", mesh_id);
                         }
                     }
+                    // add node
+                    node.graphic = scene::NodeGraphic::Skin {
+                        skin: scene::Skin {
+                            joints: skin.generate_scene_skin_joints(archive.get_name_map()),
+                        },
+                        meshes: skin_meshes,
+                    };
                 })
                 .unwrap();
-            if let Some(mut realmodel) = scene::merge_mesh_vec(trimeshes) {
-                scene::try_determine_group_transforms(&mut realmodel);
-                realmodel.transform = util::godot_to_transform3d(&tx);
-                realmodel.name = name;
-                self.scene.add_trimesh(realmodel);
-            }
         })
-        .unwrap();*/
+        .unwrap();
     }
 
     #[export]
-    pub fn add_lod(
+    pub fn set_node_lod(
         &mut self,
         owner: &Reference,
-        node_name: GodotString,
+        node_path: Vec<String>,
         fh: Instance<ChumFile, Shared>,
-        tx: Transform,
         quality: i64,
         include_skin: bool,
     ) {
@@ -241,15 +331,14 @@ impl SceneData {
                         }
                         .unwrap();
                         match skin_type.as_str() {
-                            "SKIN" => self.add_skin(
+                            "SKIN" => self.set_node_skin(
                                 owner,
-                                node_name.clone(),
+                                node_path.clone(),
                                 skin_fh,
-                                tx,
                                 quality,
                                 include_skin,
                             ),
-                            "MESH" => self.add_mesh(owner, node_name.clone(), skin_fh, tx),
+                            "MESH" => self.set_node_mesh(owner, node_path.clone(), skin_fh),
                             _ => {}
                         };
                     }
@@ -265,122 +354,13 @@ impl SceneData {
         _owner: &Reference,
         archive: Instance<ChumArchive, Shared>,
     ) {
-        let archive = unsafe { archive.assume_safe() };
-        archive
-            .map(|inner, res| {
-                for matid in self.scene.get_required_materials().iter() {
-                    if self.scene.materials.contains_key(*matid) {
-                        continue;
-                    }
-                    let materialanim_fh = match inner.get_file_from_hash(res.as_ref(), *matid) {
-                        Some(x) => x,
-                        None => continue,
-                    };
-                    // Can be MATERIAL or MATERIALANIM
-                    let materialanim_fh = unsafe { materialanim_fh.assume_safe() };
-                    materialanim_fh
-                        .map(|materialanim_data, _materialanim_res| {
-                            match materialanim_data.get_type_str() {
-                                "MATERIAL" => {
-                                    let material = match reader::material::Material::read_from(
-                                        &mut materialanim_data.get_data_as_vec().as_slice(),
-                                        materialanim_data.get_format(),
-                                    ) {
-                                        Ok(x) => x,
-                                        Err(err) => {
-                                            panic!("MATERIAL file invalid: {}", err);
-                                        }
-                                    };
-                                    self.scene.materials.insert(
-                                        materialanim_data.get_name_str().to_owned(),
-                                        scene::SMaterial::from_material(&material),
-                                    );
-                                }
-                                "MATERIALANIM" => {
-                                    let materialanim =
-                                        match reader::materialanim::MaterialAnimation::read_from(
-                                            &mut materialanim_data.get_data_as_vec().as_slice(),
-                                            materialanim_data.get_format(),
-                                        ) {
-                                            Ok(x) => x,
-                                            Err(err) => {
-                                                panic!("MATERIALANIM file invalid: {}", err);
-                                            }
-                                        };
-                                    let material_id = materialanim.material_id;
-                                    let material_fh =
-                                        match inner.get_file_from_hash(res.as_ref(), material_id) {
-                                            Some(x) => x,
-                                            None => return,
-                                        };
-                                    let material_fh = unsafe { material_fh.assume_safe() };
-                                    material_fh
-                                        .map(|material_data, _material_res| {
-                                            let material =
-                                                match reader::material::Material::read_from(
-                                                    &mut material_data.get_data_as_vec().as_slice(),
-                                                    material_data.get_format(),
-                                                ) {
-                                                    Ok(x) => x,
-                                                    Err(err) => {
-                                                        panic!("MATERIAL file invalid: {}", err);
-                                                    }
-                                                };
-                                            // have to add it under the MATERIALANIM's name
-                                            // for it to be recognized
-                                            self.scene.materials.insert(
-                                                materialanim_data.get_name_str().to_owned(),
-                                                scene::SMaterial::from_material(&material),
-                                            );
-                                        })
-                                        .unwrap();
-                                }
-                                o => panic!("INVALID: {}", o),
-                            }
-                        })
-                        .unwrap();
-                }
-                for texture_id in self.scene.get_required_textures().iter() {
-                    if self.scene.materials.contains_key(*texture_id) {
-                        continue;
-                    }
-                    let texture_fh = match inner.get_file_from_hash(res.as_ref(), *texture_id) {
-                        Some(x) => x,
-                        None => return,
-                    };
-                    let texture_fh = unsafe { texture_fh.assume_safe() };
-                    texture_fh
-                        .map(|texture_data, _texture_res| {
-                            let texture = match reader::bitmap::Bitmap::read_from(
-                                &mut texture_data.get_data_as_vec().as_slice(),
-                                texture_data.get_format(),
-                            ) {
-                                Ok(x) => x,
-                                Err(err) => {
-                                    panic!("BITMAP file invalid: {}", err);
-                                }
-                            };
-                            self.scene.textures.insert(
-                                texture_data.get_name_str().to_owned(),
-                                scene::STexture { data: texture },
-                            );
-                        })
-                        .unwrap();
-                }
-            })
-            .unwrap();
+        add_required_materials(&mut self.scene, archive);
     }
 
     #[export]
     pub fn export_to(&self, _owner: &Reference, path: GodotString) {
-        // add required materials
-        // let mut buffer = File::create(path.to_utf8().as_str()).unwrap();
-        // collada::scene_to_writer_dae(&self.scene, &mut buffer).unwrap();
-        //let gltfroot = chumgltf::export_scene(&self.scene);
-        // let writer = File::create(path.to_utf8().as_str()).expect("I/O Error");
         self.scene
             .export_to(path.to_utf8().as_str())
             .expect("Serialization Error");
-        // gltf_json::serialize::to_writer_pretty(writer, &gltfroot).expect("Serialization Error");
     }
 }

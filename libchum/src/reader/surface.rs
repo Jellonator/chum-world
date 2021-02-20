@@ -410,14 +410,12 @@ impl SurfaceObject {
         let mut normal_indices: HashMap<[u32; 3], u32> = HashMap::new();
         let mut texcoord_indices: HashMap<[u32; 2], u32> = HashMap::new();
         let mut out = scene::Mesh {
+            skin: None, // TODO: Implement skinning for generated surfaces
             vertices: Vec::new(),
             normals: Vec::new(),
             texcoords: Vec::new(),
-            data: scene::MeshFormat::Triangles {
-                data: HashMap::new(),
-            },
+            triangles: HashMap::new(),
         };
-        let mut data = HashMap::new();
         let gen = self.generate_meshes(mode);
         for mesh in gen.iter() {
             for quad in mesh.quads.iter() {
@@ -450,7 +448,10 @@ impl SurfaceObject {
             }
         }
         for mesh in gen.iter() {
-            let vec = data.entry(mesh.material_index).or_insert(Vec::new());
+            let vec = out
+                .triangles
+                .entry(mesh.material_index)
+                .or_insert(Vec::new());
             for quad in mesh.quads.iter() {
                 for tri in quad.tris().iter() {
                     vec.push(scene::MeshTriangle {
@@ -478,7 +479,6 @@ impl SurfaceObject {
                 }
             }
         }
-        out.data = scene::MeshFormat::Triangles { data };
         out
     }
 }

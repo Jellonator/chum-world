@@ -419,6 +419,11 @@ impl ChumArchive {
     pub fn get_names(&self) -> impl Iterator<Item = &String> {
         self.names.values()
     }
+
+    /// Get this archive's name map
+    pub fn get_name_map(&self) -> &HashMap<i32, String> {
+        &self.names
+    }
 }
 
 #[cfg(test)]

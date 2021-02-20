@@ -1,0 +1,53 @@
+flagsA
+F - 0
+E - 0
+D - 0
+C - 0
+B - 0
+A - 0
+9 - 0
+8 - 0
+7 - 0
+6 - 0
+5 - 0
+4 - 0
+3 - Set for most (but not all) LOD
+2 - Always set (unsure why)
+1 - 0
+0 - 0
+flagsB
+F - Probably used to mark objects as non-collidable
+E - 0
+D - 0
+C - 0
+B - Set if node has skinning information (resource is SKIN, or LOD that refers to SKIN)
+A - Seems to correlate to interactible or animated objects/NPCs? All LODs with this have animations
+9 - Can't get a good read on this, related to lights and sound????
+8 - No idea
+7 - No idea, maybe related to sound?
+6 - No idea
+5 - No idea
+4 - 0
+3 - 0
+2 - 0
+1 - 0
+0 - always loaded? Always includes ROOT, includes many splines and lights (typically suns)
+
+unk2A - related to visuals
+unk2B - related to collision
+
+                   | unk2A | unk2B |       flagsA        |       flagsB
+                   |       |       | FEDC BA98 7654 3210 | FEDC BA98 7654 3210
+vent PARTICLES     |  true | false | 0000 0000 0000 0100 | 0000 0000 0110 0000
+no-collide SURFACE |  true | false | 0000 0000 0000 0100 | 1000 0000 0100 0000
+no-collide MESH    |  true | false | 0000 0000 0000 0100 | 1000 0000 0100 0000
+SPLINE             | false | false | 0000 0000 0000 0100 | 0000 0000 0000 0001
+Squidward path LOD |  true |  true | 0000 0000 0000 1100 | 0000 1011 1110 0000
+tile & kpatty LOD  |  true |  true | 0000 0000 0000 1100 | 0000 0000 0100 0000
+floor SURFACE      |  true |  true | 0000 0000 0000 0100 | 0000 0000 0100 0000
+house MESH         |  true |  true | 0000 0000 0000 0100 | 0000 0000 0100 0000
+hidden collide SU  |  true |  true | 0000 0000 0000 0100 | 0000 0000 0100 0000
+COLLISIONVOL       | false |  true | 0000 0000 0000 0100 | 0000 0000 0110 0000
+root               | false |  true | 0000 0000 0000 0100 | 0000 0000 0110 0001
+backdoor barrel LOD|  true |  true | 0000 0000 0000 1100 | 0000 1000 0100 0000
+script LOD         |  true |  true | 0000 0000 0000 1100 | 0000 1000 0100 0000

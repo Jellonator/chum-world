@@ -37,6 +37,21 @@ func _on_Surface_toggled(button_pressed: bool):
 		node_surface_root.modulate = Color.gray
 		node_surface_label.modulate = Color.darkgray
 
+
+func create_node(scene, node_name: String, node_view) -> Array:
+	if node_view.parent_id == 0:
+		return []
+	var parent_fh = archive.get_file_from_hash(node_view.parent_id)
+	var parent_view = ChumReader.get_node_view(parent_fh)
+	var arr = create_node(scene, parent_fh.name, parent_view)
+	if not scene.has_node(arr + [node_name]):
+		print("CREATING NODE:  ", arr)
+		scene.add_node(arr, node_name, node_view.local_transform)
+	else:
+		print("ALREADY EXISTS: ", arr)
+	arr.push_back(node_name)
+	return arr
+
 func _on_SceneExportDialog_confirmed():
 #	var dict := {
 	var file_name = $VBox/File/FileString.text
@@ -62,13 +77,17 @@ func _on_SceneExportDialog_confirmed():
 			if resfile == null:
 				continue
 			if include_mesh and resfile.type == "MESH":
-				scene.add_mesh(node_name, resfile, node_view.global_transform)
+				var path = create_node(scene, node_name, node_view)
+				scene.set_node_mesh(path, resfile)
 			if include_surface and resfile.type == "SURFACE":
-				scene.add_surface(node_name, resfile, node_view.global_transform, surface_quality)
+				var path = create_node(scene, node_name, node_view)
+				scene.set_node_surface(path, resfile, surface_quality)
 			if include_lod and resfile.type == "LOD":
-				scene.add_lod(node_name, resfile, node_view.global_transform, surface_quality, false)
+				var path = create_node(scene, node_name, node_view)
+				scene.set_node_lod(path, resfile, surface_quality, false)
 			if include_skin and resfile.type == "SKIN":
-				scene.add_skin(node_name, resfile, node_view.global_transform, surface_quality, false)
+				var path = create_node(scene, node_name, node_view)
+				scene.set_node_skin(path, resfile, surface_quality, false)
 			if include_rotshape and resfile.type == "ROTSHAPE":
 				pass
 			if include_light and resfile.type == "LIGHT":

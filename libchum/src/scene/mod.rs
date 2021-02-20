@@ -12,39 +12,112 @@ use std::fs;
 
 pub mod gltf;
 
-/// Simple skinning data
-#[derive(Clone, Debug)]
-pub struct Skin {
-    pub vertices: Vec<SkinVertex>,
-    pub joints: Vec<SkinJoint> // skins in ChumWorld have no hierarchy
-}
-
-impl Skin {
-    pub fn generate_from_skin_mesh(skin: &reader::skin::Skin, mesh: &reader::mesh::Mesh, meshid: i32) -> Skin {
-
-        /*let mut out = Skin {
-        }*/
-        unimplemented!()
-    }
-}
-
 /// Skin join
 #[derive(Clone, Debug)]
 pub struct SkinJoint {
     pub transform: common::Transform3D, // inverse bind matrix is calculated on write
+    pub name: String,
 }
 
 /// Skinning data per vertex
 #[derive(Clone, Debug)]
 pub struct SkinVertex {
-    pub elements: [SkinVertexElement; 4]
+    pub elements: [SkinVertexElement; 4],
+}
+
+impl Default for SkinVertex {
+    fn default() -> SkinVertex {
+        SkinVertex {
+            elements: [
+                SkinVertexElement::default(),
+                SkinVertexElement::default(),
+                SkinVertexElement::default(),
+                SkinVertexElement::default(),
+            ],
+        }
+    }
+}
+
+impl SkinVertex {
+    pub fn length(&self) -> f32 {
+        self.elements.iter().map(|x| x.weight).sum()
+    }
+
+    pub fn normalize(&mut self) {
+        let sum_weight: f32 = self.elements.iter().map(|x| x.weight).sum();
+        if sum_weight <= 1e-10 {
+            return;
+        }
+        for element in self.elements.iter_mut() {
+            element.weight = element.weight / sum_weight;
+        }
+    }
+
+    fn find_insert_index(&self, weight: f32) -> Option<usize> {
+        for i in 0..4 {
+            if weight > self.elements[i].weight {
+                return Some(i);
+            }
+        }
+        None
+    }
+
+    pub fn push_element(&mut self, element: SkinVertexElement) {
+        if let Some(idx) = self.find_insert_index(element.weight) {
+            // push elements out of the way
+            for i in (idx..3).rev() {
+                self.elements[i + 1] = self.elements[i];
+            }
+            // add new element
+            self.elements[idx] = element;
+        }
+    }
+
+    pub fn get_weight_array(&self) -> [f32; 4] {
+        [
+            self.elements[0].weight,
+            self.elements[1].weight,
+            self.elements[2].weight,
+            self.elements[3].weight,
+        ]
+    }
+
+    pub fn get_joint_array(&self) -> [u16; 4] {
+        [
+            self.elements[0].joint,
+            self.elements[1].joint,
+            self.elements[2].joint,
+            self.elements[3].joint,
+        ]
+    }
 }
 
 /// A single element in a skin vertex
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Copy)]
 pub struct SkinVertexElement {
-    pub joint: u32,
-    pub weight: f32
+    pub joint: u16,
+    pub weight: f32,
+}
+
+impl Default for SkinVertexElement {
+    fn default() -> SkinVertexElement {
+        SkinVertexElement {
+            joint: 0,
+            weight: 0.0,
+        }
+    }
+}
+
+/// A skin
+#[derive(Clone, Debug)]
+pub struct Skin {
+    pub joints: Vec<SkinJoint>, // skins in TotemTech have no hierarchy
+}
+
+/// A mesh's skinning information
+#[derive(Clone, Debug)]
+pub struct MeshSkin {
+    pub vertices: Vec<SkinVertex>,
 }
 
 /// A simple triangle mesh that strips away non-exportable data
@@ -53,59 +126,14 @@ pub struct Mesh {
     pub vertices: Vec<common::Vector3>,
     pub texcoords: Vec<common::Vector2>,
     pub normals: Vec<common::Vector3>,
-    pub data: MeshFormat,
-}
-
-/// The internal format of the Mesh
-#[derive(Clone, Debug)]
-pub enum MeshFormat {
-    Triangles {
-        data: HashMap<i32, Vec<MeshTriangle>>,
-    },
-    Strips {
-        strips: Vec<MeshStrip>,
-    },
+    pub triangles: HashMap<i32, Vec<MeshTriangle>>,
+    pub skin: Option<MeshSkin>,
 }
 
 /// A single triangle in a mesh
 #[derive(Clone, Debug)]
 pub struct MeshTriangle {
     pub corners: [MeshPoint; 3],
-}
-
-/// A simpler version of StripData
-#[derive(Clone, Debug)]
-pub struct MeshStrip {
-    pub elements: Vec<MeshPoint>,
-    pub material: i32,
-    pub tri_order: common::TriStripOrder,
-}
-
-impl MeshStrip {
-    pub fn iterate_triangles<'a>(
-        &'a self,
-    ) -> std::iter::Map<
-        std::iter::Zip<
-            std::ops::Range<usize>,
-            std::iter::Repeat<(&Vec<MeshPoint>, common::TriStripOrder)>,
-        >,
-        fn((usize, (&Vec<MeshPoint>, common::TriStripOrder))) -> [&MeshPoint; 3],
-    > {
-        let n = self.elements.len();
-        let v = &self.elements;
-        let o = self.tri_order;
-        // have to start at two because 0..(n-2) has the (very unlikely) chance to overflow
-        (2..n).zip(std::iter::repeat((v, o))).map(|(i, (v, o))| {
-            let i1 = i - 2;
-            let a = (i1 % 2) + 1;
-            let b = 3 - a;
-            let (i2, i3) = match o {
-                common::TriStripOrder::ClockWise => (i1 + a, i1 + b),
-                common::TriStripOrder::CounterClockWise => (i1 + b, i1 + a),
-            };
-            [&v[i1], &v[i2], &v[i3]]
-        })
-    }
 }
 
 /// A single point in a Mesh
@@ -148,81 +176,51 @@ impl SMaterial {
 }
 
 /// A single visual instance
-#[derive(Clone)]
-pub enum SVisualInstance {
-    Mesh {
-        mesh: Mesh,
-        skin: Option<i32>
-    },
-    /*Surface {
-        surface: reader::surface::SurfaceObject
-    }*/
+#[derive(Clone, Debug)]
+pub enum NodeGraphic {
+    Mesh { mesh: String },
+    Skin { skin: Skin, meshes: Vec<String> },
+    None,
 }
 
 /// A single node
 #[derive(Clone, Debug)]
 pub struct SNode {
-    pub name: String,
-    pub children: Vec<SNode>,
+    pub tree: HashMap<String, SNode>,
     pub transform: common::Transform3D,
-    pub visual_instance: Option<String>,
+    pub graphic: NodeGraphic,
 }
 
 impl SNode {
-    pub fn new(name: String) -> SNode {
+    pub fn new() -> SNode {
         SNode {
-            name,
-            children: Vec::new(),
+            tree: HashMap::new(),
             transform: common::Transform3D::identity(),
-            visual_instance: None,
+            graphic: NodeGraphic::None,
         }
     }
 
-    pub fn find_node_ref(&self, name: &str) -> Option<&SNode> {
-        for child in self.children.iter() {
-            if child.name == name {
-                return Some(child);
+    pub fn get_node_ref<S: AsRef<str>>(&self, path: &[S]) -> Option<&SNode> {
+        if let Some(first) = path.first() {
+            if let Some(child) = self.tree.get(first.as_ref()) {
+                child.get_node_ref(&path[1..])
+            } else {
+                None
             }
-        }
-        None
-    }
-
-    pub fn find_node_mut(&mut self, name: &str) -> Option<&mut SNode> {
-        for child in self.children.iter_mut() {
-            if child.name == name {
-                return Some(child);
-            }
-        }
-        None
-    }
-
-    pub fn make_parent_node(&mut self, name: &[&str]) -> &mut SNode {
-        if let Some(first) = name.first() {
-            let mut index = None;
-            {
-                for (i, child) in self.children.iter().enumerate() {
-                    if child.name == *first {
-                        index = Some(i);
-                        //return child.make_parent_node(&name[1..]);
-                    }
-                }
-            }
-            // fuck you borrow checker for making me do this :rage emoji:
-            if let Some(i) = index {
-                return self.children[i].make_parent_node(&name[1..]);
-            }
-            self.children.push(SNode {
-                name: first.to_string(),
-                children: Vec::new(),
-                visual_instance: None,
-                transform: common::Transform3D::identity(),
-            });
-            self.children
-                .last_mut()
-                .unwrap()
-                .make_parent_node(&name[1..])
         } else {
-            self
+            Some(self)
+        }
+    }
+
+    pub fn get_node_mut<S: AsRef<str>>(&mut self, path: &[S]) -> Option<&mut SNode> {
+        if let Some(first) = path.first() {
+            if let Some(child) = self.tree.get_mut(first.as_ref()) {
+                child.get_node_mut(&path[1..])
+            } else {
+                None
+            }
+        } else {
+            Some(self)
         }
     }
 }
@@ -230,11 +228,10 @@ impl SNode {
 /// A full scene
 #[derive(Clone)]
 pub struct Scene {
-    pub skins: IdMap<Skin>,
     pub textures: IdMap<STexture>,
     pub materials: IdMap<SMaterial>,
-    pub visual_instances: IdMap<SVisualInstance>,
-    pub node: SNode,
+    pub meshes: IdMap<Mesh>,
+    pub root: SNode,
 }
 
 impl Scene {
@@ -242,8 +239,8 @@ impl Scene {
         Scene {
             textures: IdMap::new(),
             materials: IdMap::new(),
-            visual_instances: IdMap::new(),
-            node: SNode::new("".to_string()),
+            meshes: IdMap::new(),
+            root: SNode::new(),
         }
     }
 
@@ -274,17 +271,8 @@ impl Scene {
 
     pub fn get_required_materials(&self) -> HashSet<i32> {
         let mut v = HashSet::new();
-        for (_i, vis) in self.visual_instances.iter() {
-            match vis.get_value_ref() {
-                SVisualInstance::Mesh { mesh } => match &mesh.data {
-                    MeshFormat::Triangles { data } => {
-                        v.extend(data.keys());
-                    }
-                    MeshFormat::Strips { strips } => {
-                        v.extend(strips.iter().map(|x| x.material));
-                    }
-                },
-            }
+        for (_i, value) in self.meshes.iter() {
+            v.extend(value.get_value_ref().triangles.keys());
         }
         v
     }

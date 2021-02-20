@@ -211,10 +211,10 @@ chum_struct_generate_readwrite! {
 }
 
 chum_struct_enum! {
-    /// String              Hash | Resource Type
-    /// ------------------------------------------------
-    ///                        0 | (empty)
-    /// USERDEFINE   -1879206489 | USERDEFINE (embedded)
+    /// | String              Hash | Resource Type
+    /// |-------------------------------------------------
+    /// |                        0 | (empty)
+    /// | USERDEFINE   -1879206489 | USERDEFINE (embedded)
     #[derive(Clone)]
     pub enum NodeSkinUnk2ExtraDataUnion [i32] {
         Empty: 0 => {},

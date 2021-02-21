@@ -95,7 +95,7 @@ pub fn add_required_materials(scene: &mut scene::Scene, archive: Instance<ChumAr
                 }
                 let texture_fh = match inner.get_file_from_hash(res.as_ref(), *texture_id) {
                     Some(x) => x,
-                    None => return,
+                    None => continue,
                 };
                 let texture_fh = unsafe { texture_fh.assume_safe() };
                 texture_fh

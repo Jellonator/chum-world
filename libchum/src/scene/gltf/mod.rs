@@ -350,6 +350,7 @@ fn generate_primitive(
 }
 
 fn export_material(
+    mat_name: String,
     material: &scene::SMaterial,
     root: &mut json::Root,
     tex: &IdMap<(u32, reader::bitmap::AlphaLevel)>,
@@ -397,11 +398,11 @@ fn export_material(
         emissive_factor: json::material::EmissiveFactor(material.emission.to_array()),
         extensions: Default::default(),
         extras: Default::default(),
-        name: None,
+        name: Some(mat_name),
     });
 }
 
-fn export_texture(texture: &scene::STexture, buffer: &mut Vec<u8>, root: &mut json::Root) {
+fn export_texture(tex_name: String, texture: &scene::STexture, buffer: &mut Vec<u8>, root: &mut json::Root) {
     // add png image to buffer
     let buffer_offset = buffer.len() as u32;
     texture.data.export_png(buffer).expect("Woopsie daisey :)");
@@ -427,7 +428,7 @@ fn export_texture(texture: &scene::STexture, buffer: &mut Vec<u8>, root: &mut js
         uri: None,
         extensions: None,
         extras: Default::default(),
-        name: None,
+        name: Some(tex_name.clone()),
     });
     // add texture
     root.textures.push(json::Texture {
@@ -435,7 +436,7 @@ fn export_texture(texture: &scene::STexture, buffer: &mut Vec<u8>, root: &mut js
         source: index_image,
         extensions: Default::default(),
         extras: Default::default(),
-        name: None,
+        name: Some(tex_name),
     });
 }
 
@@ -463,7 +464,7 @@ fn export_skin(
             },
             mesh: None,
             skin: None,
-            name: None,
+            name: Some(joint.name.clone()),
             rotation: None,
             scale: None,
             translation: None,
@@ -493,7 +494,7 @@ fn export_skin(
         translation: None,
         mesh: None,
         skin: None,
-        name: None,
+        name: Some("root".to_string()),
         rotation: None,
         scale: None,
         weights: None,
@@ -540,6 +541,7 @@ fn export_skin(
 }
 
 fn export_mesh(
+    mesh_name: String,
     mesh: &scene::Mesh,
     buffer: &mut Vec<u8>,
     root: &mut json::Root,
@@ -549,7 +551,7 @@ fn export_mesh(
     let mut json_mesh = json::Mesh {
         extensions: Default::default(),
         extras: Default::default(),
-        name: None,
+        name: Some(mesh_name),
         primitives: Vec::new(),
         weights: None,
     };
@@ -695,10 +697,10 @@ pub fn export_scene(scn: &scene::Scene, binary: bool) -> (json::Root, Vec<u8>) {
     let mut buffer = Vec::new();
     let mut tex_indices = IdMap::<(u32, reader::bitmap::AlphaLevel)>::new();
     for (_id, elem) in scn.textures.iter() {
-        println!("Adding texture: {}", elem.get_name());
+        println!("Adding texture {}", elem.get_name());
         let tex = elem.get_value_ref();
         let index = root.textures.len() as u32;
-        export_texture(tex, &mut buffer, &mut root);
+        export_texture(elem.get_name().to_string(), tex, &mut buffer, &mut root);
         tex_indices.insert(
             elem.get_name().to_string(),
             (index, tex.data.get_alpha_level()),
@@ -707,19 +709,19 @@ pub fn export_scene(scn: &scene::Scene, binary: bool) -> (json::Root, Vec<u8>) {
     // export materials
     let mut mat_indices = IdMap::<u32>::new();
     for (_id, elem) in scn.materials.iter() {
-        println!("Adding material: {}", elem.get_name());
+        println!("Adding material {}", elem.get_name());
         let mat = elem.get_value_ref();
         let index = root.materials.len() as u32;
-        export_material(mat, &mut root, &tex_indices);
+        export_material(elem.get_name().to_string(), mat, &mut root, &tex_indices);
         mat_indices.insert(elem.get_name().to_string(), index);
     }
     // export meshes
     let mut mesh_indices = HashMap::<String, MeshIndex>::new();
     for (_id, elem) in scn.meshes.iter() {
         let mesh = elem.get_value_ref();
-        let index = export_mesh(mesh, &mut buffer, &mut root, &mat_indices, &scn.materials);
+        let index = export_mesh(elem.get_name().to_string(), mesh, &mut buffer, &mut root, &mat_indices, &scn.materials);
         mesh_indices.insert(elem.get_name().to_string(), index);
-        println!("Inserting: {}", elem.get_name());
+        //println!("Inserting: {}", elem.get_name());
     }
     // export nodes
     let node_root_idx = export_node("root", &scn.root, &mesh_indices, &mut root, &mut buffer);

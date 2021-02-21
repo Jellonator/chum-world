@@ -429,7 +429,6 @@ impl Mesh {
             }
         }
         for vertex in vertices.iter_mut() {
-            println!("{}", vertex.length());
             vertex.normalize();
         }
         let out = scene::MeshSkin { vertices };

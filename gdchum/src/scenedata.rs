@@ -286,11 +286,17 @@ impl SceneData {
                             godot_warn!("Mesh {} does not exist!", mesh_id);
                         }
                     }
+                    let mut scene_skin = scene::Skin {
+                        joints: skin.generate_scene_skin_joints(archive.get_name_map()),
+                    };
+                    scene_skin.auto_set_joint_transforms(skin_meshes.iter().filter_map(|id| {
+                        meshes
+                            .get(chumutil::hash_name_i32(&id))
+                            .map(|x| x.get_value_ref())
+                    }));
                     // add node
                     node.graphic = scene::NodeGraphic::Skin {
-                        skin: scene::Skin {
-                            joints: skin.generate_scene_skin_joints(archive.get_name_map()),
-                        },
+                        skin: scene_skin,
                         meshes: skin_meshes,
                     };
                 })

@@ -114,6 +114,33 @@ pub struct Skin {
     pub joints: Vec<SkinJoint>, // skins in TotemTech have no hierarchy
 }
 
+impl Skin {
+    pub fn auto_set_joint_transforms<'a, I>(&mut self, meshes: I)
+    where
+        I: Iterator<Item = &'a Mesh>,
+    {
+        let mut centers = vec![common::Vector3::zero(); self.joints.len()];
+        let mut weight_sums = vec![0.0f32; self.joints.len()];
+        for mesh in meshes {
+            if let Some(mesh_skin) = mesh.skin.as_ref() {
+                for (vert_i, vert) in mesh_skin.vertices.iter().enumerate() {
+                    for elem in vert.elements.iter() {
+                        centers[elem.joint as usize] += mesh.vertices[vert_i] * elem.weight;
+                        weight_sums[elem.joint as usize] += elem.weight;
+                    }
+                }
+            }
+        }
+        for (i, joint) in self.joints.iter_mut().enumerate() {
+            let mut c = centers[i];
+            if weight_sums[i] > 1e-5 {
+                c = c / weight_sums[i];
+            }
+            joint.transform = common::Transform3D::translation(c.x, c.y, c.z);
+        }
+    }
+}
+
 /// A mesh's skinning information
 #[derive(Clone, Debug)]
 pub struct MeshSkin {

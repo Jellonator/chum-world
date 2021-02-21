@@ -297,10 +297,13 @@ impl ChumFile {
                         godot_warn!("Mesh {} does not exist!", meshid);
                     }
                 }
+                let mut scene_skin = scene::Skin {
+                    joints: skin.generate_scene_skin_joints(archive.get_name_map()),
+                };
+                scene_skin
+                    .auto_set_joint_transforms(scene.meshes.values().map(|x| x.get_value_ref()));
                 scene.root.graphic = scene::NodeGraphic::Skin {
-                    skin: scene::Skin {
-                        joints: skin.generate_scene_skin_joints(archive.get_name_map()),
-                    },
+                    skin: scene_skin,
                     meshes: skin_meshes,
                 };
             })

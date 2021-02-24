@@ -35,6 +35,7 @@ const EXPORT_ID_TEXT := 1
 const EXPORT_ID_MODEL := 2
 const EXPORT_ID_TEXTURE := 3
 const EXPORT_ID_SCENE := 4
+const EXPORT_ID_WAV := 5
 
 const EXPORT_NAMES := {
 	EXPORT_ID_BIN: "Raw Binary (.bin)",
@@ -42,6 +43,7 @@ const EXPORT_NAMES := {
 	EXPORT_ID_MODEL: "Model (.obj)",
 	EXPORT_ID_TEXTURE: "Texture (.png)",
 	EXPORT_ID_SCENE: "Scene (.glb/.gltf)",
+	EXPORT_ID_WAV: "Sound (.wav)"
 }
 
 const EXPORT_EXTENSIONS := {
@@ -50,13 +52,15 @@ const EXPORT_EXTENSIONS := {
 	EXPORT_ID_MODEL: ["obj"],
 	EXPORT_ID_TEXTURE: ["png"],
 	EXPORT_ID_SCENE: ["glb", "gltf"],
+	EXPORT_ID_WAV: ["wav"]
 }
 
 const VALID_EXPORTS := {
 	EXPORT_ID_TEXT: ["TXT"],
 	EXPORT_ID_MODEL: ["MESH", "SURFACE"],
 	EXPORT_ID_TEXTURE: ["BITMAP"],
-	EXPORT_ID_SCENE: ["MESH", "SKIN"]#, "SURFACE", "SKIN"]
+	EXPORT_ID_SCENE: ["MESH", "SKIN"],#, "SURFACE", "SKIN"]
+	EXPORT_ID_WAV: ["SOUND"]
 }
 
 const EXPORT_FILE_FILTERS := {
@@ -64,7 +68,8 @@ const EXPORT_FILE_FILTERS := {
 	EXPORT_ID_TEXT: ["*.txt ; Text Files"],
 	EXPORT_ID_MODEL: ["*.obj ; Wavefront OBJ"],
 	EXPORT_ID_TEXTURE: ["*.png ; PNG Images"],
-	EXPORT_ID_SCENE: ["*.glb ; GLTF binary scene", "*.gltf ; GLTF text Scene"]
+	EXPORT_ID_SCENE: ["*.glb ; GLTF binary scene", "*.gltf ; GLTF text Scene"],
+	EXPORT_ID_WAV: ["*.wav ; WAV sound file"]
 }
 
 var EXPORTS_BY_TYPE := {}

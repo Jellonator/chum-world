@@ -92,3 +92,4 @@ current_path = "/home/jellonator/Workspace/Rust/ChumWorld/"
 [connection signal="confirmed" from="." to="." method="_on_BulkExport_confirmed"]
 [connection signal="item_selected" from="GridContainer/FileType" to="." method="_on_FileType_item_selected"]
 [connection signal="pressed" from="GridContainer/HBox/ExportPathSelect" to="." method="_on_ExportPathSelect_pressed"]
+[connection signal="dir_selected" from="FolderDialog" to="." method="_on_FolderDialog_dir_selected"]

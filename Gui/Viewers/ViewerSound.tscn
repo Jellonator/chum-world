@@ -1,6 +1,37 @@
-[gd_scene load_steps=2 format=2]
+[gd_scene load_steps=11 format=2]
 
 [ext_resource path="res://Gui/Viewers/ViewerSound.gd" type="Script" id=1]
+[ext_resource path="res://Gui/Icon/pause.png" type="Texture" id=2]
+[ext_resource path="res://Gui/Icon/play.png" type="Texture" id=3]
+[ext_resource path="res://Gui/Icon/slider.png" type="Texture" id=4]
+[ext_resource path="res://Gui/Viewers/Visualizer.gd" type="Script" id=5]
+
+[sub_resource type="Gradient" id=5]
+offsets = PoolRealArray( 0, 0.167, 0.333, 0.5, 0.667, 0.833333, 1 )
+colors = PoolColorArray( 1, 0, 0, 1, 1, 0.5, 0, 1, 1, 1, 0, 1, 0, 1, 0, 1, 0, 0.86, 0.86, 1, 0.13, 0.13, 1, 1, 0.486275, 0, 1, 1 )
+
+[sub_resource type="StyleBoxEmpty" id=4]
+
+[sub_resource type="StyleBoxLine" id=1]
+content_margin_bottom = 0.0
+color = Color( 0.0392157, 0.0392157, 0.0392157, 1 )
+grow_begin = -32.0
+grow_end = -32.0
+thickness = 10
+
+[sub_resource type="StyleBoxLine" id=3]
+content_margin_bottom = 0.0
+color = Color( 0.894118, 0.894118, 0.894118, 1 )
+grow_begin = -32.0
+grow_end = 0.0
+thickness = 10
+
+[sub_resource type="StyleBoxLine" id=2]
+content_margin_bottom = 0.0
+color = Color( 0.517647, 0.517647, 0.517647, 1 )
+grow_begin = -32.0
+grow_end = 0.0
+thickness = 10
 
 [node name="ViewerSound" type="Control"]
 anchor_right = 1.0
@@ -11,3 +42,51 @@ __meta__ = {
 }
 
 [node name="AudioStreamPlayer" type="AudioStreamPlayer" parent="."]
+bus = "Analyze"
+
+[node name="VBox" type="VBoxContainer" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+alignment = 2
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="Visualizer" type="Control" parent="VBox"]
+margin_right = 1280.0
+margin_bottom = 644.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+script = ExtResource( 5 )
+__meta__ = {
+"_edit_use_anchors_": false
+}
+gradient = SubResource( 5 )
+
+[node name="Controls" type="HBoxContainer" parent="VBox"]
+margin_top = 648.0
+margin_right = 1280.0
+margin_bottom = 720.0
+
+[node name="Play" type="CheckButton" parent="VBox/Controls"]
+margin_right = 76.0
+margin_bottom = 72.0
+custom_icons/off = ExtResource( 3 )
+custom_icons/on = ExtResource( 2 )
+custom_styles/focus = SubResource( 4 )
+
+[node name="HSlider" type="HSlider" parent="VBox/Controls"]
+margin_left = 80.0
+margin_right = 1280.0
+margin_bottom = 72.0
+size_flags_horizontal = 3
+size_flags_vertical = 1
+custom_icons/grabber_highlight = ExtResource( 4 )
+custom_icons/grabber = ExtResource( 4 )
+custom_styles/slider = SubResource( 1 )
+custom_styles/grabber_area_highlight = SubResource( 3 )
+custom_styles/grabber_area = SubResource( 2 )
+step = 0.0
+[connection signal="finished" from="AudioStreamPlayer" to="." method="_on_AudioStreamPlayer_finished"]
+[connection signal="toggled" from="VBox/Controls/Play" to="." method="_on_Play_toggled"]
+[connection signal="value_changed" from="VBox/Controls/HSlider" to="." method="_on_HSlider_value_changed"]

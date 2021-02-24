@@ -12,6 +12,7 @@ gltf-json = "0.15.2"
 gdnative = "0.9.3"
 libchum = { path = "../libchum" }
 phf = { version = "0.8.0", features = ["macros"] }
+hound = "3.4.0"
 
 [lib]
 crate-type = ["cdylib"]

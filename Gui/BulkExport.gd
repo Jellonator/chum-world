@@ -62,3 +62,6 @@ func _on_FileType_item_selected(_index: int):
 
 func _on_ExportPathSelect_pressed():
 	node_folderdialog.popup_centered()
+
+func _on_FolderDialog_dir_selected(dir):
+	$GridContainer/HBox/ExportPath.text = dir

@@ -29,6 +29,7 @@ const EXPORT_ID_TEXT: i64 = 1;
 const EXPORT_ID_MODEL: i64 = 2;
 const EXPORT_ID_TEXTURE: i64 = 3;
 const EXPORT_ID_COLLADA: i64 = 4;
+const EXPORT_ID_WAV: i64 = 5;
 
 #[methods]
 impl ChumFile {
@@ -343,7 +344,7 @@ impl ChumFile {
         ) {
             Ok(x) => x,
             Err(err) => {
-                panic!("MESH file invalid: {}", err);
+                panic!("SURFACE file invalid: {}", err);
             }
         };
         surf.begin_export(reader::surface::SurfaceExportMode::Mesh(
@@ -357,6 +358,33 @@ impl ChumFile {
     fn export_txt_to_txt(&mut self, path: &str) {
         let mut buffer = File::create(path).unwrap();
         buffer.write_all(&self.get_data_as_vec()[4..]).unwrap();
+    }
+
+    /// Export to .wav
+    fn export_to_wav(&self, path: &str) {
+        use libchum::binary::ChumBinary;
+        let snd = match reader::sound::SoundGcn::read_from(
+            &mut self.get_data_as_vec().as_slice(),
+            self.format,
+        ) {
+            Ok(x) => x,
+            Err(err) => {
+                panic!("SOUND file invalid: {}", err);
+            }
+        };
+        let sample = snd.gen_samples();
+        use hound;
+        let spec = hound::WavSpec {
+            channels: 1,
+            sample_rate: snd.sample_rate,
+            bits_per_sample: 16,
+            sample_format: hound::SampleFormat::Int,
+        };
+        let mut writer = hound::WavWriter::create(path, spec).unwrap();
+        for value in sample {
+            writer.write_sample(value as i16).unwrap();
+        }
+        writer.finalize().unwrap();
     }
 
     /// Export file data with the given export type to the given path
@@ -381,6 +409,7 @@ impl ChumFile {
                     panic!("Unexpected type for OBJ export {}", other);
                 }
             },
+            EXPORT_ID_WAV => self.export_to_wav(&pathstr),
             other => {
                 panic!("Unexpected export type {}", other);
             }

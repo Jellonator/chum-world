@@ -69,8 +69,8 @@ impl SoundGcn {
             let (h_high, h_low) = util::get_nibbles(frame[0]);
             let predictor: usize = h_high as usize;
             let scale: i32 = 1i32 << h_low as i32;
-            let coef1 = coef[predictor * 2];
-            let coef2 = coef[predictor * 2 + 1];
+            let coef1 = coef[(predictor * 2) % coef.len()];
+            let coef2 = coef[(predictor * 2 + 1) % coef.len()];
             let samples_to_read = SAMPLES_PER_FRAME.min(num_samples - out.len());
             for i_sample in 0..samples_to_read {
                 let sample = if i_sample % 2 == 0 {

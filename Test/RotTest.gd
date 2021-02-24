@@ -8,13 +8,18 @@ func printtx(tx1):
 	print(".")
 
 func _ready():
-	var parent_tx = self.global_transform
-	var child_tx = $Spatial.global_transform
-	printtx(parent_tx)
-	printtx(child_tx)
-	printtx($Spatial.transform)
-	var child_local_tx = parent_tx.affine_inverse() * child_tx
-	printtx(child_local_tx)
+	var sp := $Spatial as Spatial
+	
+
+	sp.rotation = Quat(0.763008, 0.00000, 0.00000, 0.645989).get_euler()
+	print(sp.rotation_degrees)
+	#var parent_tx = self.global_transform
+	#var child_tx = $Spatial.global_transform
+	#printtx(parent_tx)
+	#printtx(child_tx)
+	#printtx($Spatial.transform)
+	#var child_local_tx = parent_tx.affine_inverse() * child_tx
+	#printtx(child_local_tx)
 #	print(self.rotation)
 #	print(self.rotation_degrees)
 #	print(self.transform.basis.get_rotation_quat())

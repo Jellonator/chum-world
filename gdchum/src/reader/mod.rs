@@ -499,4 +499,20 @@ impl ChumReader {
             .unwrap();
         instance
     }
+
+    // new View system
+    #[export]
+    pub fn get_sound_view(
+        &self,
+        _owner: &Node,
+        data: Instance<ChumFile, Shared>,
+    ) -> Instance<views::sound::SoundView, Unique> {
+        let instance = Instance::<views::sound::SoundView, Unique>::new();
+        instance
+            .map_mut(|nodeview, _| {
+                nodeview.load_from(data).unwrap();
+            })
+            .unwrap();
+        instance
+    }
 }

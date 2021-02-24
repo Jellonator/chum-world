@@ -2,6 +2,7 @@ pub mod bezierpatch;
 pub mod error;
 // pub mod xml;
 pub mod idmap;
+use std::ops::{Div, Add, Sub};
 
 use crc::crc32;
 
@@ -13,6 +14,28 @@ pub fn round_up(value: usize, mult: usize) -> usize {
     } else {
         value + mult - (value % mult)
     }
+}
+
+/// Divide a by b, with the result rounded up (e.g. 7/2 -> 4)
+pub fn div_up<T>(a: T, b: T) -> T
+where T: Div<T, Output=T> + Add<T, Output=T> + Sub<T, Output=T> + From<u8> + Copy
+{
+    (a + (b - 1u8.into())) / b
+}
+
+/// Return the nibble values from a. Returns (high, low).
+pub fn get_nibbles(a: u8) -> (u8, u8) {
+    ((a >> 4) & 0xF, a & 0xF)
+}
+
+/// Return the nibble values from a.
+pub fn get_high_nibble(a: u8) -> u8 {
+    (a >> 4) & 0xF
+}
+
+/// Return the nibble values from a.
+pub fn get_low_nibble(a: u8) -> u8 {
+    a & 0xF
 }
 
 /// Get the output file name for the given file string and id

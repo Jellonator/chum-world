@@ -1,8 +1,8 @@
 pub mod bezierpatch;
-pub mod error;
 pub mod dsp;
+pub mod error;
 pub mod idmap;
-use std::ops::{Div, Add, Sub};
+use std::ops::{Add, Div, Sub};
 
 use crc::crc32;
 
@@ -18,7 +18,8 @@ pub fn round_up(value: usize, mult: usize) -> usize {
 
 /// Divide a by b, with the result rounded up (e.g. 7/2 -> 4)
 pub fn div_up<T>(a: T, b: T) -> T
-where T: Div<T, Output=T> + Add<T, Output=T> + Sub<T, Output=T> + From<u8> + Copy
+where
+    T: Div<T, Output = T> + Add<T, Output = T> + Sub<T, Output = T> + From<u8> + Copy,
 {
     (a + (b - 1u8.into())) / b
 }

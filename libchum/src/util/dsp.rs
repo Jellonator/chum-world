@@ -45,7 +45,7 @@ pub fn decode(coef: &[i16; 16], data: &[u8], num_samples: usize) -> Vec<i16> {
     let mut out = Vec::with_capacity(num_samples);
     for i_frame in 0..frame_count {
         let index = i_frame * BYTES_PER_FRAME;
-        let frame = &data[index..index+BYTES_PER_FRAME];
+        let frame = &data[index..index + BYTES_PER_FRAME];
         let (h_high, h_low) = util::get_nibbles(frame[0]);
         let predictor: usize = h_high as usize;
         let scale: i32 = 1i32 << h_low as i32;
@@ -54,16 +54,15 @@ pub fn decode(coef: &[i16; 16], data: &[u8], num_samples: usize) -> Vec<i16> {
         let samples_to_read = SAMPLES_PER_FRAME.min(num_samples - out.len());
         for i_sample in 0..samples_to_read {
             let sample = if i_sample % 2 == 0 {
-                util::get_high_nibble(frame[1 + i_sample/2])
+                util::get_high_nibble(frame[1 + i_sample / 2])
             } else {
-                util::get_low_nibble(frame[1 + i_sample/2])
+                util::get_low_nibble(frame[1 + i_sample / 2])
             } as i32;
-            let sample = if sample >= 8 {
-                sample - 16
-            } else {
-                sample
-            };
-            let sample = (((scale * sample) << 11) + 1024 + (coef1 as i32 * hist1 as i32 + coef2 as i32 * hist2 as i32)) >> 11;
+            let sample = if sample >= 8 { sample - 16 } else { sample };
+            let sample = (((scale * sample) << 11)
+                + 1024
+                + (coef1 as i32 * hist1 as i32 + coef2 as i32 * hist2 as i32))
+                >> 11;
             let real_sample = if sample > i16::MAX as i32 {
                 i16::MAX
             } else if sample < i16::MIN as i32 {
@@ -98,7 +97,7 @@ fn outer_product_merge(pcm_buf: &[i16]) -> [[f64; 3]; 3] {
     for x in 1..=2 {
         for y in 1..=2 {
             for z in 0..14 {
-                out[x][y] += pcm_buf[14 + z - x] as f64 + pcm_buf[14 + z - y] as f64;
+                out[x][y] += pcm_buf[14 + z - x] as f64 * pcm_buf[14 + z - y] as f64;
             }
         }
     }
@@ -108,7 +107,7 @@ fn outer_product_merge(pcm_buf: &[i16]) -> [[f64; 3]; 3] {
 struct AnalyzeRangeResult {
     vec_idxs: [usize; 3],
     // recips: [f64; 3],
-    mtx: [[f64; 3]; 3]
+    mtx: [[f64; 3]; 3],
 }
 
 fn analyze_ranges(mut mtx: [[f64; 3]; 3]) -> Option<AnalyzeRangeResult> {
@@ -121,8 +120,8 @@ fn analyze_ranges(mut mtx: [[f64; 3]; 3]) -> Option<AnalyzeRangeResult> {
         }
         recips[x] = 1.0 / val;
     }
+    let mut max_index = 0;
     for i in 1..=2 {
-        let mut max_index = 0;
         for x in 1..i {
             let mut tmp = mtx[x][i];
             for y in 1..x {
@@ -152,9 +151,12 @@ fn analyze_ranges(mut mtx: [[f64; 3]; 3]) -> Option<AnalyzeRangeResult> {
             recips[max_index] = recips[i];
         }
         vec_idxs[i] = max_index;
+        if mtx[i][i] == 0.0 {
+            return None;
+        }
         if i != 2 {
             let tmp = 1.0 / mtx[i][i];
-            for x in (i+1)..=2 {
+            for x in (i + 1)..=2 {
                 mtx[x][i] *= tmp;
             }
         }
@@ -180,12 +182,12 @@ fn analyze_ranges(mut mtx: [[f64; 3]; 3]) -> Option<AnalyzeRangeResult> {
 fn bidirectional_filter(mtx: [[f64; 3]; 3], vec_idxs: [usize; 3], vec_in: [f64; 3]) -> [f64; 3] {
     let mut out = vec_in;
     let mut x = 0;
-    for i in 1..= 2 {
+    for i in 1..=2 {
         let index = vec_idxs[i];
         let mut tmp = out[index];
         out[index] = out[i];
         if x != 0 {
-            for y in x..=(i-1) {
+            for y in x..=(i - 1) {
                 tmp -= out[i] * mtx[i][y];
             }
         } else if tmp != 0.0 {
@@ -195,11 +197,12 @@ fn bidirectional_filter(mtx: [[f64; 3]; 3], vec_idxs: [usize; 3], vec_in: [f64; 
     }
     for i in (1..=2).rev() {
         let mut tmp = out[i];
-        for y in (i+1)..=2 {
+        for y in (i + 1)..=2 {
             tmp -= out[y] * mtx[i][y];
         }
         out[i] = tmp / mtx[i][i];
     }
+    out[0] = 1.0;
     out
 }
 
@@ -228,11 +231,7 @@ fn finish_record(mut v: [f64; 3]) -> [f64; 3] {
             v[z] = -0.9999999999;
         }
     }
-    [
-        1.0,
-        (v[2] * v[1]) + v[1],
-        v[2]
-    ]
+    [1.0, (v[2] * v[1]) + v[1], v[2]]
 }
 
 fn matrix_filter(src: [f64; 3]) -> [f64; 3] {
@@ -244,7 +243,7 @@ fn matrix_filter(src: [f64; 3]) -> [f64; 3] {
     for i in (1..=2).rev() {
         let val = 1.0 - (mtx[i][i] * mtx[i][i]);
         for y in 1..=i {
-            mtx[i-1][y] = ((mtx[i][i] * mtx[i][i]) + mtx[i][y]) / val;
+            mtx[i - 1][y] = ((mtx[i][i] * mtx[i][y]) + mtx[i][y]) / val;
         }
     }
     let mut dst = [0.0; 3];
@@ -284,16 +283,19 @@ fn contrast_vectors(a: [f64; 3], b: [f64; 3]) -> f64 {
     let v1 = (a[0] * a[0]) + (a[1] * a[1]) + (a[2] * a[2]);
     let v2 = (a[0] * a[1]) + (a[1] * a[2]);
     let v3 = a[0] * a[2];
-    v1 + (2.0 * v0 * v2) + (2.0 * (-b[1] * v0 + -b[2]) * v3)
+    v1 + (2.0 * v0 * v2) + (2.0 * (-b[1] * v0 - b[2]) * v3)
 }
 
 fn filter_records(mut vec_best: [[f64; 3]; 8], exp: usize, records: &[[f64; 3]]) -> [[f64; 3]; 8] {
     // let mut buffer2 = [0.0; 3];
-    for x in 0..2 {
-        let mut buffer1 = [0; 8];
-        let mut buffer_list = [[0.0; 3]; 8];
+    let mut buffer1 = [0; 8];
+    let mut buffer_list = [[0.0; 3]; 8];
+    for _x in 0..2 {
         for y in 0..exp {
             buffer1[y] = 0;
+            for i in 0..=2 {
+                buffer_list[y][i] = 0.0;
+            }
         }
         for z in 0..records.len() {
             let mut index = 0;
@@ -344,7 +346,8 @@ fn calculate_coefficients(source: &[i16]) -> [i16; 16] {
         if inner_merge[0].abs() > 10.0 {
             let outer_merge = outer_product_merge(&pcm_hist_buf[..]);
             if let Some(analysis) = analyze_ranges(outer_merge) {
-                let filter_result = bidirectional_filter(analysis.mtx, analysis.vec_idxs, inner_merge);
+                let filter_result =
+                    bidirectional_filter(analysis.mtx, analysis.vec_idxs, inner_merge);
                 if let Some(value) = quadratic_merge(filter_result) {
                     records.push(finish_record(value));
                 }
@@ -370,7 +373,7 @@ fn calculate_coefficients(source: &[i16]) -> [i16; 16] {
         let vec2 = [0.0, -1.0, 0.0];
         for i in 0..exp {
             for y in 0..=2 {
-                vec_best[exp+i][y] = (0.01 * vec2[y]) + vec_best[i][y];
+                vec_best[exp + i][y] = (0.01 * vec2[y]) + vec_best[i][y];
             }
         }
         let exp = 1 << (1 + w);
@@ -381,12 +384,12 @@ fn calculate_coefficients(source: &[i16]) -> [i16; 16] {
         coef[z * 2] = f64_to_i16_clamp(-vec_best[z][1] * 2048.0);
         coef[z * 2 + 1] = f64_to_i16_clamp(-vec_best[z][2] * 2048.0);
     }
-    coef    
+    coef
 }
 
 pub struct EncodeResult {
     pub coef: [i16; 16],
-    pub data: Vec<u8>
+    pub data: Vec<u8>,
 }
 
 pub fn encode(data: &[i16]) -> EncodeResult {
@@ -400,25 +403,22 @@ pub fn encode(data: &[i16]) -> EncodeResult {
         //let pcm = &data[i_pcm..(i_pcm+SAMPLES_PER_FRAME)];
         let remaining = data.len() - i_frame * SAMPLES_PER_FRAME;
         let num_samples = remaining.min(SAMPLES_PER_FRAME);
-        for i in 2..(2+SAMPLES_PER_FRAME) {
+        for i in 2..(2 + SAMPLES_PER_FRAME) {
             pcm_buffer[i] = 0;
         }
         for i in 0..num_samples {
-            pcm_buffer[i+2] = data[i_pcm+i];
+            pcm_buffer[i + 2] = data[i_pcm + i];
         }
         out.extend_from_slice(&dsp_encode_frame(&mut pcm_buffer, num_samples, &coef));
         pcm_buffer[0] = pcm_buffer[14];
         pcm_buffer[1] = pcm_buffer[15];
     }
-    EncodeResult {
-        coef,
-        data: out
-    }
+    EncodeResult { coef, data: out }
 }
 
 fn dsp_encode_frame(pcm: &mut [i16], num_samples: usize, coef: &[i16; 16]) -> [u8; 8] {
     let mut in_samples = [[0i32; 16]; 8];
-    let mut out_samples = [[0i32; 16]; 8];
+    let mut out_samples = [[0i32; 14]; 8];
     let mut best_index = 0;
     let mut scale = [0i32; 8];
     let mut dist_acc = [0.0f64; 8];
@@ -427,9 +427,11 @@ fn dsp_encode_frame(pcm: &mut [i16], num_samples: usize, coef: &[i16; 16]) -> [u
         in_samples[i][1] = pcm[1] as i32;
         let mut distance = 0i32;
         for s in 0..num_samples {
-            let v1 = ((pcm[s] as i32 * coef[i*2+1] as i32) + (pcm[s+1] as i32 * coef[i*2] as i32)) / 2048;
-            in_samples[i][s+2] = v1;
-            let v2 = clamp_i32(pcm[s+2] as i32 - v1);
+            let v1 = ((pcm[s] as i32 * coef[i * 2 + 1] as i32)
+                + (pcm[s + 1] as i32 * coef[i * 2] as i32))
+                / 2048;
+            in_samples[i][s + 2] = v1;
+            let v2 = clamp_i32(pcm[s + 2] as i32 - v1);
             if v2.abs() > distance.abs() {
                 distance = v2;
             }
@@ -439,19 +441,17 @@ fn dsp_encode_frame(pcm: &mut [i16], num_samples: usize, coef: &[i16; 16]) -> [u
             distance /= 2;
             scale[i] += 1;
         }
-        scale[i] =  if scale[i] <= 1 {
-            -1
-        } else {
-            scale[i] - 2
-        };
+        scale[i] = if scale[i] <= 1 { -1 } else { scale[i] - 2 };
         loop {
             scale[i] += 1;
             dist_acc[i] = 0.0;
             let mut index = 0;
             for s in 0..num_samples {
-                let v1 = (in_samples[i][s] * coef[i*2+1] as i32) + (in_samples[i][s+1] * coef[i*2] as i32);
-                let v2 = pcm[s+2] << 11;
-                let mut v3 = ((v2 as f64 / (1 << scale[i]) as f64) / 2048.0 + 0.499999).round() as i32;
+                let v1 = (in_samples[i][s] * coef[i * 2 + 1] as i32)
+                    + (in_samples[i][s + 1] * coef[i * 2] as i32);
+                let v2 = ((pcm[s + 2] as i32) << 11) - v1;
+                let mut v3 =
+                    ((v2 as f64 / (1 << scale[i]) as f64) / 2048.0 + 0.499999).round() as i32;
                 if v3 < -8 {
                     if index < -8 - v3 {
                         index = -8 - v3;
@@ -466,8 +466,8 @@ fn dsp_encode_frame(pcm: &mut [i16], num_samples: usize, coef: &[i16; 16]) -> [u
                 out_samples[i][s] = v3;
                 let v1 = (v1 + ((v3 * (1 << scale[i])) << 1) + 1024) >> 11;
                 let v2 = clamp_i32(v1);
-                in_samples[i][s+2] = v2;
-                let v3 = pcm[s+2] as i32 - v2;
+                in_samples[i][s + 2] = v2;
+                let v3 = pcm[s + 2] as i32 - v2;
                 dist_acc[i] += v3 as f64 * v3 as f64;
             }
             let mut x = index + 8;
@@ -491,7 +491,7 @@ fn dsp_encode_frame(pcm: &mut [i16], num_samples: usize, coef: &[i16; 16]) -> [u
         }
     }
     for s in 0..num_samples {
-        pcm[s+2] = clamp_i32(in_samples[best_index][s+2]) as i16;
+        pcm[s + 2] = clamp_i32(in_samples[best_index][s + 2]) as i16;
     }
     let mut frame = [0u8; 8];
     frame[0] = ((best_index as u8) << 4) | (scale[best_index] as u8 & 0xF);
@@ -499,7 +499,8 @@ fn dsp_encode_frame(pcm: &mut [i16], num_samples: usize, coef: &[i16; 16]) -> [u
         out_samples[best_index][s] = 0;
     }
     for y in 0..7 {
-        frame[y+1] = (i32_to_nibble(out_samples[best_index][y*2]) << 4) | (i32_to_nibble(out_samples[best_index][y*2+1]));
+        frame[y + 1] = (i32_to_nibble(out_samples[best_index][y * 2]) << 4)
+            | (i32_to_nibble(out_samples[best_index][y * 2 + 1]));
     }
     frame
 }

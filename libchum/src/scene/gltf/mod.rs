@@ -402,7 +402,12 @@ fn export_material(
     });
 }
 
-fn export_texture(tex_name: String, texture: &scene::STexture, buffer: &mut Vec<u8>, root: &mut json::Root) {
+fn export_texture(
+    tex_name: String,
+    texture: &scene::STexture,
+    buffer: &mut Vec<u8>,
+    root: &mut json::Root,
+) {
     // add png image to buffer
     let buffer_offset = buffer.len() as u32;
     texture.data.export_png(buffer).expect("Woopsie daisey :)");
@@ -719,7 +724,14 @@ pub fn export_scene(scn: &scene::Scene, binary: bool) -> (json::Root, Vec<u8>) {
     let mut mesh_indices = HashMap::<String, MeshIndex>::new();
     for (_id, elem) in scn.meshes.iter() {
         let mesh = elem.get_value_ref();
-        let index = export_mesh(elem.get_name().to_string(), mesh, &mut buffer, &mut root, &mat_indices, &scn.materials);
+        let index = export_mesh(
+            elem.get_name().to_string(),
+            mesh,
+            &mut buffer,
+            &mut root,
+            &mat_indices,
+            &scn.materials,
+        );
         mesh_indices.insert(elem.get_name().to_string(), index);
         //println!("Inserting: {}", elem.get_name());
     }

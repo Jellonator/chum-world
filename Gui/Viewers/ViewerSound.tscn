@@ -52,7 +52,17 @@ __meta__ = {
 "_edit_use_anchors_": false
 }
 
+[node name="HBoxContainer" type="HBoxContainer" parent="VBox"]
+margin_right = 1280.0
+margin_bottom = 22.0
+
+[node name="Import" type="Button" parent="VBox/HBoxContainer"]
+margin_right = 90.0
+margin_bottom = 22.0
+text = "Import WAV"
+
 [node name="Visualizer" type="Control" parent="VBox"]
+margin_top = 26.0
 margin_right = 1280.0
 margin_bottom = 644.0
 size_flags_horizontal = 3
@@ -87,6 +97,21 @@ custom_styles/slider = SubResource( 1 )
 custom_styles/grabber_area_highlight = SubResource( 3 )
 custom_styles/grabber_area = SubResource( 2 )
 step = 0.0
+
+[node name="FileDialog" type="FileDialog" parent="."]
+margin_right = 325.0
+margin_bottom = 140.0
+popup_exclusive = true
+window_title = "Import WAV"
+resizable = true
+mode = 0
+access = 2
+filters = PoolStringArray( "*.wav; WAV files" )
+show_hidden_files = true
+current_dir = "/home/jellonator/Workspace/Rust/ChumWorld"
+current_path = "/home/jellonator/Workspace/Rust/ChumWorld/"
 [connection signal="finished" from="AudioStreamPlayer" to="." method="_on_AudioStreamPlayer_finished"]
+[connection signal="pressed" from="VBox/HBoxContainer/Import" to="." method="_on_Import_pressed"]
 [connection signal="toggled" from="VBox/Controls/Play" to="." method="_on_Play_toggled"]
 [connection signal="value_changed" from="VBox/Controls/HSlider" to="." method="_on_HSlider_value_changed"]
+[connection signal="file_selected" from="FileDialog" to="." method="_on_FileDialog_file_selected"]

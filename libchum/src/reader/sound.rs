@@ -1,9 +1,8 @@
 // use crate::common::*;
-use crate::util::error::*;
-use std::io;
-use crate::util;
 use crate::format;
 use crate::util::dsp;
+use crate::util::error::*;
+use std::io;
 
 chum_struct_generate_readwrite! {
     pub struct SoundGcn {
@@ -56,12 +55,12 @@ impl SoundGcn {
         dsp::decode(&self.coefficients, &self.data, num_samples)
     }
 
-    pub fn import_samples(&mut self, data: Vec<i16>) {
-        let result = dsp::encode(data.as_slice());
+    pub fn import_samples(&mut self, data: &[i16]) {
+        let result = dsp::encode(data);
         self.data_length = result.data.len() as u32;
         self.data = result.data;
         self.coefficients = result.coef;
-        let num_frames = util::div_up(self.data_length, dsp::BYTES_PER_FRAME as u32);
-        self.num_adpcm_nibbles = self.data_length * 2 - num_frames * dsp::HEADERS_PER_FRAME as u32;
+        // let num_frames = util::div_up(self.data_length, dsp::BYTES_PER_FRAME as u32);
+        self.num_adpcm_nibbles = self.data_length * 2; // - num_frames * dsp::HEADERS_PER_FRAME as u32;
     }
 }

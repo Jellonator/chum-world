@@ -4,7 +4,11 @@ onready var node_player := $AudioStreamPlayer as AudioStreamPlayer
 onready var node_slider := $VBox/Controls/HSlider as HSlider
 onready var node_play := $VBox/Controls/Play as CheckButton
 
+var cur_file
+var cur_view
+
 func set_file(file):
+	cur_file = file
 	# disable values
 	_play_disable = true
 	node_play.pressed = false
@@ -21,6 +25,7 @@ func set_file(file):
 		node_play.disabled = false
 		node_slider.editable = true
 		var sndview = ChumReader.get_sound_view(file)
+		cur_view = sndview
 		var stream := AudioStreamSample.new()
 		stream.data = sndview.get_stream()
 		stream.stereo = sndview.is_stereo()
@@ -74,3 +79,12 @@ func _on_HSlider_value_changed(value: float):
 		node_player.play(value)
 		print("SPLAY: ", node_slider.value)
 		_player_disable = false
+
+func _on_Import_pressed():
+	$FileDialog.popup_centered()
+
+func _on_FileDialog_file_selected(path):
+	if cur_file != null:
+		cur_view.import_wav(path)
+		cur_view.save(cur_file)
+		set_file(cur_file)

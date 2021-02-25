@@ -1,6 +1,6 @@
 use crate::chumfile::ChumFile;
-use gdnative::api::Resource;
 use gdnative::api::audio_stream_sample::Format;
+use gdnative::api::Resource;
 use gdnative::prelude::*;
 use libchum::reader::sound;
 use std::error::Error;
@@ -15,13 +15,10 @@ pub struct SoundView {
 #[methods]
 impl SoundView {
     fn new(_owner: &Resource) -> Self {
-        SoundView {
-            inner: None,
-        }
+        SoundView { inner: None }
     }
 
-    fn _register(_builder: &ClassBuilder<Self>) {
-    }
+    fn _register(_builder: &ClassBuilder<Self>) {}
 
     pub fn set_data(&mut self, data: sound::SoundGcn) {
         self.inner = Some(data);
@@ -34,17 +31,19 @@ impl SoundView {
         }
     }
 
-    /*#[export]
+    #[export]
     pub fn save(&self, _owner: &Resource, data: Instance<ChumFile, Shared>) {
         use libchum::binary::ChumBinary;
-        let mut v: Vec<u8> = Vec::new();
-        unsafe { data.assume_safe() }
-            .map_mut(|chumfile, _| {
-                self.inner.write_to(&mut v, chumfile.get_format()).unwrap();
-                chumfile.replace_data_with_vec(v);
-            })
-            .unwrap();
-    }*/
+        if let Some(snd) = self.inner.as_ref() {
+            let mut v: Vec<u8> = Vec::new();
+            unsafe { data.assume_safe() }
+                .map_mut(|chumfile, _| {
+                    snd.write_to(&mut v, chumfile.get_format()).unwrap();
+                    chumfile.replace_data_with_vec(v);
+                })
+                .unwrap();
+        }
+    }
 
     pub fn load_from(&mut self, data: Instance<ChumFile, Shared>) -> Result<(), Box<dyn Error>> {
         use libchum::binary::ChumBinary;
@@ -67,9 +66,8 @@ impl SoundView {
     #[export]
     pub fn get_stream(&self, _owner: &Resource) -> ByteArray {
         let stream = self.inner.as_ref().unwrap().gen_samples();
-        let stream_u8 = unsafe {
-            std::slice::from_raw_parts(stream.as_ptr() as *const u8, stream.len() * 2)
-        };
+        let stream_u8 =
+            unsafe { std::slice::from_raw_parts(stream.as_ptr() as *const u8, stream.len() * 2) };
         ByteArray::from_slice(stream_u8)
     }
 
@@ -81,5 +79,16 @@ impl SoundView {
     #[export]
     pub fn get_mix_rate(&self, _owner: &Resource) -> i64 {
         self.inner.as_ref().unwrap().sample_rate as i64
+    }
+
+    #[export]
+    pub fn import_wav(&mut self, _owner: &Resource, path: String) {
+        use hound;
+        if let Some(snd) = self.inner.as_mut() {
+            let mut reader = hound::WavReader::open(path).unwrap();
+            snd.sample_rate = reader.spec().sample_rate;
+            let samples: Vec<i16> = reader.samples::<i16>().map(|x| x.unwrap()).collect();
+            snd.import_samples(samples.as_slice());
+        }
     }
 }

@@ -75,6 +75,25 @@ margin_bottom = 76.0
 text = "Select"
 
 [node name="Label3" type="Label" parent="Grid"]
+margin_top = 109.0
+margin_right = 46.0
+margin_bottom = 131.0
+
+[node name="AutoFile" type="CheckButton" parent="Grid"]
+margin_left = 62.0
+margin_top = 108.0
+margin_right = 333.0
+margin_bottom = 132.0
+pressed = true
+text = "Auto-select other file"
+
+[node name="Label4" type="Label" parent="Grid"]
+margin_left = 349.0
+margin_top = 109.0
+margin_right = 400.0
+margin_bottom = 131.0
+
+[node name="Label5" type="Label" parent="Grid"]
 visible = false
 margin_top = 108.0
 margin_right = 46.0
@@ -103,6 +122,7 @@ resizable = true
 dialog_text = "Name file to write to"
 access = 2
 filters = PoolStringArray( "*.NGC;*.ngc;*.NPS;*.nps" )
+show_hidden_files = true
 current_dir = "/home/jellonator/Workspace/Rust/ChumWorld"
 current_path = "/home/jellonator/Workspace/Rust/ChumWorld/"
 
@@ -117,6 +137,7 @@ resizable = true
 dialog_text = "Data file to write to"
 access = 2
 filters = PoolStringArray( "*.DGC;*.dgc;*.DPS;*.dps" )
+show_hidden_files = true
 current_dir = "/home/jellonator/Workspace/Rust/ChumWorld"
 current_path = "/home/jellonator/Workspace/Rust/ChumWorld/"
 [connection signal="confirmed" from="." to="." method="_on_ArchiveFileSelector_confirmed"]

@@ -3,11 +3,7 @@ use crate::util::error::*;
 use std::io;
 use crate::util;
 use crate::format;
-
-const SAMPLES_PER_FRAME: usize = 14;
-const BYTES_PER_FRAME: usize = 8;
-const NIBBLES_PER_FRAME: usize = 16;
-const HEADERS_PER_FRAME: usize = NIBBLES_PER_FRAME - SAMPLES_PER_FRAME;
+use crate::util::dsp;
 
 chum_struct_generate_readwrite! {
     pub struct SoundGcn {
@@ -54,48 +50,18 @@ chum_struct_generate_readwrite! {
 }
 
 impl SoundGcn {
-    // Adapted from https://github.com/Thealexbarney/DspTool
     pub fn gen_samples(&self) -> Vec<i16> {
-        let mut hist1 = 0i16;
-        let mut hist2 = 0i16;
-        let coef = &self.coefficients;
-        let frame_count = self.data.len() / BYTES_PER_FRAME;
-        let num_samples = self.num_adpcm_nibbles as usize - frame_count * HEADERS_PER_FRAME;
-        let mut out = Vec::with_capacity(num_samples);
+        let frame_count = self.data.len() / dsp::BYTES_PER_FRAME;
+        let num_samples = self.num_adpcm_nibbles as usize - frame_count * dsp::HEADERS_PER_FRAME;
+        dsp::decode(&self.coefficients, &self.data, num_samples)
+    }
 
-        for i_frame in 0..frame_count {
-            let index = i_frame * BYTES_PER_FRAME;
-            let frame = &self.data[index..index+BYTES_PER_FRAME];
-            let (h_high, h_low) = util::get_nibbles(frame[0]);
-            let predictor: usize = h_high as usize;
-            let scale: i32 = 1i32 << h_low as i32;
-            let coef1 = coef[(predictor * 2) % coef.len()];
-            let coef2 = coef[(predictor * 2 + 1) % coef.len()];
-            let samples_to_read = SAMPLES_PER_FRAME.min(num_samples - out.len());
-            for i_sample in 0..samples_to_read {
-                let sample = if i_sample % 2 == 0 {
-                    util::get_high_nibble(frame[1 + i_sample/2])
-                } else {
-                    util::get_low_nibble(frame[1 + i_sample/2])
-                } as i32;
-                let sample = if sample >= 8 {
-                    sample - 16
-                } else {
-                    sample
-                };
-                let sample = (((scale * sample) << 11) + 1024 + (coef1 as i32 * hist1 as i32 + coef2 as i32 * hist2 as i32)) >> 11;
-                let real_sample = if sample > i16::MAX as i32 {
-                    i16::MAX
-                } else if sample < i16::MIN as i32 {
-                    i16::MIN
-                } else {
-                    sample as i16
-                };
-                hist2 = hist1;
-                hist1 = real_sample;
-                out.push(real_sample);
-            }
-        }
-        out
+    pub fn import_samples(&mut self, data: Vec<i16>) {
+        let result = dsp::encode(data.as_slice());
+        self.data_length = result.data.len() as u32;
+        self.data = result.data;
+        self.coefficients = result.coef;
+        let num_frames = util::div_up(self.data_length, dsp::BYTES_PER_FRAME as u32);
+        self.num_adpcm_nibbles = self.data_length * 2 - num_frames * dsp::HEADERS_PER_FRAME as u32;
     }
 }

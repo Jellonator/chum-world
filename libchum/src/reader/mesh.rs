@@ -253,6 +253,75 @@ impl Mesh {
         }
     }
 
+    /// Write a Mesh to a file
+    pub fn write_to<W: Write>(&self, file: &mut W, fmt: TotemFormat) -> io::Result<()> {
+        use crate::binary::ChumBinary;
+        self.transform.write_to(file, fmt)?;
+        fmt.write_u32(file, self.vertices.len() as u32)?;
+        for value in self.vertices.iter() {
+            write_vec3(value, file, fmt)?;
+        }
+        fmt.write_u32(file, self.texcoords.len() as u32)?;
+        for value in self.texcoords.iter() {
+            write_vec2(value, file, fmt)?;
+        }
+        fmt.write_u32(file, self.normals.len() as u32)?;
+        for value in self.normals.iter() {
+            write_vec3(value, file, fmt)?;
+        }
+        fmt.write_u32(file, self.strips.len() as u32)?;
+        for strip in self.strips.iter() {
+            fmt.write_u32(file, strip.strip.vertex_ids.len() as u32)?;
+            for vertid in strip.strip.vertex_ids.iter() {
+                fmt.write_u16(file, *vertid)?;
+            }
+            fmt.write_u32(file, strip.strip.material)?;
+            fmt.write_u32(file, strip.strip.tri_order)?;
+        }
+        if self.transform.item_subtype == 4 {
+            for strip in self.strips.iter() {
+                fmt.write_i32(file, strip.group.unwrap_or(0i32))?;
+            }
+        }
+        let num_stripext = self.strips.iter().filter(|x| x.ext.is_some()).count();
+        fmt.write_u32(file, num_stripext as u32)?;
+        for ext in self.strips.iter().filter_map(|x| x.ext.as_ref()) {
+            fmt.write_u32(file, ext.elements.len() as u32)?;
+            for element in ext.elements.iter() {
+                fmt.write_u16(file, element.texcoord_id)?;
+                fmt.write_u16(file, element.normal_id)?;
+            }
+        }
+        fmt.write_u32(file, self.materials.len() as u32)?;
+        for mat in self.materials.iter() {
+            fmt.write_i32(file, *mat)?;
+        }
+        fmt.write_u32(file, self.sphere_shapes.len() as u32)?;
+        for sphere in self.sphere_shapes.iter() {
+            write_vec3(&sphere.pos, file, fmt)?;
+            fmt.write_f32(file, sphere.radius)?;
+        }
+        fmt.write_u32(file, self.cuboid_shapes.len() as u32)?;
+        for cuboid in self.cuboid_shapes.iter() {
+            write_transform3d(&cuboid.transform, file, fmt)?;
+            fmt.write_bytes(file, &[0; 16])?;
+        }
+        fmt.write_u32(file, self.cylinder_shapes.len() as u32)?;
+        for cylinder in self.cylinder_shapes.iter() {
+            write_vec3(&cylinder.position, file, fmt)?;
+            fmt.write_f32(file, cylinder.height)?;
+            write_vec3(&cylinder.normal, file, fmt)?;
+            fmt.write_bytes(file, &[0; 4])?;
+            fmt.write_f32(file, cylinder.radius)?;
+        }
+        fmt.write_u32(file, 0)?;
+        fmt.write_u32(file, self.strip_order.len() as u32)?;
+        for value in self.strip_order.iter() {
+            fmt.write_u32(file, *value)?;
+        }
+        Ok(())
+    }
+
     /// Read a Mesh from a file
     pub fn read_from<R: Read>(file: &mut R, fmt: TotemFormat) -> io::Result<Mesh> {
         use crate::binary::ChumBinary;
@@ -286,6 +355,7 @@ impl Mesh {
             _ => panic!(),
         };
         // Read stripext data
+        // TODO: Handle PS2
         let num_strips_ext: u32 = fmt.read_u32(file)?;
         let mut strips_ext = if num_strips_ext == 0 {
             None

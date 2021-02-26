@@ -157,6 +157,18 @@ pub struct Mesh {
     pub skin: Option<MeshSkin>,
 }
 
+impl Mesh {
+    pub fn new_empty() -> Mesh {
+        Mesh {
+            vertices: Vec::new(),
+            texcoords: Vec::new(),
+            normals: Vec::new(),
+            triangles: HashMap::new(),
+            skin: None,
+        }
+    }
+}
+
 /// A single triangle in a mesh
 #[derive(Clone, Debug)]
 pub struct MeshTriangle {

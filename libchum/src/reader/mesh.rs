@@ -472,6 +472,112 @@ impl Mesh {
         }
     }
 
+    pub fn import_scene_mesh(&mut self, mesh: &scene::Mesh) {
+        // First, consolidate components into Point Vec and create new index buffer
+        let mut points: Vec<Point> = Vec::new();
+        let mut pointmap: HashMap<Point, u32> = HashMap::new();
+        let mut indices: HashMap<i32, Vec<u32>> = HashMap::new();
+        for (matid, tris) in mesh.triangles.iter() {
+            let mut vec: Vec<u32> = Vec::new();
+            for triangle in tris.iter() {
+                for ipoint in triangle.corners.iter() {
+                    let point = Point {
+                        vertex: mesh.vertices[ipoint.vertex_id as usize],
+                        texcoord: mesh.texcoords[ipoint.texcoord_id as usize],
+                        normal: mesh.normals[ipoint.normal_id as usize],
+                    };
+                    vec.push(if let Some(i) = pointmap.get(&point) {
+                        *i
+                    } else {
+                        let i = points.len() as u32;
+                        points.push(point.clone());
+                        pointmap.insert(point, i);
+                        i
+                    });
+                }
+            }
+            indices.insert(*matid, vec);
+        }
+        // Optimize index buffers
+        for buf in indices.values_mut() {
+            let mut result = meshopt::stripify(buf.as_slice(), points.len(), 0xFFFFFFFF).unwrap();
+            std::mem::swap(buf, &mut result);
+        }
+        // Re-build vertex, normal, and texcoord buffers while writing strips
+        self.vertices.clear();
+        self.texcoords.clear();
+        self.normals.clear();
+        self.strips.clear();
+        self.strip_order.clear();
+        self.materials.clear();
+        let mut vertex_map: HashMap<[u32; 3], u16> = HashMap::new();
+        let mut texcoord_map: HashMap<[u32; 2], u16> = HashMap::new();
+        let mut normal_map: HashMap<[u32; 3], u16> = HashMap::new();
+        let mut material_map: HashMap<i32, u32> = HashMap::new();
+        for (matid, strips) in indices.iter() {
+            for strip in strips.split(|x| *x == 0xFFFFFFFF) {
+                let mat_index = match material_map.get(matid) {
+                    Some(i) => *i,
+                    None => {
+                        let i = self.materials.len() as u32;
+                        self.materials.push(*matid);
+                        material_map.insert(*matid, i);
+                        i
+                    }
+                };
+                let mut s = Strip {
+                    vertex_ids: Vec::new(),
+                    tri_order: 1,
+                    material: mat_index,
+                };
+                let mut e = StripExt {
+                    elements: Vec::new(),
+                };
+                for index in strip {
+                    let point = &points[*index as usize];
+                    let v_id = reinterpret_vec3(&point.vertex);
+                    let n_id = reinterpret_vec3(&point.normal);
+                    let t_id = reinterpret_vec2(&point.texcoord);
+                    s.vertex_ids.push(match vertex_map.get(&v_id) {
+                        Some(i) => *i,
+                        None => {
+                            let i = self.vertices.len() as u16;
+                            self.vertices.push(point.vertex);
+                            vertex_map.insert(v_id, i);
+                            i
+                        }
+                    });
+                    e.elements.push(ElementData {
+                        normal_id: match normal_map.get(&n_id) {
+                            Some(i) => *i,
+                            None => {
+                                let i = self.normals.len() as u16;
+                                self.normals.push(point.normal);
+                                normal_map.insert(n_id, i);
+                                i
+                            }
+                        },
+                        texcoord_id: match texcoord_map.get(&t_id) {
+                            Some(i) => *i,
+                            None => {
+                                let i = self.texcoords.len() as u16;
+                                self.texcoords.push(point.texcoord);
+                                texcoord_map.insert(t_id, i);
+                                i
+                            }
+                        },
+                    });
+                }
+                self.strip_order.push(self.strips.len() as u32);
+                self.strips.push(StripData {
+                    group: None,
+                    strip: s,
+                    ext: Some(e),
+                });
+            }
+        }
+    }
+
     pub fn transform(&mut self, tx: &Transform3D) {
         for point in self.vertices.iter_mut() {
             *point = tx.transform_point3d(point.to_point()).unwrap().to_vector();

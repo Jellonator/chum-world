@@ -1,4 +1,4 @@
-[gd_scene load_steps=12 format=2]
+[gd_scene load_steps=13 format=2]
 
 [ext_resource path="res://Gui/Viewer.gd" type="Script" id=1]
 [ext_resource path="res://Gui/EditorList.tscn" type="PackedScene" id=2]
@@ -10,6 +10,7 @@
 [ext_resource path="res://Gui/ExitDialogue.gd" type="Script" id=8]
 [ext_resource path="res://Gui/theme.tres" type="Theme" id=9]
 [ext_resource path="res://Gui/ArchiveSceneExport.tscn" type="PackedScene" id=10]
+[ext_resource path="res://Global/GlobalViewport.tscn" type="PackedScene" id=11]
 
 [sub_resource type="StyleBoxFlat" id=1]
 content_margin_left = 4.0
@@ -217,6 +218,8 @@ __meta__ = {
 }
 
 [node name="SceneExportDialog" parent="." instance=ExtResource( 10 )]
+
+[node name="Viewport" parent="." instance=ExtResource( 11 )]
 [connection signal="tab_changed" from="VBox/Tabs" to="." method="_on_Tabs_tab_changed"]
 [connection signal="text_changed" from="VBox/Tabs/Files/VBox/HBox/LineEdit" to="VBox/Tabs/Files/VBox/Tree" method="_on_LineEdit_text_changed"]
 [connection signal="file_selected" from="VBox/Tabs/Files/VBox/Tree" to="." method="_on_Tree_file_selected"]

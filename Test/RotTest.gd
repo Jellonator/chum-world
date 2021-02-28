@@ -8,6 +8,7 @@ func printtx(tx1):
 	print(".")
 
 func _ready():
+	print(get_path())
 	var sp := $Spatial as Spatial
 	
 

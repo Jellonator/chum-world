@@ -1,0 +1,31 @@
+[gd_scene load_steps=5 format=2]
+
+[ext_resource path="res://default_env.tres" type="Environment" id=1]
+[ext_resource path="res://Gui/Gizmos/Grid3D.tscn" type="PackedScene" id=2]
+[ext_resource path="res://Gui/Gizmos/Camera.tscn" type="PackedScene" id=4]
+
+[sub_resource type="World" id=1]
+environment = ExtResource( 1 )
+
+[node name="Viewport" type="Viewport" groups=[
+"viewport",
+]]
+size = Vector2( 32, 32 )
+own_world = true
+world = SubResource( 1 )
+hdr = false
+render_target_update_mode = 3
+
+[node name="Spatial" type="Spatial" parent="."]
+
+[node name="Camera" parent="Spatial" instance=ExtResource( 4 )]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 4 )
+
+[node name="DirectionalLight" type="DirectionalLight" parent="Spatial"]
+transform = Transform( 0.866025, -0.377063, -0.328365, 0.165521, -0.403501, 0.899883, -0.471808, -0.833673, -0.287031, 0, 15.1487, 5.34027 )
+light_energy = 0.5
+light_indirect_energy = 0.5
+
+[node name="Grid3D" parent="Spatial" instance=ExtResource( 2 )]
+
+[node name="Meshes" type="Spatial" parent="Spatial"]

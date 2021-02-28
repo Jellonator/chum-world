@@ -11,12 +11,16 @@ const MAT_BLANK := preload("res://Shader/blank.tres")
 var cfile = null
 
 onready var node_items := $HSplitContainer/ItemList
-onready var node_meshes := $Viewport/Meshes
-onready var node_viewport := $Viewport
+onready var node_meshes := $"/root/Viewer/Viewport/Spatial/Meshes"
+onready var node_viewport := $"/root/Viewer/Viewport"
 onready var node_rect := $HSplitContainer/TextureRect
-onready var node_camera := $Viewport/CameraViewer
+onready var node_camera := $"/root/Viewer/Viewport/Spatial/Camera"
 onready var node_speed := $HSplitContainer/TextureRect/SpeedLabel
 var meshes = []
+
+func _ready():
+	node_rect.texture = node_viewport.get_texture()
+	node_rect.texture.flags = Texture.FLAG_FILTER
 
 func _input(event):
 	if node_rect.has_focus():
@@ -30,10 +34,12 @@ func _input(event):
 			speed = clamp(speed / SPEED_MULT, MIN_SPEED, MAX_SPEED)
 			node_speed.text = "Speed: " + str(speed)
 
-func set_meshes(mesh_ids: Array):
-	for child in node_meshes.get_children():
-		child.queue_free()
+func clear_meshes():
+	for data in meshes:
+		data["mesh"].queue_free()
 	meshes.clear()
+
+func set_meshes(mesh_ids: Array):
 	var archive = cfile.get_archive()
 	for id in mesh_ids:
 		var mesh_file = archive.get_file_from_hash(id)
@@ -44,8 +50,6 @@ func set_meshes(mesh_ids: Array):
 		else:
 			var mesh := MeshInstance.new()
 			mesh.mesh = mesh_data["mesh"]
-#			for i in range(mesh.get_surface_material_count()):
-#				mesh.set_surface_material(i, MAT_BLANK)
 			node_meshes.add_child(mesh)
 			meshes.append({
 				"mesh": mesh,
@@ -65,7 +69,9 @@ func set_groups(group_values: Dictionary):
 
 func set_file(file):
 	node_camera.reset_transform()
+	_on_TextureRect_item_rect_changed()
 	cfile = file
+	clear_meshes()
 	if file == null:
 		pass
 	else:
@@ -75,15 +81,15 @@ func set_file(file):
 		elif data["exists"]:
 			print("LOADED SKIN")
 			var skin = data["skin"]
-			# var archive = file.get_archive()
 			set_meshes(skin["meshes"])
 			set_groups(skin["groups"])
 		else:
 			print("DOES NOT EXIST")
 
 func _on_TextureRect_item_rect_changed():
-	node_viewport.size = node_rect.rect_size * GlobalConfig.viewport_scale
-	node_viewport.set_size_override(true, node_rect.rect_size)
+	if visible:
+		node_viewport.size = node_rect.rect_size * GlobalConfig.viewport_scale
+		node_viewport.set_size_override(true, node_rect.rect_size)
 
 func _physics_process(delta: float):
 	if node_rect.has_focus():

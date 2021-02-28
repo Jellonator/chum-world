@@ -6,6 +6,7 @@ const TAB_TEXTURE := 2
 const TAB_MATERIAL := 3
 const TAB_SKIN := 4
 const TAB_SOUND := 5
+const TAB_MESH := 6
 
 func set_tab(id: int, file):
 	get_child(id).set_file(file)
@@ -19,7 +20,9 @@ func set_file(file):
 		set_tab(TAB_DEFAULT, file)
 	else:
 		match file.type:
-			"MESH", "SURFACE", "LOD", "ROTSHAPE", "SPLINE", "COLLISIONVOL", "WARP":
+			"MESH":
+				set_tab(TAB_MESH, file)
+			"SURFACE", "LOD", "ROTSHAPE", "SPLINE", "COLLISIONVOL", "WARP":
 				set_tab(TAB_VIEWER3D, file)
 			"BITMAP":
 				set_tab(TAB_TEXTURE, file)

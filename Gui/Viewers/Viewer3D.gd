@@ -1,11 +1,11 @@
 extends Control
 
-onready var node_viewport := $Viewport
-onready var node_camera := $Viewport/Spatial/Camera
+onready var node_viewport := $"/root/Viewer/Viewport"
+onready var node_camera := $"/root/Viewer/Viewport/Spatial/Camera"
 onready var node_rect := $TextureRect
-onready var node_mesh := $Viewport/Spatial/MeshInstance
-onready var node_spatial := $Viewport/Spatial
-onready var mat = node_mesh.get_surface_material(0)
+# onready var node_mesh := $"/root/GlobalViewport/Spatial/MeshInstance"
+onready var node_meshes := $"/root/Viewer/Viewport/Spatial/Meshes"
+# onready var mat = node_mesh.get_surface_material(0)
 
 const MIN_SPEED = pow(2, -8)
 const MAX_SPEED = pow(2, 8)
@@ -13,26 +13,31 @@ const SPEED_MULT = sqrt(2.0)
 
 var speed = 2.0
 
-#var surfaces = []
+var mesh = null
 
 func _ready():
-	node_viewport.size = node_rect.rect_size
+	node_rect.texture = node_viewport.get_texture()
+	node_rect.texture.flags = Texture.FLAG_FILTER
 	var err = node_rect.connect("item_rect_changed", self, "_on_TextureRect_item_rect_changed")
 	if err != OK:
 		push_warning("Connect failed")
 
 func _on_TextureRect_item_rect_changed():
-	node_viewport.size = node_rect.rect_size * GlobalConfig.viewport_scale
-	node_viewport.set_size_override(true, node_rect.rect_size)
+	if visible:
+		node_viewport.size = node_rect.rect_size * GlobalConfig.viewport_scale
+		node_viewport.set_size_override(true, node_rect.rect_size)
 
 func set_file(file):
+	_on_TextureRect_item_rect_changed()
+#	for child in node_meshes.get_children():
+#		child.queue_free()
+	if mesh != null:
+		mesh.queue_free()
+		mesh = null
 	node_camera.reset_transform()
-	if node_mesh != null:
-		node_mesh.queue_free()
-		node_mesh = null
 	if file != null:
-		node_mesh = MeshData.try_file_to_spatial(file)
-		node_spatial.add_child(node_mesh)
+		mesh = MeshData.try_file_to_spatial(file)
+		node_meshes.add_child(mesh)
 
 func _input(event):
 	if node_rect.has_focus():

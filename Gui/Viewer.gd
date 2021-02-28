@@ -27,8 +27,10 @@ onready var node_view3d := $"VBox/Tabs/3D View"
 onready var node_tabs := $VBox/Tabs as TabContainer
 onready var node_about_dialog := $AboutDialog
 onready var node_scene_export_dialog := $SceneExportDialog
+onready var node_global_viewport := $Viewport
 
 func _ready():
+	print(get_path())
 	node_view3d.set_active(false)
 	archive = ChumArchive.new()
 	node_menu_file.get_popup().connect(

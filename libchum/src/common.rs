@@ -8,7 +8,7 @@ pub type Vector3 = euclid::Vector3D<f32, euclid::UnknownUnit>;
 pub type Vector2 = euclid::Vector2D<f32, euclid::UnknownUnit>;
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub struct Quaternion {
-    // ONLY DOING THIS BECAUSE Rotation3D DOES NOT IMPLEMENTE Default DESPITE
+    // ONLY DOING THIS BECAUSE Rotation3D DOES NOT IMPLEMENT Default DESPITE
     // THERE EXISTING A Rotation3D::identity function WHY
     pub inner: euclid::Rotation3D<f32, euclid::UnknownUnit, euclid::UnknownUnit>,
 }

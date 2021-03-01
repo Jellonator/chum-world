@@ -475,7 +475,7 @@ fn export_skin(
             translation: None,
             weights: None,
         });
-        let txinv = joint.transform.inverse().unwrap();
+        let txinv = joint.transform.inverse().unwrap_or(Transform3D::identity());
         let invbindmat = txinv.to_array();
         buffer.extend_from_slice(unsafe {
             let ptr = invbindmat.as_ptr() as *const u8;

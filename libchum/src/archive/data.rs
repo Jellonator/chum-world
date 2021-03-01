@@ -16,18 +16,15 @@ pub struct TotemHeader {
 
 impl TotemHeader {
     /// Create a new DgcHeader
-    /// If data is too big, returns None
-    pub fn new(data: &[u8]) -> Option<TotemHeader> {
-        if data.len() <= 0x100 {
-            let mut headerdata = [0; 0x100];
-            for i in 0..data.len() {
-                headerdata[i] = data[i];
-            }
-            Some(TotemHeader {
-                legal_notice: headerdata,
-            })
-        } else {
-            None
+    /// If the legal notice is larger than 0x0FF, it will be truncated.
+    /// Last byte (probably) has to be a null terminator.
+    pub fn new(legal: &[u8]) -> TotemHeader {
+        let mut headerdata = [0; 0x100];
+        for i in 0..legal.len().min(0x0FF) {
+            headerdata[i] = legal[i];
+        }
+        TotemHeader {
+            legal_notice: headerdata,
         }
     }
 
@@ -200,15 +197,15 @@ impl TotemArchive {
     /// Create a new DgcArchive. Expects a header and a base chunk size as arguments. The header
     /// must not be bigger than 256 bytes. The base chunk size will be automatically rounded up by
     /// 0x800 bytes, and it may change if files are added to this archive.
-    pub fn new(header: TotemHeader, chunk_size: usize, fmt: TotemFormat) -> Option<TotemArchive> {
+    pub fn new(header: TotemHeader, chunk_size: usize, fmt: TotemFormat) -> TotemArchive {
         // let mut headerdata = [0; 0x100];
         // headerdata.copy_from_slice(&header.as_bytes());
-        Some(TotemArchive {
-            header: header,
+        TotemArchive {
+            header,
             data: vec![],
             chunk_size: calculate_chunk_size(chunk_size),
             format: fmt,
-        })
+        }
     }
 
     /// Create a new DgcArchive with the given filess
@@ -216,10 +213,10 @@ impl TotemArchive {
         header: TotemHeader,
         files: Vec<TotemFile>,
         fmt: TotemFormat,
-    ) -> Option<TotemArchive> {
-        let mut dgc = TotemArchive::new(header, 0, fmt)?;
+    ) -> TotemArchive {
+        let mut dgc = TotemArchive::new(header, 0, fmt);
         dgc.set_files(files);
-        Some(dgc)
+        dgc
     }
 
     /// Iterate over all files in this archive.

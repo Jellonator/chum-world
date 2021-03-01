@@ -65,24 +65,72 @@ pub struct Mesh {
     pub strip_order: Vec<u32>,
 }
 
-#[derive(Clone, Debug)]
-pub struct SphereShape {
-    pub pos: Vector3,
-    pub radius: f32,
+chum_struct_generate_readwrite! {
+    #[derive(Clone, Debug)]
+    pub struct SphereShape {
+        pub pos: [Vector3],
+        pub radius: [f32],
+    }
 }
 
-#[derive(Clone, Debug)]
-pub struct CuboidShape {
-    pub transform: Transform3D,
+impl Default for SphereShape {
+    fn default() -> SphereShape {
+        SphereShape {
+            pos: Vector3::zero(),
+            radius: 1.0
+        }
+    }
 }
 
-#[derive(Clone, Debug)]
-pub struct CylinderShape {
-    pub position: Vector3,
-    pub height: f32,
-    pub normal: Vector3,
-    // pub junk: [u8; 4],
-    pub radius: f32,
+chum_struct_generate_readwrite! {
+    #[derive(Clone, Debug)]
+    pub struct CuboidShape {
+        pub transform: [Transform3D],
+        pub junk: [ignore [fixed array [u8] 16] [0u8; 16]],
+    }
+}
+
+impl Default for CuboidShape {
+    fn default() -> CuboidShape {
+        CuboidShape {
+            transform: Transform3D::identity(),
+            junk: ()
+        }
+    }
+}
+
+chum_struct_generate_readwrite! {
+    #[derive(Clone, Debug)]
+    pub struct CylinderShape {
+        pub position: [Vector3],
+        pub height: [f32],
+        pub normal: [Vector3],
+        pub junk: [ignore [fixed array [u8] 4] [0u8; 4]],
+        pub radius: [f32],
+    }
+}
+
+impl Default for CylinderShape {
+    fn default() -> CylinderShape {
+        CylinderShape {
+            position: Vector3::zero(),
+            height: 1.0,
+            normal: Vector3::new(0.0, 1.0, 0.0),
+            junk: (),
+            radius: 1.0
+        }
+    }
+}
+
+chum_struct! {
+    /// Structured data for Mesh
+    #[derive(Clone)]
+    pub struct MeshStruct {
+        pub materials: [dynamic array [u32] [reference MATERIAL] 0i32],
+        pub sphere_shapes: [dynamic array [u32] [struct SphereShape] SphereShape::default()],
+        pub cuboid_shapes: [dynamic array [u32] [struct CuboidShape] CuboidShape::default()],
+        pub cylinder_shapes: [dynamic array [u32] [struct CylinderShape] CylinderShape::default()],
+    }
 }
 
 /// Read in a triangle strip from a reader
@@ -119,7 +167,6 @@ fn strip_gen_triangle_indices(strip: &Strip, strip_ext: &StripExt) -> Vec<[(u16,
     let a = strip.tri_order;
     let b = 3 - a;
     let lists = [[0, a, b], [0, b, a]];
-    // Rust doesn't prevent you from writing bad code
     strip
         .vertex_ids
         .windows(3)
@@ -387,7 +434,7 @@ impl Mesh {
             .map(|_| {
                 let transform = read_transform3d(file, fmt)?;
                 fmt.skip_n_bytes(file, 16)?;
-                Ok(CuboidShape { transform })
+                Ok(CuboidShape { transform, junk: () })
             })
             .collect::<io::Result<_>>()?;
         let num_unk3: u32 = fmt.read_u32(file)?;
@@ -405,6 +452,7 @@ impl Mesh {
                     height,
                     normal,
                     radius,
+                    junk: ()
                 })
             })
             .collect::<io::Result<_>>()?;

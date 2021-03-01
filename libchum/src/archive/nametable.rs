@@ -1,6 +1,6 @@
 use std::collections::HashMap;
-use std::error::Error;
 use std::io::{self, BufRead, BufReader, Read, Write};
+use crate::archive::ChumError;
 
 /// .NGC archive
 /// Contains multiple NGC elements
@@ -37,7 +37,7 @@ impl TotemNameTable {
     }
 
     /// Read names from the given Reader
-    pub fn read_from<R: Read>(reader: &mut R) -> Result<TotemNameTable, Box<dyn Error>> {
+    pub fn read_from<R: Read>(reader: &mut R) -> Result<TotemNameTable, ChumError> {
         let file = BufReader::new(reader);
 
         let mut elements = HashMap::new();

@@ -1,16 +1,36 @@
-[gd_scene load_steps=2 format=2]
+[gd_scene load_steps=3 format=2]
 
+[ext_resource path="res://Gui/theme.tres" type="Theme" id=1]
 [ext_resource path="res://Gui/Viewers/ViewerMesh.gd" type="Script" id=3]
 
-[node name="ViewerMesh" type="Control"]
+[node name="ViewerMesh" type="VBoxContainer"]
 anchor_right = 1.0
 anchor_bottom = 1.0
+theme = ExtResource( 1 )
 script = ExtResource( 3 )
 __meta__ = {
 "_edit_use_anchors_": false
 }
+node_rect = NodePath("Control/TextureRect")
+speed_label = NodePath("Control/SpeedLabel")
 
-[node name="TextureRect" type="TextureRect" parent="."]
+[node name="HBox" type="HBoxContainer" parent="."]
+margin_right = 1280.0
+margin_bottom = 22.0
+
+[node name="Menu" type="MenuButton" parent="HBox"]
+margin_right = 95.0
+margin_bottom = 22.0
+text = "Import Mesh"
+items = [ "From GLTF (.glb/.gltf)", null, 0, false, false, 0, 0, null, "", false ]
+
+[node name="Control" type="Control" parent="."]
+margin_top = 26.0
+margin_right = 1280.0
+margin_bottom = 720.0
+size_flags_vertical = 3
+
+[node name="TextureRect" type="TextureRect" parent="Control"]
 anchor_right = 1.0
 anchor_bottom = 1.0
 focus_mode = 1
@@ -20,8 +40,67 @@ __meta__ = {
 "_edit_use_anchors_": false
 }
 
-[node name="SpeedLabel" type="Label" parent="."]
-margin_top = 4.0
-margin_right = 1280.0
-margin_bottom = 26.0
+[node name="SpeedLabel" type="Label" parent="Control"]
+anchor_right = 1.0
+margin_bottom = 22.0
 text = "Speed: 2.0"
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="GLTFNoMeshes" type="AcceptDialog" parent="Control"]
+margin_left = 374.0
+margin_top = 288.0
+margin_right = 618.0
+margin_bottom = 373.0
+popup_exclusive = true
+window_title = "Info"
+resizable = true
+dialog_text = "The selected GLTF file contains no mesh information."
+dialog_autowrap = true
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="GLTFFileDialog" type="FileDialog" parent="Control"]
+margin_left = 309.0
+margin_top = 132.0
+margin_right = 870.0
+margin_bottom = 550.0
+popup_exclusive = true
+window_title = "Open a GLTF scene file"
+resizable = true
+mode = 0
+access = 2
+filters = PoolStringArray( "*.gltf, *.glb; GLTF scene" )
+show_hidden_files = true
+current_dir = "/home/jellonator/Workspace/Rust/ChumWorld"
+current_path = "/home/jellonator/Workspace/Rust/ChumWorld/"
+
+[node name="Confirm" type="ConfirmationDialog" parent="Control"]
+margin_left = 161.0
+margin_top = 161.0
+margin_right = 628.0
+margin_bottom = 409.0
+window_title = "Select a mesh to import"
+
+[node name="Margin" type="MarginContainer" parent="Control/Confirm"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+margin_left = 16.0
+margin_top = 8.0
+margin_right = -16.0
+margin_bottom = -40.0
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="VBox" type="VBoxContainer" parent="Control/Confirm/Margin"]
+margin_right = 435.0
+margin_bottom = 200.0
+
+[node name="Mesh" type="OptionButton" parent="Control/Confirm/Margin/VBox"]
+margin_right = 435.0
+margin_bottom = 22.0
+[connection signal="file_selected" from="Control/GLTFFileDialog" to="." method="_on_GLTFFileDialog_file_selected"]
+[connection signal="confirmed" from="Control/Confirm" to="." method="_on_ConfirmationDialog_confirmed"]

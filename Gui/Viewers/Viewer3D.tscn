@@ -9,6 +9,8 @@ script = ExtResource( 1 )
 __meta__ = {
 "_edit_use_anchors_": false
 }
+node_rect = NodePath("TextureRect")
+speed_label = NodePath("SpeedLabel")
 
 [node name="TextureRect" type="TextureRect" parent="."]
 anchor_right = 1.0

@@ -6,27 +6,27 @@
 [ext_resource path="res://Gui/Icon/slider.png" type="Texture" id=4]
 [ext_resource path="res://Gui/Viewers/Visualizer.gd" type="Script" id=5]
 
-[sub_resource type="Gradient" id=5]
+[sub_resource type="Gradient" id=1]
 offsets = PoolRealArray( 0, 0.167, 0.333, 0.5, 0.667, 0.833333, 1 )
 colors = PoolColorArray( 1, 0, 0, 1, 1, 0.5, 0, 1, 1, 1, 0, 1, 0, 1, 0, 1, 0, 0.86, 0.86, 1, 0.13, 0.13, 1, 1, 0.486275, 0, 1, 1 )
 
-[sub_resource type="StyleBoxEmpty" id=4]
+[sub_resource type="StyleBoxEmpty" id=2]
 
-[sub_resource type="StyleBoxLine" id=1]
+[sub_resource type="StyleBoxLine" id=3]
 content_margin_bottom = 0.0
 color = Color( 0.0392157, 0.0392157, 0.0392157, 1 )
 grow_begin = -32.0
 grow_end = -32.0
 thickness = 10
 
-[sub_resource type="StyleBoxLine" id=3]
+[sub_resource type="StyleBoxLine" id=4]
 content_margin_bottom = 0.0
 color = Color( 0.894118, 0.894118, 0.894118, 1 )
 grow_begin = -32.0
 grow_end = 0.0
 thickness = 10
 
-[sub_resource type="StyleBoxLine" id=2]
+[sub_resource type="StyleBoxLine" id=5]
 content_margin_bottom = 0.0
 color = Color( 0.517647, 0.517647, 0.517647, 1 )
 grow_begin = -32.0
@@ -71,7 +71,7 @@ script = ExtResource( 5 )
 __meta__ = {
 "_edit_use_anchors_": false
 }
-gradient = SubResource( 5 )
+gradient = SubResource( 1 )
 
 [node name="Controls" type="HBoxContainer" parent="VBox"]
 margin_top = 648.0
@@ -83,7 +83,7 @@ margin_right = 76.0
 margin_bottom = 72.0
 custom_icons/off = ExtResource( 3 )
 custom_icons/on = ExtResource( 2 )
-custom_styles/focus = SubResource( 4 )
+custom_styles/focus = SubResource( 2 )
 
 [node name="HSlider" type="HSlider" parent="VBox/Controls"]
 margin_left = 80.0
@@ -93,16 +93,16 @@ size_flags_horizontal = 3
 size_flags_vertical = 1
 custom_icons/grabber_highlight = ExtResource( 4 )
 custom_icons/grabber = ExtResource( 4 )
-custom_styles/slider = SubResource( 1 )
-custom_styles/grabber_area_highlight = SubResource( 3 )
-custom_styles/grabber_area = SubResource( 2 )
+custom_styles/slider = SubResource( 3 )
+custom_styles/grabber_area_highlight = SubResource( 4 )
+custom_styles/grabber_area = SubResource( 5 )
 step = 0.0
 
 [node name="FileDialog" type="FileDialog" parent="."]
 margin_right = 325.0
 margin_bottom = 140.0
 popup_exclusive = true
-window_title = "Import WAV"
+window_title = "Open a File"
 resizable = true
 mode = 0
 access = 2

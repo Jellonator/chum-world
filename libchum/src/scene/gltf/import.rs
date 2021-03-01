@@ -101,11 +101,11 @@ fn get_data(p: &gltf::Primitive, buffers: &[gltf::buffer::Data]) -> PrimitiveDat
                 .collect(),
             ReadTexCoords::F32(data) => data.map(|v| Vector2::new(v[0], v[1])).collect(),
         })
-        .unwrap_or(Vec::new());
+        .unwrap_or(vec![Vector2::zero(); positions.len()]);
     let normals: Vec<Vector3> = reader
         .read_normals()
         .map(|x| x.map(|v| Vector3::new(v[0], v[1], v[2])).collect())
-        .unwrap_or(Vec::new());
+        .unwrap_or(vec![Vector3::zero(); positions.len()]);
     let indices: Vec<u32> = reader
         .read_indices()
         .map(|x| match x {
@@ -254,6 +254,7 @@ fn push_primitive_fan(
 bitflags! {
     pub struct ImportHint: u32 {
         const MESHES = 1<<0;
+        const ALL = 1;
         /*
         const NODES = 1<<1;
         const TEXTURES = 1<<2;
@@ -269,6 +270,7 @@ where
     let (document, buffers, _images) = gltf::import(path)?;
     let mut scene = scene::Scene::new_empty();
     if hint.contains(ImportHint::MESHES) {
+        println!("Importing MESHES!");
         for doc_mesh in document.meshes() {
             let mut builder = MeshBuilder::new();
             for primitive in doc_mesh.primitives() {
@@ -289,6 +291,7 @@ where
                 .name()
                 .map(|x| x.to_owned())
                 .unwrap_or_else(|| format!("Mesh {}", doc_mesh.index()));
+            println!("IMPORTED {}", mesh_name);
             scene.meshes.insert(mesh_name, builder.commit());
         }
     }

@@ -156,6 +156,7 @@ resizable = true
 mode = 0
 access = 2
 filters = PoolStringArray( "*.png; PNG Images", "*.jpg,*.jpeg; JPEG Images", "*.gif; GIF Images", "*.bmp; BMP Images", "*.ico; ICO Images", "*.tif, *.tiff; TIFF Images", "*.webp; WebP Images", "*.tga; TGA Images" )
+show_hidden_files = true
 current_dir = "/home/jellonator/Workspace/Rust/ChumWorld"
 current_path = "/home/jellonator/Workspace/Rust/ChumWorld/"
 [connection signal="pressed" from="HBox/Button" to="." method="_on_Button_pressed"]

@@ -6,6 +6,7 @@ use libchum::binary::ChumBinary;
 use libchum::reader;
 use libchum::scene;
 use libchum::util as chumutil;
+use libchum::scene::gltf;
 use std::collections::HashMap;
 
 #[derive(NativeClass)]
@@ -126,6 +127,40 @@ impl SceneData {
         SceneData {
             scene: scene::Scene::new_empty(),
         }
+    }
+
+    #[export]
+    pub fn get_mesh_info(&self, _owner: &Reference) -> Dictionary<Unique> {
+        let dict = Dictionary::new();
+        for (key, value) in self.scene.meshes.iter() {
+            println!("ITER {}", key);
+            let data = Dictionary::new();
+            data.insert("name", value.get_name());
+            data.insert("id", key);
+            dict.insert(value.get_name(), data);
+        }
+        dict
+    }
+
+    #[export]
+    pub fn import_mesh(&self, _owner: &Reference, id: i32, data: Instance<ChumFile, Shared>) {
+        let data = unsafe { data.assume_safe() };
+        let mut mesh = data.map(|cfile, _| {
+            cfile.borrow_data(|mut inner_data| {
+                reader::mesh::Mesh::read_from(&mut inner_data, cfile.get_format()).unwrap()
+            })
+        }).unwrap();
+        mesh.import_scene_mesh(self.scene.meshes.get(id).unwrap().get_value_ref());
+        data.map_mut(|cfile, _| {
+            let mut v: Vec<u8> = Vec::new();
+            mesh.write_to(&mut v, cfile.get_format()).unwrap();
+            cfile.replace_data_with_vec(v);
+        }).unwrap();
+    }
+
+    #[export]
+    pub fn load(&mut self, _owner: &Reference, path: String) {
+        self.scene = gltf::import_scene(path, gltf::ImportHint::ALL).unwrap();
     }
 
     #[export]

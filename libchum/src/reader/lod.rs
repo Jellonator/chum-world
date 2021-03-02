@@ -2,8 +2,8 @@
 use crate::common::*;
 // use crate::format::TotemFormat;
 // use crate::util::error;
-use crate::util::error::*;
-use std::io::{self};
+use crate::error::*;
+use std::io;
 
 chum_struct_generate_readwrite! {
     pub struct Lod {
@@ -57,10 +57,10 @@ chum_struct_generate_readwrite! {
                     o => Err(StructUnpackError {
                         structname: "Lod".to_owned(),
                         structpath: "sounds".to_owned(),
-                        error: Box::new(EnumerationError {
+                        error: UnpackError::InvalidEnumeration {
                             enum_name: "item_subtype".to_owned(),
                             value: o as i64
-                        })
+                        }
                     })
                 }
             };

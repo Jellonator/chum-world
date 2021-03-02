@@ -1,6 +1,28 @@
-use std::error::Error;
+use std::error;
 use std::fmt;
+use thiserror;
 
+#[derive(Debug, thiserror::Error)]
+pub enum UnpackError {
+    #[error("Boolean value resolved to {value}, expected 0 or 1")]
+    InvalidBoolean {
+        value: u8
+    },
+    #[error("Invalid value {value} for enumeration {enum_name}")]
+    InvalidEnumeration {
+        enum_name: String,
+        value: i64
+    },
+    #[error("Invalid value variant {value}; expected one of {expected:?}")]
+    InvalidVariant {
+        expected: Vec<String>,
+        value: String,
+    },
+    #[error(transparent)]
+    Io(#[from] std::io::Error)
+}
+
+/*
 /// Error that occurs when failing to parse an optional structure
 #[derive(Debug, Clone)]
 pub struct BooleanError {
@@ -79,13 +101,14 @@ impl fmt::Display for BadValueError {
 }
 
 impl Error for BadValueError {}
+*/
 
 /// Error that occurs when failing to read a structure
 #[derive(Debug)]
 pub struct StructUnpackError {
     pub structname: String,
     pub structpath: String,
-    pub error: Box<dyn Error>,
+    pub error: UnpackError
 }
 
 impl StructUnpackError {
@@ -119,9 +142,9 @@ impl fmt::Display for StructUnpackError {
     }
 }
 
-impl Error for StructUnpackError {
-    fn source(&self) -> Option<&(dyn Error + 'static)> {
-        Some(self.error.as_ref())
+impl error::Error for StructUnpackError {
+    fn source(&self) -> Option<&(dyn error::Error + 'static)> {
+        Some(&self.error)
     }
 }
 
@@ -131,7 +154,7 @@ pub fn unpack_map<A, B, T, E>(data: Result<T, E>, sname: A, spath: B) -> StructU
 where
     A: ToString,
     B: ToString,
-    E: Into<Box<dyn Error>>,
+    E: Into<UnpackError>,
 {
     data.map_err(|y| StructUnpackError {
         structname: sname.to_string(),
@@ -150,7 +173,7 @@ where
     A: ToString,
     B: fmt::Display,
     C: fmt::Display,
-    E: Into<Box<dyn Error>>,
+    E: Into<UnpackError>,
 {
     data.map_err(|y| StructUnpackError {
         structname: sname.to_string(),
@@ -175,6 +198,9 @@ where
     })
 }
 
+
+
+/*
 /// Error that occurs when a structure variant fails
 #[derive(Debug, Clone)]
 pub struct ChumStructVariantError {
@@ -200,3 +226,4 @@ impl fmt::Display for ChumStructVariantError {
 }
 
 impl Error for ChumStructVariantError {}
+*/

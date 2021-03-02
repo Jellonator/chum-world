@@ -9,6 +9,7 @@ pub mod reader;
 pub mod scene;
 pub mod structure;
 pub mod util;
+pub mod error;
 
 pub use gltf;
 

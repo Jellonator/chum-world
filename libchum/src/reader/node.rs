@@ -1,6 +1,6 @@
 use crate::format::TotemFormat;
 use crate::reader::material;
-use crate::util::error::*;
+use crate::error::*;
 use std::error::Error;
 use std::fmt;
 use std::io::{self, Read, Write};
@@ -105,7 +105,7 @@ chum_struct_enum! {
                     let len = fmt.read_u32(file).map_err(|e| StructUnpackError {
                         structname: "NodeDataUnion::NodeDataSkin".to_owned(),
                         structpath: "unk7".to_owned(),
-                        error: Box::new(e)
+                        error: e.into()
                     })? as usize;
                     let mut value = vec![NodeSkinUnk7::default(); len];
                     for i in 0..len {
@@ -117,14 +117,14 @@ chum_struct_enum! {
                         let inner_len = fmt.read_u32(file).map_err(|e| StructUnpackError {
                             structname: "NodeDataUnion::NodeDataSkin".to_owned(),
                             structpath: format!("unk7[{}].ids", i),
-                            error: Box::new(e)
+                            error: e.into()
                         })? as usize;
                         let mut ids = Vec::with_capacity(inner_len.min(crate::common::SAFE_CAPACITY_SMALL));
                         for j in 0..inner_len {
                             ids.push(fmt.read_i32(file).map_err(|e| StructUnpackError {
                                 structname: "NodeDataUnion::NodeDataSkin".to_owned(),
                                 structpath: format!("unk7[{}].ids[{}]", i, j),
-                                error: Box::new(e)
+                                error: e.into()
                             })?);
                         }
                         value[i].ids = ids;

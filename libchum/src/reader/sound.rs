@@ -1,7 +1,7 @@
 // use crate::common::*;
 use crate::format;
 use crate::util::dsp;
-use crate::util::error::*;
+use crate::error::*;
 use std::io;
 
 chum_struct_generate_readwrite! {
@@ -36,7 +36,7 @@ chum_struct_generate_readwrite! {
                     Err(e) => Err(StructUnpackError {
                         structname: "Sound".to_owned(),
                         structpath: "data".to_owned(),
-                        error: Box::new(e)
+                        error: e.into()
                     })
                 }
             };

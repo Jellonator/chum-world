@@ -1,6 +1,6 @@
 // use crate::common;
 use crate::format::TotemFormat;
-use crate::util::error;
+use crate::error;
 use std::io::{self, Read, Write};
 
 pub trait ChumBinary: Sized {

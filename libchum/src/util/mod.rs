@@ -1,6 +1,5 @@
 pub mod bezierpatch;
 pub mod dsp;
-pub mod error;
 pub mod idmap;
 use std::ops::{Add, Div, Sub};
 

@@ -1,8 +1,9 @@
 use crate::common;
+use crate::error;
 
 pub trait ChumStruct: Sized {
     fn structure(&self) -> ChumStructVariant;
-    fn destructure(data: &ChumStructVariant) -> Result<Self, Box<dyn std::error::Error>>;
+    fn destructure(data: &ChumStructVariant) -> Result<Self, error::UnpackError>;
 }
 
 pub trait ChumEnum: Sized {

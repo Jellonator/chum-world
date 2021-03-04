@@ -1,6 +1,9 @@
 extends Control
 
 onready var node_view := $Control/TextureViewer
+onready var node_imp_format := $ConfirmationDialog/GridContainer/Format
+onready var node_imp_palette := $ConfirmationDialog/GridContainer/Palette
+
 var curfile = null
 
 func set_file(file):

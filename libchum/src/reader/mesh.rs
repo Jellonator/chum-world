@@ -77,7 +77,7 @@ impl Default for SphereShape {
     fn default() -> SphereShape {
         SphereShape {
             pos: Vector3::zero(),
-            radius: 1.0
+            radius: 1.0,
         }
     }
 }
@@ -94,7 +94,7 @@ impl Default for CuboidShape {
     fn default() -> CuboidShape {
         CuboidShape {
             transform: Transform3D::identity(),
-            junk: ()
+            junk: (),
         }
     }
 }
@@ -117,7 +117,7 @@ impl Default for CylinderShape {
             height: 1.0,
             normal: Vector3::new(0.0, 1.0, 0.0),
             junk: (),
-            radius: 1.0
+            radius: 1.0,
         }
     }
 }
@@ -434,7 +434,10 @@ impl Mesh {
             .map(|_| {
                 let transform = read_transform3d(file, fmt)?;
                 fmt.skip_n_bytes(file, 16)?;
-                Ok(CuboidShape { transform, junk: () })
+                Ok(CuboidShape {
+                    transform,
+                    junk: (),
+                })
             })
             .collect::<io::Result<_>>()?;
         let num_unk3: u32 = fmt.read_u32(file)?;
@@ -452,7 +455,7 @@ impl Mesh {
                     height,
                     normal,
                     radius,
-                    junk: ()
+                    junk: (),
                 })
             })
             .collect::<io::Result<_>>()?;

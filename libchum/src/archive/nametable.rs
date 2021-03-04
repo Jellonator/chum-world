@@ -1,6 +1,6 @@
+use crate::archive::ChumError;
 use std::collections::HashMap;
 use std::io::{self, BufRead, BufReader, Read, Write};
-use crate::archive::ChumError;
 
 /// .NGC archive
 /// Contains multiple NGC elements

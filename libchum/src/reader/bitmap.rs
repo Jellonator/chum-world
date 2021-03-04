@@ -5,7 +5,6 @@ use crate::format::TotemFormat;
 use crate::util;
 pub use image;
 use imagequant;
-use std::error::Error;
 use std::io::{self, BufRead, Read, Seek, Write};
 use std::slice;
 
@@ -480,6 +479,7 @@ impl BitmapFormat {
     pub fn get_colors_as_vec(&self) -> Vec<Color> {
         let mut ret = Vec::with_capacity(self.len());
         for i in 0..self.len() {
+            // unwrap here is fine because i is always within [0, len)
             ret.push(self.get_color(i).unwrap());
         }
         ret
@@ -525,8 +525,8 @@ fn get_chunk_index(
 }
 
 /// Arrange the pixel data into a Vector following bitmap chunk rules.
-fn arrange_blocks<T>(
-    data: &Vec<T>,
+fn deblockify<T>(
+    data: &[T],
     blockwidth: usize,
     blockheight: usize,
     imagewidth: usize,
@@ -545,7 +545,7 @@ where
         panic!();
     }
     if imagewidth == blockwidth {
-        return data.clone();
+        return data.to_vec();
     }
     let mut newdata = vec![T::default(); imagewidth * imageheight];
     for (i, col) in data.iter().enumerate() {
@@ -555,8 +555,12 @@ where
 }
 
 /// Take data from a linear arrangement into a blocked arangement
+/// If data does not fit neatly into blocks,
+/// then the data will be padded to fit.
+/// Panics if the data's length does not match the given size,
+/// or if blockwidth or blockheigh are 0.
 fn blockify<T>(
-    data: &Vec<T>,
+    data: &[T],
     blockwidth: usize,
     blockheight: usize,
     imagewidth: usize,
@@ -571,16 +575,17 @@ where
     if blockheight == 0 || blockwidth == 0 {
         panic!();
     }
-    if imagewidth % blockwidth != 0 || imageheight % blockheight != 0 {
-        panic!();
-    }
+    // potentially upsize data
+    let data_width = util::round_up(imagewidth, blockwidth);
+    let data_height = util::round_up(imageheight, blockheight);
+    let data = util::resize_2d_cloned(data, (imagewidth, imageheight), (data_width, data_height));
+    let (imagewidth, imageheight) = (data_width, data_height);
+    // do nothing if fits in single block width
     if imagewidth == blockwidth {
-        return data.clone();
+        return data.to_vec();
     }
+    // re-pack data into new vec
     let mut newdata = vec![T::default(); imagewidth * imageheight];
-    // for (i, col) in data.iter().enumerate() {
-    //     newdata[blockify_index(i, blockwidth, blockheight, imagewidth, imageheight)] = col.clone();
-    // }
     for i in 0..(imagewidth * imageheight) {
         newdata[i] =
             data[get_chunk_index(i, blockwidth, blockheight, imagewidth, imageheight)].clone();
@@ -590,29 +595,54 @@ where
 
 /// Read the interleaved color format (FORMAT_ARGB8888)
 fn read_u32_interleaved<R: Read>(
+    fmt: &TotemFormat,
     file: &mut R,
-    fmt: TotemFormat,
-    num: usize,
-) -> io::Result<Vec<Color>> {
-    let mut res = Vec::with_capacity(num);
+    out: &mut [Color]
+) -> io::Result<()> {
+    let num = out.len();
     if num % 16 != 0 {
         panic!();
     }
 
-    for _ in 0..num / 16 {
+    for i in 0..num / 16 {
         let mut buf = [0; 64];
         fmt.read_u8_into(file, &mut buf)?;
-        for i in 0..16 {
-            res.push(Color {
-                r: buf[1 + i * 2],
-                g: buf[32 + i * 2],
-                b: buf[33 + i * 2],
-                a: buf[0 + i * 2],
-            });
+        for j in 0..16 {
+            out[i * 16 + j] = Color {
+                r: buf[1 + j * 2],
+                g: buf[32 + j * 2],
+                b: buf[33 + j * 2],
+                a: buf[0 + j * 2],
+            };
         }
     }
 
-    Ok(res)
+    Ok(())
+}
+
+/// Macro used to read image data. Reduces repitition in reading code.
+macro_rules! bitmap_read_data {
+    ($width:expr, $height:expr, $block_width:literal, $block_height:literal, $read_func:expr, $fmt: expr, $file:expr) => {
+        {
+            // round up size to match block size.
+            let data_width = util::round_up($width as usize, $block_width);
+            let data_height = util::round_up($height as usize, $block_height);
+            // read data
+            let mut indices = vec![Default::default(); (data_width * data_height) as usize];
+            match $read_func($fmt, $file, &mut indices) {
+                Ok(_) => {
+                    // convert from block arrangement to linear arrangement
+                    let mut data = deblockify(&indices, $block_width, $block_height, data_width, data_width);
+                    // resize to match original size
+                    util::resize_2d_inplace(&mut data, (data_width, data_height), ($width as usize, $height as usize));
+                    Ok(data)
+                },
+                Err(e) => {
+                    Err(e)
+                }
+            }
+        }
+    };
 }
 
 impl Bitmap {
@@ -680,38 +710,33 @@ impl Bitmap {
         let opacity_level: u8 = fmt.read_u8(file)?;
         let _unk: u8 = fmt.read_u8(file)?;
         let filter: u8 = fmt.read_u8(file)?;
-        // TODO: Handle irregular image sizes for arrange_blocks
         let data: BitmapFormat = match format {
             FORMAT_C4 => {
-                let mut indices = vec![0; (width * height) as usize];
-                fmt.read_u4_into(file, &mut indices)?;
-                let palette = PaletteC4::read_palette(palette_format, file, fmt)?;
-                let data = arrange_blocks(&indices, 8, 8, width as usize, height as usize);
-                BitmapFormat::C4(data, palette)
+                BitmapFormat::C4(
+                    bitmap_read_data!(width, height, 8, 8, TotemFormat::read_u4_into, &fmt, file)?,
+                    PaletteC4::read_palette(palette_format, file, fmt)?
+                )
             }
             FORMAT_C8 => {
-                let mut indices = vec![0; (width * height) as usize];
-                fmt.read_u8_into(file, &mut indices)?;
-                let palette = PaletteC8::read_palette(palette_format, file, fmt)?;
-                let data = arrange_blocks(&indices, 8, 4, width as usize, height as usize);
-                BitmapFormat::C8(data, palette)
+                BitmapFormat::C8(
+                    bitmap_read_data!(width, height, 8, 4, TotemFormat::read_u8_into, &fmt, file)?,
+                    PaletteC8::read_palette(palette_format, file, fmt)?
+                )
             }
             FORMAT_RGB565 => {
-                let mut data = vec![0; (width * height) as usize];
-                fmt.read_u16_into(file, &mut data)?;
-                let data = arrange_blocks(&data, 4, 4, width as usize, height as usize);
-                BitmapFormat::RGB565(data)
+                BitmapFormat::RGB565(
+                    bitmap_read_data!(width, height, 4, 4, TotemFormat::read_u16_into, &fmt, file)?
+                )
             }
             FORMAT_A3RGB565 => {
-                let mut data = vec![0; (width * height) as usize];
-                fmt.read_u16_into(file, &mut data)?;
-                let data = arrange_blocks(&data, 4, 4, width as usize, height as usize);
-                BitmapFormat::RGB5A3(data)
+                BitmapFormat::RGB5A3(
+                    bitmap_read_data!(width, height, 4, 4, TotemFormat::read_u16_into, &fmt, file)?
+                )
             }
             FORMAT_ARGB8888 => {
-                let data = read_u32_interleaved(file, fmt, (width * height) as usize)?;
-                let coldata = arrange_blocks(&data, 4, 4, width as usize, height as usize);
-                BitmapFormat::RGBA8888(coldata)
+                BitmapFormat::RGBA8888(
+                    bitmap_read_data!(width, height, 4, 4, read_u32_interleaved, &fmt, file)?
+                )
             }
             FORMAT_RGB888 => {
                 let mut data = vec![(0, 0, 0); (width * height) as usize];
@@ -814,7 +839,7 @@ impl Bitmap {
         }
     }
 
-    pub fn export_png<W>(&self, writer: &mut W) -> Result<(), Box<dyn Error>>
+    pub fn export_png<W>(&self, writer: &mut W) -> image::ImageResult<()>
     where
         W: Write,
     {
@@ -833,30 +858,30 @@ impl Bitmap {
     }
 }
 
-fn palettize(data: &[Color], n: i32, width: u32, height: u32) -> (Vec<u8>, Vec<Color>) {
+fn palettize(
+    data: &[Color],
+    n: i32,
+    width: u32,
+    height: u32,
+) -> Result<(Vec<u8>, Vec<Color>), imagequant::liq_error> {
     let mut liq = imagequant::new();
     liq.set_max_colors(n);
     liq.set_quality(0, 100);
     use std::mem;
     // This is fine. Color and RGBA are both in the same format; RGBA8888.
     let data = unsafe { mem::transmute::<&[Color], &[imagequant::RGBA]>(data) };
-    let mut liq_image = liq
-        .new_image(data, width as usize, height as usize, 0.0)
-        .unwrap();
+    let mut liq_image = liq.new_image(data, width as usize, height as usize, 0.0)?;
 
-    let mut res = match liq.quantize(&liq_image) {
-        Ok(res) => res,
-        Err(err) => panic!("Failed quantization: {:?}", err),
-    };
+    let mut res = liq.quantize(&liq_image)?;
 
     res.set_dithering_level(1.0);
 
-    let (palette, pixels) = res.remapped(&mut liq_image).unwrap();
+    let (palette, pixels) = res.remapped(&mut liq_image)?;
     if palette.len() as i32 > n {
         panic!("Resulting palette has too many colors (this should not happen)");
     }
 
-    (
+    Ok((
         pixels,
         palette
             .into_iter()
@@ -867,7 +892,7 @@ fn palettize(data: &[Color], n: i32, width: u32, height: u32) -> (Vec<u8>, Vec<C
                 a: x.a,
             })
             .collect(),
-    )
+    ))
 }
 
 fn read_into_palette_c4(colors: Vec<Color>, palette: &mut PaletteC4) {
@@ -892,7 +917,12 @@ fn read_into_palette_c8(colors: Vec<Color>, palette: &mut PaletteC8) {
     }
 }
 
-pub fn compress_bitmap(data: &[Color], basis: &mut BitmapFormat, width: u32, height: u32) {
+pub fn compress_bitmap(
+    data: &[Color],
+    basis: &mut BitmapFormat,
+    width: u32,
+    height: u32,
+) -> Result<(), imagequant::liq_error> {
     match basis {
         BitmapFormat::RGBA8888(ref mut v) => {
             v.clear();
@@ -911,38 +941,38 @@ pub fn compress_bitmap(data: &[Color], basis: &mut BitmapFormat, width: u32, hei
             v.extend(data.iter().map(|x| x.to_A3RGB5()));
         }
         BitmapFormat::C4(ref mut v, ref mut palette) => {
-            let (newdata, newpalette) = palettize(data, 16, width, height);
+            let (newdata, newpalette) = palettize(data, 16, width, height)?;
             v.clear();
             v.extend(newdata.into_iter());
             read_into_palette_c4(newpalette, palette);
         }
         BitmapFormat::C8(ref mut v, ref mut palette) => {
-            let (newdata, newpalette) = palettize(data, 256, width, height);
+            let (newdata, newpalette) = palettize(data, 256, width, height)?;
             v.clear();
             v.extend(newdata.into_iter());
             read_into_palette_c8(newpalette, palette);
         }
     }
+    Ok(())
 }
 
 pub fn import_bitmap<R>(
     reader: &mut R,
     format: image::ImageFormat,
-) -> Result<(Vec<Color>, u32, u32), Box<dyn Error>>
+) -> image::ImageResult<(Vec<Color>, u32, u32)>
 where
     R: Read + BufRead + Seek,
 {
-    use image::GenericImageView;
     let mut imgreader = image::io::Reader::new(reader);
     imgreader.set_format(format);
     let image = imgreader.decode()?;
-    let image = if image.width() % 8 != 0 || image.height() % 8 != 0 {
+    /* let image = if image.width() % 8 != 0 || image.height() % 8 != 0 {
         let width = util::round_up(image.width() as usize, 8) as u32;
         let height = util::round_up(image.height() as usize, 8) as u32;
         image.resize_exact(width, height, image::imageops::FilterType::CatmullRom)
     } else {
         image
-    };
+    };*/
     let image = image.to_rgba8();
     let (width, height) = image.dimensions();
     let mut buf = Vec::with_capacity(width as usize * height as usize);
@@ -959,3 +989,4 @@ where
     }
     Ok((buf, width, height))
 }
+

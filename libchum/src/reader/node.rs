@@ -1,6 +1,6 @@
+use crate::error::*;
 use crate::format::TotemFormat;
 use crate::reader::material;
-use crate::error::*;
 use std::error::Error;
 use std::fmt;
 use std::io::{self, Read, Write};

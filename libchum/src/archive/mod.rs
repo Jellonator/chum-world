@@ -1,12 +1,12 @@
 pub mod data;
 pub mod nametable;
 
-pub use data::{TotemHeader, TotemFile, TotemArchive};
+pub use data::{TotemArchive, TotemFile, TotemHeader};
 
-use std::collections::{HashMap, HashSet};
-use std::io::{self, Read, Write};
 use crate::format;
 use crate::util;
+use std::collections::{HashMap, HashSet};
+use std::io::{self, Read, Write};
 use thiserror::Error;
 
 /// Complete Chum archive.

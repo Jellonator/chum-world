@@ -4,7 +4,7 @@ use crate::util;
 use crate::ChumArchive;
 use gdnative::api::Resource;
 use gdnative::prelude::*;
-use libchum::{self, common, reader, scene, structure::ChumStruct};
+use libchum::{archive, common, reader, scene, structure::ChumStruct};
 use std::fs::File;
 use std::io::{BufReader, Write};
 
@@ -125,7 +125,7 @@ impl ChumFile {
     /// Read a file from the given ChumArchive
     pub fn read_from_chumfile(
         &mut self,
-        file: &libchum::ChumFile,
+        file: &archive::ChumFile,
         fmt: libchum::format::TotemFormat,
         parent: Instance<ChumArchive, Shared>,
     ) {
@@ -178,7 +178,7 @@ impl ChumFile {
         let archive_instance = self.get_archive_instance();
         unsafe { archive_instance.assume_safe() }
             .map(|archive, _| {
-                let file: &libchum::ChumFile =
+                let file: &archive::ChumFile =
                     archive.archive.get_file_from_name(&self.namestr).unwrap();
                 func(file.get_data())
             })
@@ -192,7 +192,7 @@ impl ChumFile {
         let archive_instance = self.get_archive_instance();
         unsafe { archive_instance.assume_safe() }
             .map_mut(|archive, _| {
-                let file: &mut libchum::ChumFile = archive
+                let file: &mut archive::ChumFile = archive
                     .archive
                     .get_file_from_name_mut(&self.namestr)
                     .unwrap();
@@ -471,7 +471,7 @@ impl ChumFile {
         let (bitmap, width, height) = bitmap::import_bitmap(&mut buf_reader, image_format).unwrap();
         let mut data =
             bitmap::BitmapFormat::new_empty(formattype as u8, palettetype as u8).unwrap();
-        bitmap::compress_bitmap(&bitmap, &mut data, width, height);
+        bitmap::compress_bitmap(&bitmap, &mut data, width, height).unwrap();
         let bitmap =
             match reader::bitmap::Bitmap::read_data(&mut self.get_data_as_vec(), self.format) {
                 Ok(x) => x,

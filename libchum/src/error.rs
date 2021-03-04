@@ -2,113 +2,29 @@ use std::error;
 use std::fmt;
 use thiserror;
 
+/// Error that can occur while unpacking a structure.
+/// This can be while destructuring, or reading binary data.
 #[derive(Debug, thiserror::Error)]
 pub enum UnpackError {
     #[error("Boolean value resolved to {value}, expected 0 or 1")]
-    InvalidBoolean {
-        value: u8
-    },
+    InvalidBoolean { value: u8 },
     #[error("Invalid value {value} for enumeration {enum_name}")]
-    InvalidEnumeration {
-        enum_name: String,
-        value: i64
-    },
+    InvalidEnumeration { enum_name: String, value: i64 },
     #[error("Invalid value variant {value}; expected one of {expected:?}")]
     InvalidVariant {
         expected: Vec<String>,
         value: String,
     },
     #[error(transparent)]
-    Io(#[from] std::io::Error)
+    Io(#[from] std::io::Error),
 }
-
-/*
-/// Error that occurs when failing to parse an optional structure
-#[derive(Debug, Clone)]
-pub struct BooleanError {
-    pub value: u8,
-}
-
-impl BooleanError {
-    pub fn new(value: u8) -> BooleanError {
-        BooleanError { value }
-    }
-}
-
-impl fmt::Display for BooleanError {
-    fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
-        write!(fmt, "Bool resolved to {}, expected 0 or 1.", self.value)
-    }
-}
-
-impl Error for BooleanError {}
-
-/// Error that occurs when an enum is constructed from a bad integer
-#[derive(Debug, Clone)]
-pub struct EnumerationError {
-    pub enum_name: String,
-    pub value: i64,
-}
-
-impl EnumerationError {
-    pub fn new(name: &str, value: i64) -> EnumerationError {
-        EnumerationError {
-            enum_name: name.to_owned(),
-            value,
-        }
-    }
-}
-
-impl fmt::Display for EnumerationError {
-    fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
-        write!(
-            fmt,
-            "Invalid enum value {} for enumeration {}",
-            self.value, self.enum_name
-        )
-    }
-}
-
-impl Error for EnumerationError {}
-
-/// Error that occurs when a value is mismatched
-#[derive(Debug, Clone)]
-pub struct BadValueError {
-    pub possible_values: Option<String>,
-    pub value: String,
-}
-
-impl BadValueError {
-    pub fn new<A, B>(value: A, possible_values: Option<B>) -> BadValueError
-    where
-        A: ToString,
-        B: ToString,
-    {
-        BadValueError {
-            value: value.to_string(),
-            possible_values: possible_values.map(|x| x.to_string()),
-        }
-    }
-}
-
-impl fmt::Display for BadValueError {
-    fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
-        match self.possible_values.as_ref() {
-            Some(x) => write!(fmt, "'{}' is not a valid value; expected {}", self.value, x),
-            None => write!(fmt, "'{}' is not a valid value", self.value),
-        }
-    }
-}
-
-impl Error for BadValueError {}
-*/
 
 /// Error that occurs when failing to read a structure
 #[derive(Debug)]
 pub struct StructUnpackError {
     pub structname: String,
     pub structpath: String,
-    pub error: UnpackError
+    pub error: UnpackError,
 }
 
 impl StructUnpackError {
@@ -197,33 +113,3 @@ where
         error: x.error,
     })
 }
-
-
-
-/*
-/// Error that occurs when a structure variant fails
-#[derive(Debug, Clone)]
-pub struct ChumStructVariantError {
-    pub expected: Vec<String>,
-    pub value: String,
-}
-
-impl fmt::Display for ChumStructVariantError {
-    fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
-        write!(fmt, "Expected one of: [")?;
-        let mut is_first = true;
-        for value in self.expected.iter() {
-            if is_first {
-                write!(fmt, "\"{}\"", value)?;
-                is_first = false;
-            } else {
-                write!(fmt, ", \"{}\"", value)?;
-            }
-        }
-        write!(fmt, "]\nGot: {}", self.value)?;
-        Ok(())
-    }
-}
-
-impl Error for ChumStructVariantError {}
-*/

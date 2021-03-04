@@ -1,6 +1,6 @@
 use gdnative::api::Resource;
 use gdnative::prelude::*;
-use libchum;
+use libchum::{self, archive};
 use std::collections::HashMap;
 use std::fs::File;
 
@@ -16,7 +16,7 @@ pub mod views;
 #[derive(NativeClass)]
 #[inherit(Resource)]
 pub struct ChumArchive {
-    pub archive: libchum::ChumArchive,
+    pub archive: archive::ChumArchive,
     pub files: HashMap<i32, Instance<chumfile::ChumFile, Shared>>,
 }
 
@@ -24,7 +24,7 @@ pub struct ChumArchive {
 impl ChumArchive {
     fn new(_owner: &Resource) -> Self {
         ChumArchive {
-            archive: libchum::ChumArchive::default(),
+            archive: archive::ChumArchive::default(),
             files: HashMap::new(),
         }
     }
@@ -80,7 +80,7 @@ impl ChumArchive {
                 return GodotError::FileBadPath as i64;
             }
         };
-        match libchum::ChumArchive::read_chum_archive(&mut ngcfile, &mut dgcfile, format) {
+        match archive::ChumArchive::read_chum_archive(&mut ngcfile, &mut dgcfile, format) {
             Ok(x) => {
                 self.files.clear();
                 for file in x.get_files() {

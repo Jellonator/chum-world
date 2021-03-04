@@ -1,7 +1,7 @@
 // use crate::common::*;
+use crate::error::*;
 use crate::format;
 use crate::util::dsp;
-use crate::error::*;
 use std::io;
 
 chum_struct_generate_readwrite! {

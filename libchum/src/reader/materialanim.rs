@@ -112,6 +112,7 @@ impl<T> Track<T> {
                 }
             }
             Some((
+                // unwrap here is fine because we already know that frames.len() > 0
                 &self.frames.last().unwrap().data,
                 &self.frames.last().unwrap().data,
                 0.0,

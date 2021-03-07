@@ -408,7 +408,7 @@ macro_rules! chum_struct_impl {
                     )*
                 ].into_iter().filter_map(|e|e).collect())
             }
-            fn destructure(data: &$crate::structure::ChumStructVariant) -> Result<Self, $crate::error::UnpackError> {
+            fn destructure(data: &$crate::structure::ChumStructVariant) -> Result<Self, $crate::error::DestructureError> {
                 Ok(
                     Self {
                         $(
@@ -1017,7 +1017,7 @@ macro_rules! chum_struct_enum {
                     ),*
                 }
             }
-            fn destructure(data: &$crate::structure::ChumStructVariant) -> Result<Self, $crate::error::UnpackError> {
+            fn destructure(data: &$crate::structure::ChumStructVariant) -> Result<Self, $crate::error::DestructureError> {
                 // unimplemented!()
                 let inner_name = data.get_variant_name().unwrap();
                 let inner_data = data.get_variant_data().unwrap();
@@ -1035,7 +1035,7 @@ macro_rules! chum_struct_enum {
                     )*
                     o => {
                         Err(
-                            $crate::error::UnpackError::InvalidVariant {
+                            $crate::error::DestructureError::InvalidVariant {
                                 expected: vec![
                                     $(
                                         stringify!($variantname).to_owned()

@@ -2,21 +2,25 @@ use std::error;
 use std::fmt;
 use thiserror;
 
-/// Error that can occur while unpacking a structure.
-/// This can be while destructuring, or reading binary data.
+/// Error that can occur while reading a structure from a binary data source.
 #[derive(Debug, thiserror::Error)]
 pub enum UnpackError {
     #[error("Boolean value resolved to {value}, expected 0 or 1")]
     InvalidBoolean { value: u8 },
     #[error("Invalid value {value} for enumeration {enum_name}")]
     InvalidEnumeration { enum_name: String, value: i64 },
+    #[error(transparent)]
+    Io(#[from] std::io::Error),
+}
+
+/// Error that can occur while destructuring
+#[derive(Debug, thiserror::Error)]
+pub enum DestructureError {
     #[error("Invalid value variant {value}; expected one of {expected:?}")]
     InvalidVariant {
         expected: Vec<String>,
         value: String,
     },
-    #[error(transparent)]
-    Io(#[from] std::io::Error),
 }
 
 /// Error that occurs when failing to read a structure

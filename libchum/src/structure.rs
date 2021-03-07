@@ -3,7 +3,7 @@ use crate::error;
 
 pub trait ChumStruct: Sized {
     fn structure(&self) -> ChumStructVariant;
-    fn destructure(data: &ChumStructVariant) -> Result<Self, error::UnpackError>;
+    fn destructure(data: &ChumStructVariant) -> Result<Self, error::DestructureError>;
 }
 
 pub trait ChumEnum: Sized {

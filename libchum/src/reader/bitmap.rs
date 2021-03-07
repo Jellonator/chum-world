@@ -7,6 +7,7 @@ pub use image;
 use imagequant;
 use std::io::{self, BufRead, Read, Seek, Write};
 use std::slice;
+use crate::error;
 
 // Image formats
 const FORMAT_C4: u8 = 1;
@@ -39,8 +40,6 @@ impl Default for Color {
         }
     }
 }
-
-// TODO: Avoid unecessary panic!s
 
 #[allow(non_snake_case)]
 impl Color {
@@ -272,6 +271,7 @@ impl PaletteC4 {
     pub fn get_color(&self, index: u8) -> Color {
         match self.data.get(index as usize) {
             Some(val) => self.format.get_color(*val),
+            // panic here is fine because indices are read from nibbles
             None => panic!(),
         }
     }
@@ -280,9 +280,9 @@ impl PaletteC4 {
         ptype: u8,
         file: &mut R,
         fmt: TotemFormat,
-    ) -> io::Result<PaletteC4> {
+    ) -> Result<PaletteC4, error::UnpackError> {
         match ptype {
-            1 => {
+            PALETTE_A3RGB5 => {
                 let mut palettedata = [0u16; 16];
                 fmt.read_u16_into(file, &mut palettedata)?;
                 let mut retdata = [0u32; 16];
@@ -294,7 +294,7 @@ impl PaletteC4 {
                     data: retdata,
                 })
             }
-            2 => {
+            PALETTE_RGB565 => {
                 let mut palettedata = [0u16; 16];
                 fmt.read_u16_into(file, &mut palettedata)?;
                 let mut retdata = [0u32; 16];
@@ -306,7 +306,7 @@ impl PaletteC4 {
                     data: retdata,
                 })
             }
-            3 => {
+            PALETTE_RGBA8888 => {
                 let mut palettedata = [0u32; 16];
                 fmt.read_u32_into(file, &mut palettedata)?;
                 Ok(PaletteC4 {
@@ -314,7 +314,10 @@ impl PaletteC4 {
                     data: palettedata,
                 })
             }
-            _ => panic!(),
+            v => Err(error::UnpackError::InvalidEnumeration {
+                enum_name: "PaletteFormat".to_owned(),
+                value: v as i64
+            }),
         }
     }
 }
@@ -354,6 +357,7 @@ impl PaletteC8 {
     pub fn get_color(&self, index: u8) -> Color {
         match self.data.get(index as usize) {
             Some(val) => self.format.get_color(*val),
+            // panic is fine here because indices are read from bytes
             None => panic!(),
         }
     }
@@ -362,7 +366,7 @@ impl PaletteC8 {
         ptype: u8,
         file: &mut R,
         fmt: TotemFormat,
-    ) -> io::Result<PaletteC8> {
+    ) -> Result<PaletteC8, error::UnpackError> {
         match ptype {
             PALETTE_A3RGB5 => {
                 let mut palettedata = [0u16; 256];
@@ -396,7 +400,10 @@ impl PaletteC8 {
                     data: palettedata,
                 })
             }
-            _ => panic!(),
+            v => Err(error::UnpackError::InvalidEnumeration {
+                enum_name: "PaletteFormat".to_owned(),
+                value: v as i64
+            }),
         }
     }
 }
@@ -524,7 +531,9 @@ fn get_chunk_index(
     return iy * imagewidth + ix;
 }
 
-/// Arrange the pixel data into a Vector following bitmap chunk rules.
+/// Converts image data that is in block format into linear format.
+/// panic!s if image data size does not match given dimensions, block width or
+/// height is 0, or if image size is not a multiple of block size.
 fn deblockify<T>(
     data: &[T],
     blockwidth: usize,
@@ -554,7 +563,7 @@ where
     newdata
 }
 
-/// Take data from a linear arrangement into a blocked arangement
+/// Convertss image data from a linear arrangement into a blocked arangement.
 /// If data does not fit neatly into blocks,
 /// then the data will be padded to fit.
 /// Panics if the data's length does not match the given size,
@@ -594,6 +603,7 @@ where
 }
 
 /// Read the interleaved color format (FORMAT_ARGB8888)
+/// panic!s if the output buffer's size is not a multiple of 16.
 fn read_u32_interleaved<R: Read>(
     fmt: &TotemFormat,
     file: &mut R,
@@ -630,7 +640,7 @@ macro_rules! bitmap_read_data {
             // read data
             let mut indices = vec![Default::default(); (data_width * data_height) as usize];
             match $read_func($fmt, $file, &mut indices) {
-                Ok(_) => {
+                Ok(()) => {
                     // convert from block arrangement to linear arrangement
                     let mut data = deblockify(&indices, $block_width, $block_height, data_width, data_width);
                     // resize to match original size
@@ -700,7 +710,7 @@ impl Bitmap {
     }
 
     /// Read a Bitmap from a file
-    pub fn read_from<R: Read>(file: &mut R, fmt: TotemFormat) -> io::Result<Bitmap> {
+    pub fn read_from<R: Read>(file: &mut R, fmt: TotemFormat) -> Result<Bitmap, error::UnpackError> {
         let width: u32 = fmt.read_u32(file)?;
         let height: u32 = fmt.read_u32(file)?;
         fmt.skip_n_bytes(file, 4)?;
@@ -739,6 +749,7 @@ impl Bitmap {
                 )
             }
             FORMAT_RGB888 => {
+                // this is the only linear format
                 let mut data = vec![(0, 0, 0); (width * height) as usize];
                 for i in 0..data.len() {
                     let b = fmt.read_u8(file)?;
@@ -750,7 +761,10 @@ impl Bitmap {
                 // linear format, no blocks necessary
                 // TODO: Handle weird format
             }
-            _ => panic!(),
+            v => Err(error::UnpackError::InvalidEnumeration {
+                enum_name: "BitmapFormat".to_string(),
+                value: v as i64
+            })?,
         };
         Ok(Bitmap {
             data,
@@ -758,7 +772,10 @@ impl Bitmap {
                 0 => AlphaLevel::Opaque,
                 1 => AlphaLevel::Bit,
                 2 => AlphaLevel::Blend,
-                _ => panic!(),
+                v => Err(error::UnpackError::InvalidEnumeration {
+                    enum_name: "AlphaLevel".to_string(),
+                    value: v as i64
+                })?,
             },
             width,
             height,
@@ -768,7 +785,7 @@ impl Bitmap {
     }
 
     /// Read a TMesh from data
-    pub fn read_data(data: &[u8], fmt: TotemFormat) -> io::Result<Bitmap> {
+    pub fn read_data(data: &[u8], fmt: TotemFormat) -> Result<Bitmap, error::UnpackError> {
         Bitmap::read_from(&mut data.as_ref(), fmt)
     }
 

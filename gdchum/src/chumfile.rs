@@ -252,7 +252,8 @@ impl ChumFile {
     }
 
     fn export_skin_to_gltf(&self, path: &str) {
-        let skin = match reader::skin::Skin::read_data(&mut self.get_data_as_vec(), self.format) {
+        use libchum::binary::ChumBinary;
+        let skin = match reader::skin::Skin::read_from(&mut self.get_data_as_vec().as_slice(), self.format) {
             Ok(x) => x,
             Err(err) => {
                 panic!("MESH file invalid: {}", err);

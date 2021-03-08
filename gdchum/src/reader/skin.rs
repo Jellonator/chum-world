@@ -8,7 +8,8 @@ pub fn read_skin(
     fmt: libchum::format::TotemFormat,
     file: &ChumFile,
 ) -> Option<Dictionary<Unique>> {
-    let skin = match skin::Skin::read_data(data, fmt) {
+    use libchum::binary::ChumBinary;
+    let skin = match skin::Skin::read_from(&mut data.as_slice(), fmt) {
         Ok(x) => x,
         Err(err) => {
             display_err!("Error loading SKIN: {}\n{}", file.get_name_str(), err);

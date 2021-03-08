@@ -255,6 +255,7 @@ impl SceneData {
         _quality: i64,
         _include_skin: bool,
     ) {
+        use libchum::binary::ChumBinary;
         let fh = unsafe { fh.assume_safe() };
         let node = self.scene.root.get_node_mut(node_path.as_slice()).unwrap();
         // let visual_instances = &mut self.scene.visual_instances;
@@ -262,7 +263,7 @@ impl SceneData {
         let meshes = &mut self.scene.meshes;
         fh.map(|chumfile, _res| {
             let skin = chumfile.borrow_data(|mut data| {
-                match reader::skin::Skin::read_data(&mut data, chumfile.get_format()) {
+                match reader::skin::Skin::read_from(&mut data, chumfile.get_format()) {
                     Ok(x) => x,
                     Err(err) => {
                         panic!("SKIN file invalid: {}", err);

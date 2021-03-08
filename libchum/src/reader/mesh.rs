@@ -1,6 +1,7 @@
 use crate::common::*;
 use crate::format::TotemFormat;
 use crate::reader::skin;
+use crate::error;
 use crate::scene;
 use std::collections::HashMap;
 use std::io::{self, Read, Write};
@@ -22,25 +23,31 @@ pub struct MeshTri {
     pub points: [MeshPoint; 3],
 }
 
-/// A triangle strip
-#[derive(Clone, Debug)]
-pub struct Strip {
-    pub vertex_ids: Vec<u16>,
-    pub tri_order: u32,
-    pub material: u32,
+chum_struct_generate_readwrite! {
+    /// A triangle strip
+    #[derive(Clone, Debug, Default)]
+    pub struct Strip {
+        pub vertex_ids: [dynamic array [u32] [u16] 0u16],
+        pub material: [u32],
+        pub tri_order: [u32],
+    }
 }
 
-/// A combination of a normal index and a texture coordinate index
-#[derive(Clone, Debug)]
-pub struct ElementData {
-    pub texcoord_id: u16,
-    pub normal_id: u16,
+chum_struct_generate_readwrite! {
+    /// A combination of a normal index and a texture coordinate index
+    #[derive(Clone, Debug, Default)]
+    pub struct ElementData {
+        pub texcoord_id: [u16],
+        pub normal_id: [u16],
+    }
 }
 
-/// A triangle strip's extra data
-#[derive(Clone, Debug)]
-pub struct StripExt {
-    pub elements: Vec<ElementData>,
+chum_struct_generate_readwrite! {
+    /// A triangle strip's extra data
+    #[derive(Clone, Debug)]
+    pub struct StripExt {
+        pub elements: [dynamic array [u32] [struct ElementData] ElementData::default()],
+    }
 }
 
 #[derive(Clone, Debug)]
@@ -63,6 +70,52 @@ pub struct Mesh {
     pub cuboid_shapes: Vec<CuboidShape>,
     pub cylinder_shapes: Vec<CylinderShape>,
     pub strip_order: Vec<u32>,
+}
+
+chum_struct_generate_readwrite! {
+    /// temporary data structure used for reading/writing to binary files
+    #[derive(Clone, Debug)]
+    pub struct MeshTemp {
+        pub transform: [struct THeaderTyped],
+        pub vertices: [dynamic array [u32] [Vector3] Vector3::zero()],
+        pub texcoords: [dynamic array [u32] [Vector2] Vector2::zero()],
+        pub normals: [dynamic array [u32] [Vector3] Vector3::zero()],
+        pub strip_data: [dynamic array [u32] [struct Strip] Strip::default()],
+        pub strip_groups: [custom_binary
+            [dynamic array [u32] [i32] 0i32]
+            read: |mesh: &Inner, file: &mut dyn Read, fmt: TotemFormat| -> error::StructUnpackResult<Vec<i32>> {
+                if mesh.transform.as_ref().unwrap().item_subtype & 4 != 0 {
+                    let len = mesh.strip_data.as_ref().unwrap().len();
+                    let mut v = Vec::with_capacity(len);
+                    for i in 0..len {
+                        v.push(fmt.read_i32(file).map_err(|e| {
+                            error::StructUnpackError {
+                                structname: "MeshTemp".to_owned(),
+                                structpath: format!("strip_groups[{}]", i),
+                                error: e.into()
+                            }
+                        })?);
+                    }
+                    Ok(v)
+                } else {
+                    Ok(Vec::new())
+                }
+            };
+            write: |value: &Vec<i32>, file: &mut dyn Write, fmt: TotemFormat| -> io::Result<()> {
+                for value in value.iter() {
+                    fmt.write_i32(file, *value)?;
+                }
+                Ok(())
+            };
+        ],
+        pub strip_exts: [dynamic array [u32] [struct StripExt] Strip::default()],
+        pub materials: [dynamic array [u32] [reference MATERIAL] 0i32],
+        pub sphere_shapes: [dynamic array [u32] [struct SphereShape] SphereShape::default()],
+        pub cuboid_shapes: [dynamic array [u32] [struct CuboidShape] CuboidShape::default()],
+        pub cylinder_shapes: [dynamic array [u32] [struct CylinderShape] CylinderShape::default()],
+        pub unk_shapes: [ignore [u32] 0u32],
+        pub strip_order: [dynamic array [u32] [u32] 0u32],
+    }
 }
 
 chum_struct_generate_readwrite! {

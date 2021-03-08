@@ -17,6 +17,7 @@ onready var node_rect := $HSplitContainer/TextureRect
 onready var node_camera := $"/root/Viewer/Viewport/Spatial/Camera"
 onready var node_speed := $HSplitContainer/TextureRect/SpeedLabel
 var meshes = []
+var surfaces = []
 
 func _ready():
 	node_rect.texture = node_viewport.get_texture()
@@ -37,24 +38,33 @@ func _input(event):
 func clear_meshes():
 	for data in meshes:
 		data["mesh"].queue_free()
+	for surf in surfaces:
+		surf.queue_free()
+	surfaces.clear()
 	meshes.clear()
 
 func set_meshes(mesh_ids: Array):
 	var archive = cfile.get_archive()
 	for id in mesh_ids:
 		var mesh_file = archive.get_file_from_hash(id)
-		var mesh_data = ChumReader.read_mesh(mesh_file)
-		if mesh_data == null or not mesh_data["exists"]:
-			meshes.append(null)
-			print("COULD NOT LOAD")
-		else:
-			var mesh := MeshInstance.new()
-			mesh.mesh = mesh_data["mesh"]
-			node_meshes.add_child(mesh)
-			meshes.append({
-				"mesh": mesh,
-				"surfaces": mesh_data["surfaces"]
-			})
+		if mesh_file.type == "SURFACE":
+			var node = MeshData.load_surface_from_file(mesh_file, null)
+			if node != null:
+				surfaces.append(node)
+				node_meshes.add_child(node)
+		elif mesh_file.type == "MESH":
+			var mesh_data = ChumReader.read_mesh(mesh_file)
+			if mesh_data == null or not mesh_data["exists"]:
+				# meshes.append(null)
+				print("COULD NOT LOAD")
+			else:
+				var mesh := MeshInstance.new()
+				mesh.mesh = mesh_data["mesh"]
+				node_meshes.add_child(mesh)
+				meshes.append({
+					"mesh": mesh,
+					"surfaces": mesh_data["surfaces"]
+				})
 
 func set_groups(group_values: Dictionary):
 	node_items.clear()

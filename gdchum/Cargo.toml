@@ -7,12 +7,11 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-gltf = { git = "https://github.com/Jellonator/gltf", branch = "no_submodule" }
-gltf-json = { git = "https://github.com/Jellonator/gltf", branch = "no_submodule" }
 gdnative = "0.9.3"
 libchum = { path = "../libchum" }
 phf = { version = "0.8.0", features = ["macros"] }
 hound = "3.4.0"
+anyhow = "1.0.38"
 
 [lib]
 crate-type = ["cdylib"]

@@ -197,7 +197,7 @@ impl SceneData {
         let fh = unsafe { fh.assume_safe() };
         fh.map(|chumfile, _res| {
             let mesh = chumfile.borrow_data(|mut data| {
-                match reader::mesh::Mesh::read_data(&mut data, chumfile.get_format()) {
+                match reader::mesh::Mesh::read_from(&mut data, chumfile.get_format()) {
                     Ok(x) => x,
                     Err(err) => {
                         panic!("MESH file invalid: {}", err);
@@ -284,8 +284,8 @@ impl SceneData {
                                 .map(|meshscript, _meshres| {
                                     match meshscript.get_type_str() {
                                         "MESH" => {
-                                            let mesh = match reader::mesh::Mesh::read_data(
-                                                &mut meshscript.get_data_as_vec(),
+                                            let mesh = match reader::mesh::Mesh::read_from(
+                                                &mut meshscript.get_data_as_vec().as_slice(),
                                                 meshscript.get_format(),
                                             ) {
                                                 Ok(x) => x,

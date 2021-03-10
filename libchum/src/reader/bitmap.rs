@@ -504,6 +504,19 @@ pub struct Bitmap {
     unknown: u8,
 }
 
+impl Default for Bitmap {
+    fn default() -> Bitmap {
+        Bitmap {
+            alpha: AlphaLevel::Opaque,
+            width: 0,
+            height: 0,
+            flags: 0,
+            unknown: 0,
+            data: BitmapFormat::RGBA8888(Vec::new())
+        }
+    }
+}
+
 chum_struct! {
     pub struct BitmapStruct {
         pub alpha: [enum [u8] AlphaLevel],
@@ -673,6 +686,12 @@ impl Bitmap {
             flags: data.flags,
             unknown: data.unknown,
         }
+    }
+
+    pub fn import_struct(&mut self, data: &BitmapStruct) {
+        self.alpha = data.alpha;
+        self.flags = data.flags;
+        self.unknown = data.unknown;
     }
 
     pub fn get_data_as_vec(&self) -> Vec<Color> {

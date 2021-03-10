@@ -7,6 +7,7 @@ use gdnative::prelude::*;
 use libchum::{archive, common, reader, scene, structure::ChumStruct};
 use std::fs::File;
 use std::io::{BufReader, Write};
+use libchum::binary::ChumBinary;
 
 /// A File resource derived from a ChumArchive.
 #[derive(NativeClass)]
@@ -242,7 +243,7 @@ impl ChumFile {
     /// Export a MESH file as a .obj
     fn export_mesh_to_obj(&mut self, path: &str) {
         let mut buffer = File::create(path).unwrap();
-        let mesh = match reader::mesh::Mesh::read_data(&mut self.get_data_as_vec(), self.format) {
+        let mesh = match reader::mesh::Mesh::read_from(&mut self.get_data_as_vec().as_slice(), self.format) {
             Ok(x) => x,
             Err(err) => {
                 panic!("MESH file invalid: {}", err);
@@ -269,8 +270,8 @@ impl ChumFile {
                         unsafe { meshfile.assume_safe() }
                             .map(|meshscript, _| match meshscript.typestr.as_str() {
                                 "MESH" => {
-                                    let mesh = match reader::mesh::Mesh::read_data(
-                                        &mut meshscript.get_data_as_vec(),
+                                    let mesh = match reader::mesh::Mesh::read_from(
+                                        &mut meshscript.get_data_as_vec().as_slice(),
                                         self.format,
                                     ) {
                                         Ok(x) => x,
@@ -315,7 +316,7 @@ impl ChumFile {
     }
 
     fn export_mesh_to_gltf(&self, path: &str) {
-        let mesh = match reader::mesh::Mesh::read_data(&mut self.get_data_as_vec(), self.format) {
+        let mesh = match reader::mesh::Mesh::read_from(&mut self.get_data_as_vec().as_slice(), self.format) {
             Ok(x) => x,
             Err(err) => {
                 panic!("MESH file invalid: {}", err);

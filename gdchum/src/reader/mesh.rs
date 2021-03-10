@@ -30,7 +30,8 @@ pub fn read_mesh(
     reader: &mut ChumReader,
     file: &ChumFile,
 ) -> Option<MeshResult> {
-    let mesh = match mesh::Mesh::read_data(data, fmt) {
+    use libchum::binary::ChumBinary;
+    let mesh = match mesh::Mesh::read_from(&mut data.as_slice(), fmt) {
         Ok(x) => x,
         Err(err) => {
             display_err!("Error loading MESH: {}\n{}", file.get_name_str(), err);

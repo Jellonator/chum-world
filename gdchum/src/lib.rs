@@ -3,7 +3,10 @@ use gdnative::prelude::*;
 use libchum::{self, archive};
 use std::collections::HashMap;
 use std::fs::File;
+use anyhow;
 
+#[macro_use]
+pub mod macros;
 #[macro_use]
 pub mod util;
 pub mod bytedata;

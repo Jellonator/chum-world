@@ -3,7 +3,6 @@ use crate::util;
 use gdnative::api::Resource;
 use gdnative::prelude::*;
 use libchum::reader::node;
-use std::error::Error;
 
 #[derive(NativeClass)]
 #[inherit(Resource)]
@@ -14,70 +13,37 @@ pub struct NodeView {
 
 #[methods]
 impl NodeView {
+
     fn new(_owner: &Resource) -> Self {
         NodeView {
             inner: node::Node::default(),
         }
     }
 
-    fn _register(builder: &ClassBuilder<Self>) {
-        builder
-            .add_property("global_transform")
-            .with_getter(Self::get_global_transform)
-            .with_setter(Self::set_global_transform)
-            .done();
-        builder
-            .add_property("local_transform")
-            .with_getter(Self::get_local_transform)
-            .with_setter(Self::set_local_transform)
-            .done();
-        builder
-            .add_property("parent_id")
-            .with_getter(Self::get_parent_id)
-            .with_setter(Self::set_parent_id)
-            .done();
-        builder
-            .add_property("resource_id")
-            .with_getter(Self::get_resource_id)
-            .with_setter(Self::set_resource_id)
-            .done();
-    }
-
-    pub fn set_data(&mut self, data: node::Node) {
-        self.inner = data;
-    }
-
-    #[export]
-    pub fn load(&mut self, _owner: &Resource, data: Instance<ChumFile, Shared>) {
-        if let Err(e) = self.load_from(data) {
-            display_err!("Error while loading NODE into view: {}", e);
+    impl_view!(NodeView, node::Node, "NODE",
+        |builder: &ClassBuilder<Self>| {
+            builder
+                .add_property("global_transform")
+                .with_getter(Self::get_global_transform)
+                .with_setter(Self::set_global_transform)
+                .done();
+            builder
+                .add_property("local_transform")
+                .with_getter(Self::get_local_transform)
+                .with_setter(Self::set_local_transform)
+                .done();
+            builder
+                .add_property("parent_id")
+                .with_getter(Self::get_parent_id)
+                .with_setter(Self::set_parent_id)
+                .done();
+            builder
+                .add_property("resource_id")
+                .with_getter(Self::get_resource_id)
+                .with_setter(Self::set_resource_id)
+                .done();
         }
-    }
-
-    #[export]
-    pub fn save(&self, _owner: &Resource, data: Instance<ChumFile, Shared>) {
-        use libchum::binary::ChumBinary;
-        let mut v: Vec<u8> = Vec::new();
-        unsafe { data.assume_safe() }
-            .map_mut(|chumfile, _| {
-                self.inner.write_to(&mut v, chumfile.get_format()).unwrap();
-                chumfile.replace_data_with_vec(v);
-            })
-            .unwrap();
-    }
-
-    pub fn load_from(&mut self, data: Instance<ChumFile, Shared>) -> Result<(), Box<dyn Error>> {
-        use libchum::binary::ChumBinary;
-        unsafe {
-            let data = data.assume_safe();
-            self.inner = data.map(|cfile, _| {
-                cfile.borrow_data(|mut inner_data| {
-                    node::Node::read_from(&mut inner_data, cfile.get_format())
-                })
-            })??;
-        }
-        Ok(())
-    }
+    );
 
     #[export]
     pub fn set_global_transform(&mut self, _owner: TRef<Resource>, value: Transform) {
@@ -126,4 +92,19 @@ impl NodeView {
     pub fn set_resource_id(&mut self, _owner: TRef<Resource>, value: i32) {
         self.inner.resource_id = value;
     }
+
+    #[export]
+    pub fn get_structure(&self, _owner: &Resource) -> Variant {
+        use libchum::structure::ChumStruct;
+        let data = self.inner.structure();
+        util::struct_to_dict(&data).into_shared().to_variant()
+    }
+
+    #[export]
+    pub fn import_structure(&mut self, _owner: &Resource, data: Dictionary) {
+        use libchum::structure::ChumStruct;
+        let structure = util::dict_to_struct(&data);
+        self.inner = node::Node::destructure(&structure).unwrap();
+    }
 }
+

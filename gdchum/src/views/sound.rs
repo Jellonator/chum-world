@@ -1,4 +1,3 @@
-use crate::chumfile::ChumFile;
 use crate::util;
 use gdnative::api::audio_stream_sample::Format;
 use gdnative::api::Resource;

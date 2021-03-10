@@ -1,4 +1,3 @@
-use crate::chumfile::ChumFile;
 use gdnative::api::Resource;
 use gdnative::prelude::*;
 use libchum::reader::bitmap;

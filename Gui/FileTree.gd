@@ -134,8 +134,12 @@ func _gui_input(event):
 				$TreeMenu.popup(Rect2(pos - Vector2.ONE*4, Vector2.ONE))
 
 const TREE_MENU_COPY_ID := 0
+const TREE_MENU_COPY_PATH := 1
 
 func _on_TreeMenu_id_pressed(id):
 	if id == TREE_MENU_COPY_ID:
 		var file_id = _tree_menu_item.get_meta("file").get_hash_id()
 		OS.clipboard = str(file_id)
+	elif id == TREE_MENU_COPY_PATH:
+		var path = _tree_menu_item.get_meta("file").name
+		OS.clipboard = path

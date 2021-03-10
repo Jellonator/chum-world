@@ -17,10 +17,10 @@ macro_rules! impl_view {
                 fn get_type(&self, _owner: &Resource) -> &str
             ));
             builder.add_method("load", gdnative::godot_wrap_method!($name,
-                fn load(&mut self, _owner: &Resource, data: Instance<ChumFile, Shared>)
+                fn load(&mut self, _owner: &Resource, data: Instance<$crate::chumfile::ChumFile, Shared>)
             ));
             builder.add_method("save", gdnative::godot_wrap_method!($name,
-                fn save(&self, _owner: &Resource, data: Instance<ChumFile, Shared>)
+                fn save(&self, _owner: &Resource, data: Instance<$crate::chumfile::ChumFile, Shared>)
             ));
             builder.add_signal(Signal {
                 name: "modified",
@@ -37,7 +37,7 @@ macro_rules! impl_view {
             self.inner = data;
         }
 
-        pub fn load(&mut self, owner: &Resource, data: Instance<ChumFile, Shared>) {
+        pub fn load(&mut self, owner: &Resource, data: Instance<$crate::chumfile::ChumFile, Shared>) {
             if let Err(e) = self.load_from(data) {
                 display_err!("Error while loading {} into view: {}", $typename, e);
             }
@@ -45,7 +45,7 @@ macro_rules! impl_view {
         }
 
         #[allow(unused_imports)]
-        pub fn save(&self, _owner: &Resource, data: Instance<ChumFile, Shared>) {
+        pub fn save(&self, _owner: &Resource, data: Instance<$crate::chumfile::ChumFile, Shared>) {
             use libchum::binary::ChumBinary;
             let mut v: Vec<u8> = Vec::new();
             unsafe { data.assume_safe() }
@@ -57,7 +57,7 @@ macro_rules! impl_view {
         }
 
         #[allow(unused_imports)]
-        pub fn load_from(&mut self, data: Instance<ChumFile, Shared>) -> $crate::anyhow::Result<()> {
+        pub fn load_from(&mut self, data: Instance<$crate::chumfile::ChumFile, Shared>) -> $crate::anyhow::Result<()> {
             use libchum::binary::ChumBinary;
             unsafe {
                 let data = data.assume_safe();
@@ -70,4 +70,40 @@ macro_rules! impl_view {
             Ok(())
         }
     }
+}
+
+#[macro_export]
+macro_rules! impl_view_node_resource {
+    (
+        $name:ty,
+        $type:ty,
+        $typename:literal,
+        $block:expr
+    ) => {
+        impl_view!(
+            $name, $type, $typename,
+            |builder: &ClassBuilder<$name>| {
+                builder.add_method("get_flags", gdnative::godot_wrap_method!($name,
+                    fn get_flags(&self, _owner: &Resource) -> i64
+                ));
+                builder.add_method("set_flags", gdnative::godot_wrap_method!($name,
+                    fn set_flags(&mut self, owner: &Resource, value: i64)
+                ));
+                builder.add_property("flags")
+                    .with_getter(Self::get_flags)
+                    .with_setter(Self::set_flags)
+                    .done();
+                $block(builder);
+            }
+        );
+
+        pub fn get_flags(&self, _owner: TRef<Resource>) -> i64 {
+            self.inner.header.item_subtype as i64
+        }
+
+        pub fn set_flags(&mut self, owner: TRef<Resource>, value: i64) {
+            self.inner.header.item_subtype = value as u16;
+            owner.emit_signal("modified", &[]);
+        }
+    };
 }

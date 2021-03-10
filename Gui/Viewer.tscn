@@ -130,7 +130,7 @@ script = ExtResource( 7 )
 [node name="TreeMenu" type="PopupMenu" parent="VBox/Tabs/Files/VBox/Tree"]
 margin_right = 20.0
 margin_bottom = 20.0
-items = [ "Copy item ID", null, 0, false, false, 0, 0, null, "", false ]
+items = [ "Copy item ID", null, 0, false, false, 0, 0, null, "", false, "Copy path", null, 0, false, false, 1, 0, null, "", false ]
 
 [node name="EditorList" parent="VBox/Tabs/Files" instance=ExtResource( 2 )]
 anchor_right = 0.0

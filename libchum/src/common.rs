@@ -456,7 +456,7 @@ pub fn write_color_rgba(
 // Common header used by many different structures
 chum_struct_binary! {
     #[repr(C)]
-    #[derive(Clone, Debug)]
+    #[derive(Clone, Debug, Default)]
     pub struct THeaderTyped {
         pub floats: [fixed array [f32] 4],
         pub transform: [Transform3D],
@@ -469,7 +469,7 @@ chum_struct_binary! {
 // Common header used by many different structures
 chum_struct_binary! {
     #[repr(C)]
-    #[derive(Clone, Debug)]
+    #[derive(Clone, Debug, Default)]
     pub struct THeaderNoType {
         pub floats: [fixed array [f32] 4],
         pub transform: [Transform3D],

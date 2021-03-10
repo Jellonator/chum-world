@@ -1,4 +1,3 @@
-use crate::chumfile::ChumFile;
 use crate::util;
 use gdnative::api::Resource;
 use gdnative::prelude::*;
@@ -13,7 +12,6 @@ pub struct NodeView {
 
 #[methods]
 impl NodeView {
-
     fn new(_owner: &Resource) -> Self {
         NodeView {
             inner: node::Node::default(),

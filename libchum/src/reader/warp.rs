@@ -1,4 +1,4 @@
-chum_struct_generate_readwrite! {
+chum_struct_binary! {
     pub struct Warp {
         pub size: [f32],
         pub material_ids: [fixed array [reference MATERIAL] 6],

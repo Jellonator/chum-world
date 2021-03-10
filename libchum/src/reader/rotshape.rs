@@ -1,6 +1,6 @@
 use crate::common::*;
 
-chum_struct_generate_readwrite! {
+chum_struct_binary! {
     /// Rotation shape
     pub struct RotShape {
         pub transform: [struct THeaderNoType],

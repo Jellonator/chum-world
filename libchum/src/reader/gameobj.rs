@@ -2,13 +2,13 @@ use crate::reader::node;
 
 const T_NODE: i32 = -1276508687;
 
-chum_struct_generate_readwrite! {
+chum_struct_binary! {
     pub struct GameObj {
         pub prefabs: [dynamic array [u32] [struct Prefab] Prefab::default()]
     }
 }
 
-chum_struct_generate_readwrite! {
+chum_struct_binary! {
     pub struct Prefab {
         pub asset_type: [ignore [i32] T_NODE],
         pub subtype1: [reference],

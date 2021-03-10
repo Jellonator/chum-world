@@ -3,7 +3,7 @@ use crate::common::*;
 use crate::scene;
 use std::collections::HashMap;
 
-chum_struct_generate_readwrite! {
+chum_binary! {
     #[derive(Clone, Debug)]
     pub struct Skin {
         pub transform: [struct THeaderTyped],
@@ -15,7 +15,7 @@ chum_struct_generate_readwrite! {
     }
 }
 
-chum_struct_generate_readwrite! {
+chum_binary! {
     #[derive(Clone, Debug, Default)]
     pub struct VertexGroup {
         pub group_id: [reference],
@@ -23,7 +23,7 @@ chum_struct_generate_readwrite! {
     }
 }
 
-chum_struct_generate_readwrite! {
+chum_binary! {
     #[derive(Clone, Debug, Default)]
     pub struct VertexGroupSection {
         pub mesh_index: [u16],
@@ -32,7 +32,7 @@ chum_struct_generate_readwrite! {
     }
 }
 
-chum_struct_generate_readwrite! {
+chum_binary! {
     #[derive(Clone, Debug, Default)]
     pub struct VertexGroupVertex {
         pub vertex_id: [u32],
@@ -40,7 +40,7 @@ chum_struct_generate_readwrite! {
     }
 }
 
-chum_struct_generate_readwrite! {
+chum_binary! {
     #[derive(Clone, Debug, Default)]
     pub struct VertexGroupNormal {
         pub normal_id: [u32],
@@ -48,14 +48,14 @@ chum_struct_generate_readwrite! {
     }
 }
 
-chum_struct_generate_readwrite! {
+chum_binary! {
     #[derive(Clone, Debug, Default)]
     pub struct AnimSection {
         pub entries: [dynamic array [u32] [struct AnimEntry] AnimEntry::default()],
     }
 }
 
-chum_struct_generate_readwrite! {
+chum_binary! {
     #[derive(Clone, Debug, Default)]
     pub struct AnimEntry {
         pub symbol: [u32],
@@ -63,7 +63,7 @@ chum_struct_generate_readwrite! {
     }
 }
 
-chum_struct_generate_readwrite! {
+chum_binary! {
     #[derive(Clone, Debug, Default)]
     pub struct UnknownEntry {
         pub vertices: [dynamic array [u32] [u32] 0u32],

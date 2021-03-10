@@ -175,7 +175,7 @@ chum_struct_binary_impl! {
     }
 }
 
-chum_struct_generate_readwrite! {
+chum_struct_binary! {
     /// Material animation file
     pub struct MaterialAnimation {
         pub unk1: [u8],

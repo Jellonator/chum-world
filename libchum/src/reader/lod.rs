@@ -5,7 +5,7 @@ use crate::common::*;
 use crate::error::*;
 use std::io;
 
-chum_struct_generate_readwrite! {
+chum_struct_binary! {
     pub struct Lod {
         pub transform: [struct THeaderNoType],
         pub item_type: [ignore [u16] 5u16],
@@ -76,7 +76,7 @@ chum_struct_generate_readwrite! {
     }
 }
 
-chum_struct_generate_readwrite! {
+chum_struct_binary! {
     pub struct LodTransform {
         pub transform: [Transform3D],
         pub junk: [ignore [fixed array [u8] 16] [0u8; 16]]
@@ -92,7 +92,7 @@ impl Default for LodTransform {
     }
 }
 
-chum_struct_generate_readwrite! {
+chum_struct_binary! {
     pub struct LodUnkStruct {
         pub unk1: [fixed array[f32] 4],
         pub unk2: [u32],
@@ -108,7 +108,7 @@ impl Default for LodUnkStruct {
     }
 }
 
-chum_struct_generate_readwrite! {
+chum_struct_binary! {
     pub struct LodAnimEntry {
         // pub symbol: AnimSymbol, Jimmy files differ on animsymbols, so this is disabled for now
         pub symbol: [u32],
@@ -125,7 +125,7 @@ impl Default for LodAnimEntry {
     }
 }
 
-chum_struct_generate_readwrite! {
+chum_struct_binary! {
     pub struct LodSoundData {
         pub data: [
             dynamic array [u32] [struct LodSoundEntry]
@@ -140,7 +140,7 @@ impl Default for LodSoundData {
     }
 }
 
-chum_struct_generate_readwrite! {
+chum_struct_binary! {
     pub struct LodSoundEntry {
         pub symbol: [u32],
         pub sound_id: [reference SOUND],

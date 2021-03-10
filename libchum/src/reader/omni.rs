@@ -1,6 +1,6 @@
 use crate::common::*;
 
-chum_struct_generate_readwrite! {
+chum_struct_binary! {
     pub struct Omni {
         pub transform: [struct THeaderNoType],
         pub item_type: [ignore [u16] 16u16],

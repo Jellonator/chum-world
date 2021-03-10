@@ -563,7 +563,7 @@ where
     newdata
 }
 
-/// Convertss image data from a linear arrangement into a blocked arangement.
+/// Converts image data from a linear arrangement into a blocked arangement.
 /// If data does not fit neatly into blocks,
 /// then the data will be padded to fit.
 /// Panics if the data's length does not match the given size,
@@ -642,7 +642,7 @@ macro_rules! bitmap_read_data {
             match $read_func($fmt, $file, &mut indices) {
                 Ok(()) => {
                     // convert from block arrangement to linear arrangement
-                    let mut data = deblockify(&indices, $block_width, $block_height, data_width, data_width);
+                    let mut data = deblockify(&indices, $block_width, $block_height, data_width, data_height);
                     // resize to match original size
                     util::resize_2d_inplace(&mut data, (data_width, data_height), ($width as usize, $height as usize));
                     Ok(data)

@@ -1,6 +1,6 @@
 use crate::common::*;
 
-chum_struct_generate_readwrite! {
+chum_binary! {
     pub struct Spline {
         pub transform: [struct THeaderNoType],
         pub item_type: [ignore [u16] 2u16],
@@ -38,7 +38,7 @@ impl Spline {
     }
 }
 
-chum_struct_generate_readwrite! {
+chum_binary! {
     #[derive(Default)]
     pub struct SplineSection {
         pub p1: [u32],
@@ -51,7 +51,7 @@ chum_struct_generate_readwrite! {
     }
 }
 
-chum_struct_generate_readwrite! {
+chum_binary! {
     #[derive(Default)]
     pub struct SplineSubsection {
         pub point1: [Vector3],

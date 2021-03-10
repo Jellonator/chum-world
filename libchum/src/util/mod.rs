@@ -173,7 +173,7 @@ where
         }
     }
     for _iy in old_h.min(new_h)..new_h {
-        for _ix in 0..new_h {
+        for _ix in 0..new_w {
             v.push(T::default());
         }
     }

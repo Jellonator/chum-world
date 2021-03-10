@@ -9,10 +9,10 @@ edition = "2018"
 [dependencies]
 byteorder = "1.4.2"
 crc = "1.8.1"
-image = "0.23.13"
+image = "0.23.14"
 imagequant = "3.0.3"
 chrono = "0.4.19"
-euclid = "0.22.1"
+euclid = "0.22.2"
 meshopt = "0.1.9"
 gltf = { git = "https://github.com/Jellonator/gltf", branch = "no_submodule" }
 gltf-json = { git = "https://github.com/Jellonator/gltf", branch = "no_submodule" }

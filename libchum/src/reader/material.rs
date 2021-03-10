@@ -1,7 +1,7 @@
 //! See https://github.com/Jellonator/chum-world/wiki/MATERIAL for more information
 
 // Material data
-chum_struct_generate_readwrite! {
+chum_struct_binary! {
     #[derive(Default, Clone)]
     pub struct Material {
         pub color: [Color],

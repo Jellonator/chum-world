@@ -33,7 +33,7 @@ impl fmt::Display for NodeReadError {
 
 impl Error for NodeReadError {}
 
-chum_struct_generate_readwrite! {
+chum_struct_binary! {
     #[derive(Clone, Default)]
     pub struct Node {
         pub node_parent_id: [reference NODE],
@@ -69,7 +69,7 @@ chum_struct_generate_readwrite! {
 // SURFACEDATAS     413080818 | SURFACE
 // LODDATA         -141015160 | LOD
 // PARTICLESDATA   -241612565 | PARTICLES
-chum_struct_enum! {
+chum_struct_binary_enum! {
     #[derive(Clone)]
     pub enum NodeDataUnion [i32] {
         Empty: 0 => {},
@@ -181,7 +181,7 @@ impl Default for NodeDataUnion {
     }
 }
 
-chum_struct_generate_readwrite! {
+chum_struct_binary! {
     #[derive(Clone)]
     pub struct NodeDataSurfaceUnk {
         pub data: [fixed array [u8] 104],
@@ -194,7 +194,7 @@ impl Default for NodeDataSurfaceUnk {
     }
 }
 
-chum_struct_generate_readwrite! {
+chum_struct_binary! {
     #[derive(Default, Clone)]
     pub struct NodeSkinUnk2 {
         pub unk_ids: [fixed array [i32] 5],
@@ -210,7 +210,7 @@ chum_struct_generate_readwrite! {
     }
 }
 
-chum_struct_enum! {
+chum_struct_binary_enum! {
     /// | String              Hash | Resource Type
     /// |-------------------------------------------------
     /// |                        0 | (empty)
@@ -232,7 +232,7 @@ impl Default for NodeSkinUnk2ExtraDataUnion {
     }
 }
 
-chum_struct_generate_readwrite! {
+chum_struct_binary! {
     #[derive(Default, Clone)]
     pub struct NodeSkinMaterial {
         pub filetype_id: [i32],
@@ -242,7 +242,7 @@ chum_struct_generate_readwrite! {
     }
 }
 
-chum_struct_generate_readwrite! {
+chum_struct_binary! {
     #[derive(Default, Clone)]
     pub struct NodeSkinUnk {
         pub unk1: [fixed array [f32] 4],
@@ -251,7 +251,7 @@ chum_struct_generate_readwrite! {
     }
 }
 
-chum_struct_generate_readwrite! {
+chum_struct_binary! {
     #[derive(Default, Clone)]
     pub struct NodeSkinUnk7 {
         pub data: [struct NodeDataUnion],

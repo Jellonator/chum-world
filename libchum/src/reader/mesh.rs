@@ -3,6 +3,7 @@ use crate::format::TotemFormat;
 use crate::reader::skin;
 use crate::error;
 use crate::scene;
+use crate::binary::ChumBinary;
 use std::collections::HashMap;
 use std::io::{self, Read, Write};
 
@@ -23,7 +24,7 @@ pub struct MeshTri {
     pub points: [MeshPoint; 3],
 }
 
-chum_struct_generate_readwrite! {
+chum_binary! {
     /// A triangle strip
     #[derive(Clone, Debug, Default)]
     pub struct Strip {
@@ -33,7 +34,7 @@ chum_struct_generate_readwrite! {
     }
 }
 
-chum_struct_generate_readwrite! {
+chum_binary! {
     /// A combination of a normal index and a texture coordinate index
     #[derive(Clone, Debug, Default)]
     pub struct ElementData {
@@ -42,7 +43,7 @@ chum_struct_generate_readwrite! {
     }
 }
 
-chum_struct_generate_readwrite! {
+chum_binary! {
     /// A triangle strip's extra data
     #[derive(Clone, Debug)]
     pub struct StripExt {
@@ -72,7 +73,7 @@ pub struct Mesh {
     pub strip_order: Vec<u32>,
 }
 
-chum_struct_generate_readwrite! {
+chum_binary! {
     /// temporary data structure used for reading/writing to binary files
     #[derive(Clone, Debug)]
     pub struct MeshTemp {
@@ -118,7 +119,7 @@ chum_struct_generate_readwrite! {
     }
 }
 
-chum_struct_generate_readwrite! {
+chum_struct_binary! {
     #[derive(Clone, Debug)]
     pub struct SphereShape {
         pub pos: [Vector3],
@@ -135,7 +136,7 @@ impl Default for SphereShape {
     }
 }
 
-chum_struct_generate_readwrite! {
+chum_struct_binary! {
     #[derive(Clone, Debug)]
     pub struct CuboidShape {
         pub transform: [Transform3D],
@@ -152,7 +153,7 @@ impl Default for CuboidShape {
     }
 }
 
-chum_struct_generate_readwrite! {
+chum_struct_binary! {
     #[derive(Clone, Debug)]
     pub struct CylinderShape {
         pub position: [Vector3],
@@ -184,35 +185,6 @@ chum_struct! {
         pub cuboid_shapes: [dynamic array [u32] [struct CuboidShape] CuboidShape::default()],
         pub cylinder_shapes: [dynamic array [u32] [struct CylinderShape] CylinderShape::default()],
     }
-}
-
-/// Read in a triangle strip from a reader
-fn read_strip<R: Read>(file: &mut R, fmt: TotemFormat) -> io::Result<Strip> {
-    let num_elements: u32 = fmt.read_u32(file)?;
-    let vertex_ids: Vec<u16> = (0..num_elements)
-        .map(|_| fmt.read_u16(file))
-        .collect::<io::Result<_>>()?;
-    let material: u32 = fmt.read_u32(file)?;
-    let tri_order: u32 = fmt.read_u32(file)?;
-    Ok(Strip {
-        vertex_ids,
-        tri_order,
-        material,
-    })
-}
-
-/// Read in a triangle strip's extra data from a reader
-fn read_strip_ext<R: Read>(file: &mut R, fmt: TotemFormat) -> io::Result<StripExt> {
-    let num_elements: u32 = fmt.read_u32(file)?;
-    let elements: Vec<ElementData> = (0..num_elements)
-        .map(|_| {
-            Ok(ElementData {
-                texcoord_id: fmt.read_u16(file)?,
-                normal_id: fmt.read_u16(file)?,
-            })
-        })
-        .collect::<io::Result<_>>()?;
-    Ok(StripExt { elements })
 }
 
 /// Get a vector of triangle indices in (vertex, texcoord, normal) order.
@@ -351,212 +323,6 @@ impl Mesh {
             }
             ret
         }
-    }
-
-    /// Write a Mesh to a file
-    pub fn write_to<W: Write>(&self, file: &mut W, fmt: TotemFormat) -> io::Result<()> {
-        use crate::binary::ChumBinary;
-        self.transform.write_to(file, fmt)?;
-        fmt.write_u32(file, self.vertices.len() as u32)?;
-        for value in self.vertices.iter() {
-            write_vec3(value, file, fmt)?;
-        }
-        fmt.write_u32(file, self.texcoords.len() as u32)?;
-        for value in self.texcoords.iter() {
-            write_vec2(value, file, fmt)?;
-        }
-        fmt.write_u32(file, self.normals.len() as u32)?;
-        for value in self.normals.iter() {
-            write_vec3(value, file, fmt)?;
-        }
-        fmt.write_u32(file, self.strips.len() as u32)?;
-        for strip in self.strips.iter() {
-            fmt.write_u32(file, strip.strip.vertex_ids.len() as u32)?;
-            for vertid in strip.strip.vertex_ids.iter() {
-                fmt.write_u16(file, *vertid)?;
-            }
-            fmt.write_u32(file, strip.strip.material)?;
-            fmt.write_u32(file, strip.strip.tri_order)?;
-        }
-        if self.transform.item_subtype == 4 {
-            for strip in self.strips.iter() {
-                fmt.write_i32(file, strip.group.unwrap_or(0i32))?;
-            }
-        }
-        let num_stripext = self.strips.iter().filter(|x| x.ext.is_some()).count();
-        fmt.write_u32(file, num_stripext as u32)?;
-        for ext in self.strips.iter().filter_map(|x| x.ext.as_ref()) {
-            fmt.write_u32(file, ext.elements.len() as u32)?;
-            for element in ext.elements.iter() {
-                fmt.write_u16(file, element.texcoord_id)?;
-                fmt.write_u16(file, element.normal_id)?;
-            }
-        }
-        fmt.write_u32(file, self.materials.len() as u32)?;
-        for mat in self.materials.iter() {
-            fmt.write_i32(file, *mat)?;
-        }
-        fmt.write_u32(file, self.sphere_shapes.len() as u32)?;
-        for sphere in self.sphere_shapes.iter() {
-            write_vec3(&sphere.pos, file, fmt)?;
-            fmt.write_f32(file, sphere.radius)?;
-        }
-        fmt.write_u32(file, self.cuboid_shapes.len() as u32)?;
-        for cuboid in self.cuboid_shapes.iter() {
-            write_transform3d(&cuboid.transform, file, fmt)?;
-            fmt.write_bytes(file, &[0; 16])?;
-        }
-        fmt.write_u32(file, self.cylinder_shapes.len() as u32)?;
-        for cylinder in self.cylinder_shapes.iter() {
-            write_vec3(&cylinder.position, file, fmt)?;
-            fmt.write_f32(file, cylinder.height)?;
-            write_vec3(&cylinder.normal, file, fmt)?;
-            fmt.write_bytes(file, &[0; 4])?;
-            fmt.write_f32(file, cylinder.radius)?;
-        }
-        fmt.write_u32(file, 0)?;
-        fmt.write_u32(file, self.strip_order.len() as u32)?;
-        for value in self.strip_order.iter() {
-            fmt.write_u32(file, *value)?;
-        }
-        Ok(())
-    }
-
-    /// Read a Mesh from a file
-    pub fn read_from<R: Read>(file: &mut R, fmt: TotemFormat) -> io::Result<Mesh> {
-        use crate::binary::ChumBinary;
-        let transform = THeaderTyped::read_from(file, fmt).unwrap();
-        // Read coordinate data
-        let num_vertices: u32 = fmt.read_u32(file)?;
-        let vertices: Vec<Vector3> = (0..num_vertices)
-            .map(|_| read_vec3(file, fmt))
-            .collect::<io::Result<_>>()?;
-        let num_texcoords: u32 = fmt.read_u32(file)?;
-        let texcoords: Vec<Vector2> = (0..num_texcoords)
-            .map(|_| read_vec2(file, fmt))
-            .collect::<io::Result<_>>()?;
-        let num_normals: u32 = fmt.read_u32(file)?;
-        let normals: Vec<Vector3> = (0..num_normals)
-            .map(|_| read_vec3(file, fmt))
-            .collect::<io::Result<_>>()?;
-        // Read strip data
-        let num_strips: u32 = fmt.read_u32(file)?;
-        let strips: Vec<Strip> = (0..num_strips)
-            .map(|_| read_strip(file, fmt))
-            .collect::<io::Result<_>>()?;
-        // Ignore a few bytes
-        let groups = match transform.item_subtype {
-            4 => {
-                let mut data = vec![0i32; strips.len()];
-                fmt.read_i32_into(file, &mut data)?;
-                Some(data)
-            }
-            0 => None,
-            _ => panic!(),
-        };
-        // Read stripext data
-        // TODO: Handle PS2
-        let num_strips_ext: u32 = fmt.read_u32(file)?;
-        let mut strips_ext = if num_strips_ext == 0 {
-            None
-        } else if num_strips_ext == num_strips {
-            let strips_ext: Vec<StripExt> = (0..num_strips_ext)
-                .map(|_| read_strip_ext(file, fmt))
-                .collect::<io::Result<_>>()?;
-            Some(strips_ext)
-        } else {
-            panic!()
-        };
-        // read material data
-        let num_materials: u32 = fmt.read_u32(file)?;
-        let materials: Vec<i32> = (0..num_materials)
-            .map(|_| fmt.read_i32(file))
-            .collect::<io::Result<_>>()?;
-        // read unknown data
-        let num_unk1: u32 = fmt.read_u32(file)?;
-        let footer1: Vec<SphereShape> = (0..num_unk1)
-            .map(|_| {
-                Ok(SphereShape {
-                    pos: read_vec3(file, fmt)?,
-                    radius: fmt.read_f32(file)?,
-                })
-            })
-            .collect::<io::Result<_>>()?;
-        let num_unk2: u32 = fmt.read_u32(file)?;
-        let footer2: Vec<CuboidShape> = (0..num_unk2)
-            .map(|_| {
-                let transform = read_transform3d(file, fmt)?;
-                fmt.skip_n_bytes(file, 16)?;
-                Ok(CuboidShape {
-                    transform,
-                    junk: (),
-                })
-            })
-            .collect::<io::Result<_>>()?;
-        let num_unk3: u32 = fmt.read_u32(file)?;
-        let footer3: Vec<CylinderShape> = (0..num_unk3)
-            .map(|_| {
-                // let mut unk1 = [0.0f32; 4];
-                // fmt.read_f32_into(file, &mut unk1)?;
-                let position = read_vec3(file, fmt)?;
-                let height = fmt.read_f32(file)?;
-                let normal = read_vec3(file, fmt)?;
-                fmt.skip_n_bytes(file, 4)?;
-                let radius = fmt.read_f32(file)?;
-                Ok(CylinderShape {
-                    position,
-                    height,
-                    normal,
-                    radius,
-                    junk: (),
-                })
-            })
-            .collect::<io::Result<_>>()?;
-        let num_unk4: u32 = fmt.read_u32(file)?; // always 0?
-        if num_unk4 != 0 {
-            panic!();
-        }
-        // pack strips together (they all should have the same length from earlier checks)
-        let num_strip_order: u32 = fmt.read_u32(file)?;
-        let mut strip_order = vec![0u32; num_strip_order as usize];
-        fmt.read_u32_into(file, &mut strip_order)?;
-        let strips = strips
-            .into_iter()
-            .enumerate()
-            .map(|(i, value)| {
-                let ext = if let Some(ref mut stripext) = strips_ext {
-                    let mut fake = StripExt {
-                        elements: Vec::new(),
-                    };
-                    std::mem::swap(&mut fake, &mut stripext[i]);
-                    Some(fake)
-                } else {
-                    None
-                };
-                StripData {
-                    strip: value,
-                    group: groups.as_ref().map(|groupdata| groupdata[i]),
-                    ext,
-                }
-            })
-            .collect();
-        Ok(Mesh {
-            transform,
-            vertices,
-            texcoords,
-            normals,
-            strips,
-            materials,
-            sphere_shapes: footer1,
-            cuboid_shapes: footer2,
-            cylinder_shapes: footer3,
-            strip_order,
-        })
-    }
-
-    /// Read a Mesh from data
-    pub fn read_data(data: &[u8], fmt: TotemFormat) -> io::Result<Mesh> {
-        Mesh::read_from(&mut data.as_ref(), fmt)
     }
 
     /// Write a Mesh to an OBJ
@@ -759,5 +525,98 @@ impl Mesh {
         for vector in self.normals.iter_mut() {
             *vector = tx.transform_vector3d(*vector);
         }
+    }
+}
+
+impl ChumBinary for Mesh {
+    fn read_from(file: &mut dyn Read, fmt: TotemFormat) -> error::StructUnpackResult<Mesh> {
+        let meshtmp = MeshTemp::read_from(file, fmt)?;
+        let mut exts = meshtmp.strip_exts.into_iter();
+        let mut groups = meshtmp.strip_groups.into_iter();
+        Ok(Mesh {
+            transform: meshtmp.transform,
+            vertices: meshtmp.vertices,
+            texcoords: meshtmp.texcoords,
+            normals: meshtmp.normals,
+            strips: meshtmp.strip_data.into_iter().map(|strip| {
+                StripData {
+                    strip,
+                    group: groups.next(),
+                    ext: exts.next()
+                }
+            }).collect(),
+            materials: meshtmp.materials,
+            sphere_shapes: meshtmp.sphere_shapes,
+            cuboid_shapes: meshtmp.cuboid_shapes,
+            cylinder_shapes: meshtmp.cylinder_shapes,
+            strip_order: meshtmp.strip_order,
+        })
+    }
+
+    fn write_to(&self, file: &mut dyn Write, fmt: TotemFormat) -> io::Result<()> {
+        self.transform.write_to(file, fmt)?;
+        fmt.write_u32(file, self.vertices.len() as u32)?;
+        for value in self.vertices.iter() {
+            write_vec3(value, file, fmt)?;
+        }
+        fmt.write_u32(file, self.texcoords.len() as u32)?;
+        for value in self.texcoords.iter() {
+            write_vec2(value, file, fmt)?;
+        }
+        fmt.write_u32(file, self.normals.len() as u32)?;
+        for value in self.normals.iter() {
+            write_vec3(value, file, fmt)?;
+        }
+        fmt.write_u32(file, self.strips.len() as u32)?;
+        for strip in self.strips.iter() {
+            fmt.write_u32(file, strip.strip.vertex_ids.len() as u32)?;
+            for vertid in strip.strip.vertex_ids.iter() {
+                fmt.write_u16(file, *vertid)?;
+            }
+            fmt.write_u32(file, strip.strip.material)?;
+            fmt.write_u32(file, strip.strip.tri_order)?;
+        }
+        if self.transform.item_subtype == 4 {
+            for strip in self.strips.iter() {
+                fmt.write_i32(file, strip.group.unwrap_or(0i32))?;
+            }
+        }
+        let num_stripext = self.strips.iter().filter(|x| x.ext.is_some()).count();
+        fmt.write_u32(file, num_stripext as u32)?;
+        for ext in self.strips.iter().filter_map(|x| x.ext.as_ref()) {
+            fmt.write_u32(file, ext.elements.len() as u32)?;
+            for element in ext.elements.iter() {
+                fmt.write_u16(file, element.texcoord_id)?;
+                fmt.write_u16(file, element.normal_id)?;
+            }
+        }
+        fmt.write_u32(file, self.materials.len() as u32)?;
+        for mat in self.materials.iter() {
+            fmt.write_i32(file, *mat)?;
+        }
+        fmt.write_u32(file, self.sphere_shapes.len() as u32)?;
+        for sphere in self.sphere_shapes.iter() {
+            write_vec3(&sphere.pos, file, fmt)?;
+            fmt.write_f32(file, sphere.radius)?;
+        }
+        fmt.write_u32(file, self.cuboid_shapes.len() as u32)?;
+        for cuboid in self.cuboid_shapes.iter() {
+            write_transform3d(&cuboid.transform, file, fmt)?;
+            fmt.write_bytes(file, &[0; 16])?;
+        }
+        fmt.write_u32(file, self.cylinder_shapes.len() as u32)?;
+        for cylinder in self.cylinder_shapes.iter() {
+            write_vec3(&cylinder.position, file, fmt)?;
+            fmt.write_f32(file, cylinder.height)?;
+            write_vec3(&cylinder.normal, file, fmt)?;
+            fmt.write_bytes(file, &[0; 4])?;
+            fmt.write_f32(file, cylinder.radius)?;
+        }
+        fmt.write_u32(file, 0)?;
+        fmt.write_u32(file, self.strip_order.len() as u32)?;
+        for value in self.strip_order.iter() {
+            fmt.write_u32(file, *value)?;
+        }
+        Ok(())
     }
 }

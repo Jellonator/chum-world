@@ -4,9 +4,9 @@ use crate::format;
 use crate::util::dsp;
 use std::io;
 
-chum_struct_generate_readwrite! {
+chum_binary! {
     pub struct SoundGcn {
-        pub unk0: [u8],
+        pub unk0: [ignore [u8] 0u8],
         pub unk0_junk: [ignore [fixed array [u8] 3] [0; 3]],
         pub sample_rate: [u32],
         pub junk: [ignore [fixed array [u8] 4] [0; 4]],
@@ -48,7 +48,57 @@ chum_struct_generate_readwrite! {
     }
 }
 
+chum_struct! {
+    pub struct SoundGcnStruct {
+        pub sample_rate: [u32],
+        pub unk10: [u32],
+        pub unk11: [u32],
+    }
+}
+
+impl Default for SoundGcn {
+    fn default() -> SoundGcn {
+        SoundGcn {
+            unk0: (),
+            unk0_junk: (),
+            sample_rate: 0,
+            junk: (),
+            data_length: 0,
+            unk1: (),
+            unk2: (),
+            num_adpcm_nibbles: 0,
+            unk3: (),
+            unk4: 0,
+            unk5: (),
+            unk6: (),
+            unk7: (),
+            coefficients: [0i16; 16],
+            unk8: (),
+            first_header: 0i16,
+            data: Vec::new(),
+            unk9: (),
+            unk10: 0u32,
+            unk11: 0u32
+        }
+    }
+}
+
 impl SoundGcn {
+    pub fn get_struct(&self) -> SoundGcnStruct {
+        SoundGcnStruct {
+            sample_rate: self.sample_rate,
+            unk10: self.unk10,
+            unk11: self.unk11
+        }
+    }
+
+    pub fn import_struct(&mut self, s: &SoundGcnStruct) {
+        self.sample_rate = s.sample_rate;
+        self.unk4 = (s.sample_rate as f64 * 1.3653) as u32;
+        self.unk10 = s.unk10;
+        self.unk11 = s.unk11;
+    }
+
     pub fn gen_samples(&self) -> Vec<i16> {
         let frame_count = self.data.len() / dsp::BYTES_PER_FRAME;
         let num_samples = self.num_adpcm_nibbles as usize - frame_count * dsp::HEADERS_PER_FRAME;

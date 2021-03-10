@@ -454,7 +454,7 @@ pub fn write_color_rgba(
 }
 
 // Common header used by many different structures
-chum_struct_generate_readwrite! {
+chum_struct_binary! {
     #[repr(C)]
     #[derive(Clone, Debug)]
     pub struct THeaderTyped {
@@ -467,7 +467,7 @@ chum_struct_generate_readwrite! {
 }
 
 // Common header used by many different structures
-chum_struct_generate_readwrite! {
+chum_struct_binary! {
     #[repr(C)]
     #[derive(Clone, Debug)]
     pub struct THeaderNoType {

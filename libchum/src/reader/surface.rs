@@ -11,7 +11,9 @@ use std::io::{self, Read, Write};
 /// A surface object; contains entire surface object information
 #[derive(Clone)]
 pub struct SurfaceObject {
-    pub transform: THeaderTyped,
+    pub header: THeader,
+    //pub item_type: [ignore [u16] ITEM_TYPE_LIGHT],
+    pub item_flags: u16,
     pub vertices: Vec<Vector3>,
     pub surfaces: Vec<Surface>,
     pub curves: Vec<Curve>,
@@ -333,7 +335,9 @@ impl SurfaceObject {
         // fmt.skip_n_bytes(file, 96)?;
         // let _unknown2 = fmt.read_u16(file)?;
         // let _unknown3 = fmt.read_u16(file)?;
-        let transform = THeaderTyped::read_from(file, fmt).unwrap();
+        let header = THeader::read_from(file, fmt).unwrap();
+        let _item_type = fmt.read_u16(file)?;
+        let item_flags = fmt.read_u16(file)?;
         let num_vertices = fmt.read_u32(file)?;
         let mut vertices = Vec::with_capacity((num_vertices as usize).min(SAFE_CAPACITY_SMALL));
         for _ in 0..num_vertices {
@@ -384,7 +388,8 @@ impl SurfaceObject {
             normals.push(read_vec3(file, fmt)?);
         }
         Ok(SurfaceObject {
-            transform,
+            header,
+            item_flags,
             vertices,
             surfaces,
             curves,

@@ -3,7 +3,9 @@ use crate::common::*;
 chum_struct_binary! {
     #[derive(Default)]
     pub struct CollisionVol {
-        pub header: [struct THeaderTyped],
+        pub header: [struct THeader],
+        pub item_type: [ignore [u16] ITEM_TYPE_COLLISIONVOL],
+        pub item_flags: [u16],
         pub unk1: [u32],
         pub local_transform: [Transform3D],
         pub local_transform_inv: [custom_structure [Transform3D]

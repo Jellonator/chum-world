@@ -2,8 +2,8 @@ use crate::common::*;
 
 chum_binary! {
     pub struct Spline {
-        pub transform: [struct THeaderNoType],
-        pub item_type: [ignore [u16] 2u16],
+        pub transform: [struct THeader],
+        pub item_type: [ignore [u16] ITEM_TYPE_SPLINE],
         pub item_subtype: [ignore [u16] 2u16],
         pub vertices: [dynamic array [u32] [Vector3] Vector3::default()],
         pub sections: [dynamic array [u32] [struct SplineSection] SplineSection::default()],

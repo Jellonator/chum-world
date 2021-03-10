@@ -61,7 +61,9 @@ pub struct StripData {
 /// A full triangle mesh
 #[derive(Clone, Debug)]
 pub struct Mesh {
-    pub transform: THeaderTyped,
+    pub header: THeader,
+    pub item_type: u16,
+    pub item_flags: u16,
     pub vertices: Vec<Vector3>,
     pub texcoords: Vec<Vector2>,
     pub normals: Vec<Vector3>,
@@ -77,7 +79,9 @@ chum_binary! {
     /// temporary data structure used for reading/writing to binary files
     #[derive(Clone, Debug)]
     pub struct MeshTemp {
-        pub transform: [struct THeaderTyped],
+        pub header: [struct THeader],
+        pub item_type: [ignore [u16] ITEM_TYPE_MESH],
+        pub item_flags: [u16],
         pub vertices: [dynamic array [u32] [Vector3] Vector3::zero()],
         pub texcoords: [dynamic array [u32] [Vector2] Vector2::zero()],
         pub normals: [dynamic array [u32] [Vector3] Vector3::zero()],
@@ -85,7 +89,7 @@ chum_binary! {
         pub strip_groups: [custom_binary
             [dynamic array [u32] [i32] 0i32]
             read: |mesh: &Inner, file: &mut dyn Read, fmt: TotemFormat| -> error::StructUnpackResult<Vec<i32>> {
-                if mesh.transform.as_ref().unwrap().item_subtype & 4 != 0 {
+                if mesh.item_flags.unwrap() & 4 != 0 {
                     let len = mesh.strip_data.as_ref().unwrap().len();
                     let mut v = Vec::with_capacity(len);
                     for i in 0..len {
@@ -534,7 +538,9 @@ impl ChumBinary for Mesh {
         let mut exts = meshtmp.strip_exts.into_iter();
         let mut groups = meshtmp.strip_groups.into_iter();
         Ok(Mesh {
-            transform: meshtmp.transform,
+            header: meshtmp.header,
+            item_type: ITEM_TYPE_MESH,
+            item_flags: meshtmp.item_flags,
             vertices: meshtmp.vertices,
             texcoords: meshtmp.texcoords,
             normals: meshtmp.normals,
@@ -554,7 +560,9 @@ impl ChumBinary for Mesh {
     }
 
     fn write_to(&self, file: &mut dyn Write, fmt: TotemFormat) -> io::Result<()> {
-        self.transform.write_to(file, fmt)?;
+        self.header.write_to(file, fmt)?;
+        fmt.write_u16(file, self.item_type)?;
+        fmt.write_u16(file, self.item_flags)?;
         fmt.write_u32(file, self.vertices.len() as u32)?;
         for value in self.vertices.iter() {
             write_vec3(value, file, fmt)?;
@@ -576,7 +584,7 @@ impl ChumBinary for Mesh {
             fmt.write_u32(file, strip.strip.material)?;
             fmt.write_u32(file, strip.strip.tri_order)?;
         }
-        if self.transform.item_subtype == 4 {
+        if self.item_flags & 4 != 0 {
             for strip in self.strips.iter() {
                 fmt.write_i32(file, strip.group.unwrap_or(0i32))?;
             }

@@ -6,7 +6,9 @@ use std::collections::HashMap;
 chum_binary! {
     #[derive(Clone, Debug)]
     pub struct Skin {
-        pub transform: [struct THeaderTyped],
+        pub header: [struct THeader],
+        pub item_type: [ignore [u16] ITEM_TYPE_SKIN],
+        pub item_flags: [u16],
         pub meshes: [dynamic array [u32] [reference MESH] 0i32],
         pub unk_zero: [ignore [u32] 0u32],
         pub vertex_groups: [dynamic array [u32] [struct VertexGroup] VertexGroup::default()],

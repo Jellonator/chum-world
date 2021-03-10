@@ -4,6 +4,21 @@ use std::hash::{Hash, Hasher};
 use std::io::{self, Read, Write};
 use std::mem;
 
+pub const ITEM_TYPE_SURFACE: u16 = 1;
+pub const ITEM_TYPE_SPLINE: u16 = 2;
+pub const ITEM_TYPE_SKIN: u16 = 3;
+pub const ITEM_TYPE_ROTSHAPE: u16 = 4;
+pub const ITEM_TYPE_LOD: u16 = 5;
+pub const ITEM_TYPE_MESH: u16 = 6;
+pub const ITEM_TYPE_CAMERA: u16 = 7;
+pub const ITEM_TYPE_OCCLUDER: u16 = 10;
+pub const ITEM_TYPE_CAMERAZONE: u16 = 11;
+pub const ITEM_TYPE_LIGHT: u16 = 12;
+pub const ITEM_TYPE_HFOG: u16 = 13;
+pub const ITEM_TYPE_COLLISIONVOL: u16 = 14;
+pub const ITEM_TYPE_OMNI: u16 = 16;
+pub const ITEM_TYPE_PARTICLES: u16 = 18;
+
 pub type Vector3 = euclid::Vector3D<f32, euclid::UnknownUnit>;
 pub type Vector2 = euclid::Vector2D<f32, euclid::UnknownUnit>;
 #[derive(Copy, Clone, Debug, PartialEq)]
@@ -453,26 +468,14 @@ pub fn write_color_rgba(
     Ok(())
 }
 
-// Common header used by many different structures
 chum_struct_binary! {
+    /// Common header used by many different structures
     #[repr(C)]
     #[derive(Clone, Debug, Default)]
-    pub struct THeaderTyped {
+    pub struct THeader {
         pub floats: [fixed array [f32] 4],
         pub transform: [Transform3D],
         pub junk: [ignore [fixed array [u8] 16] [0;16]],
-        pub item_type: [u16],
-        pub item_subtype: [u16],
     }
 }
 
-// Common header used by many different structures
-chum_struct_binary! {
-    #[repr(C)]
-    #[derive(Clone, Debug, Default)]
-    pub struct THeaderNoType {
-        pub floats: [fixed array [f32] 4],
-        pub transform: [Transform3D],
-        pub junk: [ignore [fixed array [u8] 16] [0;16]],
-    }
-}

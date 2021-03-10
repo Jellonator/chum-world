@@ -6,9 +6,10 @@ use crate::error::*;
 use std::io;
 
 chum_struct_binary! {
+    #[derive(Default)]
     pub struct Lod {
-        pub transform: [struct THeaderNoType],
-        pub item_type: [ignore [u16] 5u16],
+        pub header: [struct THeader],
+        pub item_type: [ignore [u16] ITEM_TYPE_LOD],
         pub item_subtype: [custom_structure [u16]
             // Do not present the subtype
             structure: |_lod: &Lod| {

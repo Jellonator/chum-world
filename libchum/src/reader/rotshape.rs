@@ -3,8 +3,8 @@ use crate::common::*;
 chum_struct_binary! {
     /// Rotation shape
     pub struct RotShape {
-        pub transform: [struct THeaderNoType],
-        pub item_type: [ignore [u16] 4u16],
+        pub transform: [struct THeader],
+        pub item_type: [ignore [u16] ITEM_TYPE_ROTSHAPE],
         pub item_subtype: [ignore [u16] 0u16],
         pub junk1: [ignore [u32] 1],
         pub offset: [Vector3],

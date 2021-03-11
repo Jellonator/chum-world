@@ -25,24 +25,20 @@ chum_enum! {
     }
 }
 
+impl Default for Interpolation {
+    fn default() -> Self {
+        Interpolation::Discrete
+    }
+}
+
 /// A single frame in a track
-pub struct TrackFrame<T> {
+#[derive(Clone, Default)]
+pub struct TrackFrame<T>
+    where T: Clone + Default
+{
     pub frame: u16,
     pub junk: (),
     pub data: T,
-}
-
-impl<T> Default for TrackFrame<T>
-where
-    T: Default,
-{
-    fn default() -> Self {
-        TrackFrame::<T> {
-            frame: 0,
-            junk: (),
-            data: T::default(),
-        }
-    }
 }
 
 // Implement ChumBinary for all TrackFrame types
@@ -85,12 +81,17 @@ chum_struct_binary_impl! {
 }
 
 /// A full track, including a list of frames and interpolation method
-pub struct Track<T> {
+#[derive(Clone, Default)]
+pub struct Track<T>
+    where T: Clone + Default
+{
     pub interp: Interpolation,
     pub frames: Vec<TrackFrame<T>>,
 }
 
-impl<T> Track<T> {
+impl<T> Track<T>
+    where T: Clone + Default
+{
     /// Find the frame value that the given frame refers to.
     /// Most of the time, the frame index will be between two frames.
     /// Because of this, this function returns the values of the frame before
@@ -177,6 +178,7 @@ chum_struct_binary_impl! {
 
 chum_struct_binary! {
     /// Material animation file
+    #[derive(Clone, Default)]
     pub struct MaterialAnimation {
         pub unk1: [u8],
         pub length: [f32],
@@ -191,5 +193,50 @@ chum_struct_binary! {
         pub track_unk2: [struct Track<[u8; 4]>],
         pub track_unk3: [struct Track<[u8; 4]>],
         pub material_id: [reference MATERIAL],
+    }
+}
+
+pub const TRACK_TEXTURE: usize = 0;
+pub const TRACK_SCROLL: usize = 1;
+pub const TRACK_STRETCH: usize = 2;
+pub const TRACK_ROTATION: usize = 3;
+pub const TRACK_COLOR: usize = 4;
+pub const TRACK_EMISSION: usize = 5;
+pub const TRACK_ALPHA: usize = 6;
+pub const TRACK_UNK1: usize = 7;
+pub const TRACK_UNK2: usize = 8;
+pub const TRACK_UNK3: usize = 9;
+
+impl MaterialAnimation {
+    pub fn get_track_interpolation(&self, index: usize) -> Option<Interpolation> {
+        Some(match index {
+            0 => self.track_texture.interp,
+            1 => self.track_scroll.interp,
+            2 => self.track_stretch.interp,
+            3 => self.track_rotation.interp,
+            4 => self.track_color.interp,
+            5 => self.track_emission.interp,
+            6 => self.track_alpha.interp,
+            7 => self.track_unk1.interp,
+            8 => self.track_unk2.interp,
+            9 => self.track_unk3.interp,
+            _ => None?
+        })
+    }
+
+    pub fn set_track_interpolation(&mut self, index: usize, value: Interpolation) {
+        match index {
+            0 => self.track_texture.interp = value,
+            1 => self.track_scroll.interp = value,
+            2 => self.track_stretch.interp = value,
+            3 => self.track_rotation.interp = value,
+            4 => self.track_color.interp = value,
+            5 => self.track_emission.interp = value,
+            6 => self.track_alpha.interp = value,
+            7 => self.track_unk1.interp = value,
+            8 => self.track_unk2.interp = value,
+            9 => self.track_unk3.interp = value,
+            _ => {}
+        }
     }
 }

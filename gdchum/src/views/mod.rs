@@ -5,6 +5,7 @@ pub mod bitmap;
 pub mod collisionvol;
 pub mod light;
 pub mod material;
+pub mod materialanim;
 
 pub fn init(handle: InitHandle) {
     handle.add_class::<node::NodeView>();
@@ -13,4 +14,5 @@ pub fn init(handle: InitHandle) {
     handle.add_class::<collisionvol::CollisionVolView>();
     handle.add_class::<light::LightView>();
     handle.add_class::<material::MaterialView>();
+    handle.add_class::<materialanim::MaterialAnimView>();
 }

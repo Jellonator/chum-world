@@ -108,6 +108,38 @@ macro_rules! display_err {
     };
 }
 
+
+pub fn color_to_godot(col: &common::ColorRGBA) -> Color {
+    Color::rgba(col.r, col.g, col.b, col.a)
+}
+
+pub fn godot_to_color(col: &Color) -> common::ColorRGBA {
+    common::ColorRGBA::new(col.r, col.g, col.b, col.a)
+}
+
+pub fn color3_to_godot(col: &common::Vector3) -> Color {
+    Color::rgb(col.x, col.y, col.z)
+}
+
+pub fn godot_to_color3(col: &Color) -> common::Vector3 {
+    common::Vector3::new(col.r, col.g, col.b)
+}
+
+pub fn get_transform2d_scale(tx: &Transform2D) -> Vector2 {
+    Vector2::new(
+        (tx.m11 * tx.m11 + tx.m21 + tx.m21).sqrt().copysign(tx.m11),
+        (tx.m12 * tx.m12 + tx.m22 + tx.m22).sqrt().copysign(tx.m12)
+    )
+}
+
+pub fn get_transform2d_angle(tx: &Transform2D) -> f32 {
+    if tx.m11.abs() > tx.m22.abs() {
+        f32::atan2(-tx.m21, tx.m11)
+    } else {
+        f32::atan2(tx.m12, tx.m22)
+    }
+}
+
 pub fn transform3d_to_godot(tx: &common::Transform3D) -> Transform {
     Transform {
         basis: Basis {

@@ -19,7 +19,7 @@ pub fn read_skin(
     let data = Dictionary::new();
     data.insert(
         "transform",
-        util::transform3d_to_godot(&skin.transform.transform),
+        util::transform3d_to_godot(&skin.header.transform),
     );
     data.insert("meshes", skin.meshes);
     let groups = Dictionary::new();

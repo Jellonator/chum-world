@@ -89,7 +89,7 @@ pub fn read_surface(
     }
     Some(SurfaceResult {
         surfaces: meshes,
-        transform: surfaceobj.transform.transform.clone(),
+        transform: surfaceobj.header.transform.clone(),
     })
 }
 

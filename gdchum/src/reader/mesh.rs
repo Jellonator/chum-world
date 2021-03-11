@@ -110,7 +110,7 @@ pub fn read_mesh(
     Some(MeshResult {
         mesh: array_mesh,
         surfaces,
-        transform: mesh.transform.transform.clone(),
+        transform: mesh.header.transform.clone(),
         sphere_shapes: mesh.sphere_shapes.clone(),
         cuboid_shapes: mesh.cuboid_shapes.clone(),
         cylinder_shapes: mesh.cylinder_shapes.clone(),

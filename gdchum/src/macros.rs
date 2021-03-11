@@ -89,20 +89,65 @@ macro_rules! impl_view_node_resource {
                 builder.add_method("set_flags", gdnative::godot_wrap_method!($name,
                     fn set_flags(&mut self, owner: &Resource, value: i64)
                 ));
+                builder.add_method("get_header_transform", gdnative::godot_wrap_method!($name,
+                    fn get_header_transform(&self, _owner: TRef<Resource>) -> Transform
+                ));
+                builder.add_method("set_header_transform", gdnative::godot_wrap_method!($name,
+                    fn set_header_transform(&mut self, _owner: TRef<Resource>, value: Transform)
+                ));
+                builder.add_method("get_header_floats", gdnative::godot_wrap_method!($name,
+                    fn get_header_floats(&self, _owner: TRef<Resource>) -> VariantArray<Shared>
+                ));
+                builder.add_method("set_header_floats", gdnative::godot_wrap_method!($name,
+                    fn set_header_floats(&mut self, _owner: TRef<Resource>, value: VariantArray<Shared>)
+                ));
                 builder.add_property("flags")
                     .with_getter(Self::get_flags)
                     .with_setter(Self::set_flags)
+                    .done();
+                builder.add_property("header_transform")
+                    .with_getter(Self::get_header_transform)
+                    .with_setter(Self::set_header_transform)
+                    .done();
+                builder.add_property("header_floats")
+                    .with_getter(Self::get_header_floats)
+                    .with_setter(Self::set_header_floats)
                     .done();
                 $block(builder);
             }
         );
 
         pub fn get_flags(&self, _owner: TRef<Resource>) -> i64 {
-            self.inner.header.item_subtype as i64
+            self.inner.item_flags as i64
         }
 
         pub fn set_flags(&mut self, owner: TRef<Resource>, value: i64) {
-            self.inner.header.item_subtype = value as u16;
+            self.inner.item_flags = value as u16;
+            owner.emit_signal("modified", &[]);
+        }
+
+        pub fn get_header_transform(&self, _owner: TRef<Resource>) -> Transform {
+            util::transform3d_to_godot(&self.inner.header.transform)
+        }
+
+        pub fn set_header_transform(&mut self, owner: TRef<Resource>, value: Transform) {
+            self.inner.header.transform = util::godot_to_transform3d(&value);
+            owner.emit_signal("modified", &[]);
+        }
+
+        pub fn get_header_floats(&self, _owner: TRef<Resource>) -> VariantArray<Shared> {
+            let arr = VariantArray::new();
+            arr.push(self.inner.header.floats[0]);
+            arr.push(self.inner.header.floats[1]);
+            arr.push(self.inner.header.floats[2]);
+            arr.push(self.inner.header.floats[3]);
+            arr.into_shared()
+        }
+
+        pub fn set_header_floats(&mut self, owner: TRef<Resource>, value: VariantArray<Shared>) {
+            for i in 0..4 {
+                self.inner.header.floats[i] = value.get(i as i32).to_f64() as f32;
+            }
             owner.emit_signal("modified", &[]);
         }
     };

@@ -44,13 +44,14 @@ impl NodeView {
     );
 
     #[export]
-    pub fn set_global_transform(&mut self, _owner: TRef<Resource>, value: Transform) {
+    pub fn set_global_transform(&mut self, owner: TRef<Resource>, value: Transform) {
         self.inner.global_transform = util::godot_to_transform3d(&value);
         let inverse = Transform {
             basis: value.basis.inverted(),
             origin: -value.origin,
         };
         self.inner.global_transform_inverse = util::godot_to_transform3d(&inverse);
+        owner.emit_signal("modified", &[]);
     }
 
     #[export]
@@ -59,11 +60,12 @@ impl NodeView {
     }
 
     #[export]
-    pub fn set_local_transform(&mut self, _owner: TRef<Resource>, value: Transform) {
+    pub fn set_local_transform(&mut self, owner: TRef<Resource>, value: Transform) {
         self.inner.local_transform = util::godot_to_transform3d(&value);
         self.inner.local_translation = value.origin;
         self.inner.local_rotation.inner = value.basis.to_quat();
         self.inner.local_scale = value.basis.to_scale();
+        owner.emit_signal("modified", &[]);
     }
 
     #[export]
@@ -77,8 +79,9 @@ impl NodeView {
     }
 
     #[export]
-    pub fn set_parent_id(&mut self, _owner: TRef<Resource>, value: i32) {
+    pub fn set_parent_id(&mut self, owner: TRef<Resource>, value: i32) {
         self.inner.node_parent_id = value;
+        owner.emit_signal("modified", &[]);
     }
 
     #[export]
@@ -87,8 +90,9 @@ impl NodeView {
     }
 
     #[export]
-    pub fn set_resource_id(&mut self, _owner: TRef<Resource>, value: i32) {
+    pub fn set_resource_id(&mut self, owner: TRef<Resource>, value: i32) {
         self.inner.resource_id = value;
+        owner.emit_signal("modified", &[]);
     }
 
     #[export]
@@ -99,10 +103,11 @@ impl NodeView {
     }
 
     #[export]
-    pub fn import_structure(&mut self, _owner: &Resource, data: Dictionary) {
+    pub fn import_structure(&mut self, owner: &Resource, data: Dictionary) {
         use libchum::structure::ChumStruct;
         let structure = util::dict_to_struct(&data);
         self.inner = node::Node::destructure(&structure).unwrap();
+        owner.emit_signal("modified", &[]);
     }
 }
 

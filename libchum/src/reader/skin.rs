@@ -4,7 +4,7 @@ use crate::scene;
 use std::collections::HashMap;
 
 chum_binary! {
-    #[derive(Clone, Debug)]
+    #[derive(Clone, Debug, Default)]
     pub struct Skin {
         pub header: [struct THeader],
         pub item_type: [ignore [u16] ITEM_TYPE_SKIN],

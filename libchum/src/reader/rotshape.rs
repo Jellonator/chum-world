@@ -2,10 +2,11 @@ use crate::common::*;
 
 chum_struct_binary! {
     /// Rotation shape
+    #[derive(Clone, Default)]
     pub struct RotShape {
-        pub transform: [struct THeader],
+        pub header: [struct THeader],
         pub item_type: [ignore [u16] ITEM_TYPE_ROTSHAPE],
-        pub item_subtype: [ignore [u16] 0u16],
+        pub item_flags: [u16],
         pub junk1: [ignore [u32] 1],
         pub offset: [Vector3],
         pub junk2: [ignore [u32] 1],
@@ -25,5 +26,11 @@ chum_enum! {
     pub enum BillBoardMode {
         YAxis,
         Full,
+    }
+}
+
+impl Default for BillBoardMode {
+    fn default() -> Self {
+        BillBoardMode::YAxis
     }
 }

@@ -7,6 +7,7 @@ pub mod material;
 pub mod materialanim;
 pub mod mesh;
 pub mod node;
+pub mod omni;
 pub mod sound;
 
 pub fn init(handle: InitHandle) {
@@ -18,5 +19,6 @@ pub fn init(handle: InitHandle) {
     handle.add_class::<materialanim::MaterialAnimView>();
     handle.add_class::<mesh::MeshView>();
     handle.add_class::<node::NodeView>();
+    handle.add_class::<omni::OmniView>();
     handle.add_class::<sound::SoundView>();
 }

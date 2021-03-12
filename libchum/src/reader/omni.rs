@@ -1,6 +1,7 @@
 use crate::common::*;
 
 chum_struct_binary! {
+    #[derive(Clone, Default)]
     pub struct Omni {
         pub header: [struct THeader],
         pub item_type: [ignore [u16] ITEM_TYPE_OMNI],

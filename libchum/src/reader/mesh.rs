@@ -59,7 +59,7 @@ pub struct StripData {
 }
 
 /// A full triangle mesh
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Default)]
 pub struct Mesh {
     pub header: THeader,
     pub item_type: u16,
@@ -126,7 +126,7 @@ chum_binary! {
 chum_struct_binary! {
     #[derive(Clone, Debug)]
     pub struct SphereShape {
-        pub pos: [Vector3],
+        pub position: [Vector3],
         pub radius: [f32],
     }
 }
@@ -134,7 +134,7 @@ chum_struct_binary! {
 impl Default for SphereShape {
     fn default() -> SphereShape {
         SphereShape {
-            pos: Vector3::zero(),
+            position: Vector3::zero(),
             radius: 1.0,
         }
     }
@@ -274,6 +274,24 @@ fn strip_gen_triangles(
 }
 
 impl Mesh {
+    /// Get visible structured data for this mesh
+    pub fn get_struct(&self) -> MeshStruct {
+        MeshStruct {
+            materials: self.materials.clone(),
+            sphere_shapes: self.sphere_shapes.clone(),
+            cuboid_shapes: self.cuboid_shapes.clone(),
+            cylinder_shapes: self.cylinder_shapes.clone()
+        }
+    }
+
+    /// Import structured data into this mesh
+    pub fn import_struct(&mut self, s: MeshStruct) {
+        self.materials = s.materials;
+        self.sphere_shapes = s.sphere_shapes;
+        self.cuboid_shapes = s.cuboid_shapes;
+        self.cylinder_shapes = s.cylinder_shapes;
+    }
+
     /// Get the materials that this mesh uses
     pub fn get_materials(&self) -> &[i32] {
         &self.materials
@@ -604,7 +622,7 @@ impl ChumBinary for Mesh {
         }
         fmt.write_u32(file, self.sphere_shapes.len() as u32)?;
         for sphere in self.sphere_shapes.iter() {
-            write_vec3(&sphere.pos, file, fmt)?;
+            write_vec3(&sphere.position, file, fmt)?;
             fmt.write_f32(file, sphere.radius)?;
         }
         fmt.write_u32(file, self.cuboid_shapes.len() as u32)?;

@@ -10,7 +10,7 @@ chum_struct_binary! {
     pub struct Lod {
         pub header: [struct THeader],
         pub item_type: [ignore [u16] ITEM_TYPE_LOD],
-        pub item_subtype: [custom_structure [u16]
+        pub item_flags: [custom_structure [u16]
             // Do not present the subtype
             structure: |_lod: &Lod| {
                 None
@@ -49,7 +49,7 @@ chum_struct_binary! {
             [option [struct LodSoundData] LodSoundData::default()]
             // Only read `sounds` if the subtype is 2
             read: |lod: &Inner, file, fmt| -> StructUnpackResult<Option<LodSoundData>> {
-                match lod.item_subtype.unwrap() {
+                match lod.item_flags.unwrap() {
                     2 => match LodSoundData::read_from(file, fmt) {
                         Ok(value) => Ok(Some(value)),
                         Err(e) => Err(e.structuralize("Lod", "sounds"))

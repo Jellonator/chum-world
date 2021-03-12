@@ -6,6 +6,10 @@ use gdnative::prelude::*;
 use libchum::common;
 use libchum::reader::mesh;
 
+/// Each instance represents one surface in an array mesh.
+/// This is NOT the same thing as Totem's SURFACE.
+/// Each element correlates to a point in the mesh, and represents its original
+/// index in the original MESH data.
 #[derive(Clone, Debug)]
 pub struct MeshResultSurface {
     pub vertex_ids: Vec<u16>,
@@ -153,7 +157,7 @@ pub fn read_mesh_from_res(data: &ChumFile, reader: &mut ChumReader) -> Dictionar
                     .into_iter()
                     .map(|x| {
                         let dict = Dictionary::new();
-                        dict.insert("pos", x.pos);
+                        dict.insert("pos", x.position);
                         dict.insert("radius", x.radius);
                         dict.into_shared()
                     })

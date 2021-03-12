@@ -17,8 +17,7 @@ impl LodView {
     }
 
     impl_view_node_resource!(LodView, lod::Lod, "LOD",
-        |builder: &ClassBuilder<Self>| {
-        }
+        |_builder: &ClassBuilder<Self>| {}
     );
 
     #[export]
@@ -35,4 +34,52 @@ impl LodView {
         self.inner = lod::Lod::destructure(&structure).unwrap();
         owner.emit_signal("modified", &[]);
     }
+
+    #[export]
+    pub fn get_resources(&self, _owner: TRef<Resource>) -> VariantArray<Shared> {
+        let arr = VariantArray::new();
+        for value in self.inner.skin_ids.iter() {
+            arr.push(value.to_variant());
+        }
+        arr.into_shared()
+    }
+
+    #[export]
+    pub fn set_resources(&mut self, owner: TRef<Resource>, value: VariantArray<Shared>) {
+        let value = unsafe { value.assume_unique() };
+        self.inner.skin_ids = value.iter().map(|x| i32::from_variant(&x).unwrap()).collect();
+        owner.emit_signal("modified", &[]);
+    }
+
+    /*#[export]
+    pub fn get_animations(&self, _owner: TRef<Resource>) -> VariantArray<Shared> {
+        let arr = VariantArray::new();
+        for value in self.inner.anims.iter() {
+            arr.push(value.to_variant());
+        }
+        arr.into_shared()
+    }
+
+    #[export]
+    pub fn set_animations(&mut self, owner: TRef<Resource>, value: VariantArray<Shared>) {
+        let value = unsafe { value.assume_safe() };
+        self.inner.anims = value.iter().map(|x| i32::from_variant(x).unwrap()).collect();
+        owner.emit_signal("modified", &[]);
+    }
+
+    #[export]
+    pub fn get_sounds(&self, _owner: TRef<Resource>) -> VariantArray<Shared> {
+        let arr = VariantArray::new();
+        for value in self.inner.sounds.iter() {
+            arr.push(value.to_variant());
+        }
+        arr.into_shared()
+    }
+
+    #[export]
+    pub fn set_sounds(&mut self, owner: TRef<Resource>, value: VariantArray<Shared>) {
+        let value = unsafe { value.assume_safe() };
+        self.inner.sounds = value.iter().map(|x| i32::from_variant(x).unwrap()).collect();
+        owner.emit_signal("modified", &[]);
+    }*/
 }

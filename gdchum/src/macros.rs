@@ -1,11 +1,4 @@
-/// Generate a few methods and signals that all View types must have.
-/// This includes:
-/// func load(ChumFile) - loads data into this view from a ChumFile instance
-/// func save(ChumFile) - saves data from this view into a ChumFile instance
-/// func get_type(): String - returns this view's type
-/// signal modified() - Called when this view's data is modified
-#[macro_export]
-macro_rules! impl_view {
+macro_rules! impl_view_base {
     (
         $name:ty,
         $type:ty,
@@ -18,9 +11,6 @@ macro_rules! impl_view {
             ));
             builder.add_method("load", gdnative::godot_wrap_method!($name,
                 fn load(&mut self, _owner: &Resource, data: Instance<$crate::chumfile::ChumFile, Shared>)
-            ));
-            builder.add_method("save", gdnative::godot_wrap_method!($name,
-                fn save(&self, _owner: &Resource, data: Instance<$crate::chumfile::ChumFile, Shared>)
             ));
             builder.add_signal(Signal {
                 name: "modified",
@@ -45,18 +35,6 @@ macro_rules! impl_view {
         }
 
         #[allow(unused_imports)]
-        pub fn save(&self, _owner: &Resource, data: Instance<$crate::chumfile::ChumFile, Shared>) {
-            use libchum::binary::ChumBinary;
-            let mut v: Vec<u8> = Vec::new();
-            unsafe { data.assume_safe() }
-                .map_mut(|chumfile, _| {
-                    self.inner.write_to(&mut v, chumfile.get_format()).unwrap();
-                    chumfile.replace_data_with_vec(v);
-                })
-                .unwrap();
-        }
-
-        #[allow(unused_imports)]
         pub fn load_from(&mut self, data: Instance<$crate::chumfile::ChumFile, Shared>) -> $crate::anyhow::Result<()> {
             use libchum::binary::ChumBinary;
             unsafe {
@@ -72,6 +50,67 @@ macro_rules! impl_view {
     }
 }
 
+/// Generate a few methods and signals that all View types must have.
+/// This includes:
+/// func load(ChumFile) - loads data into this view from a ChumFile instance
+/// func save(ChumFile) - saves data from this view into a ChumFile instance
+/// func get_type(): String - returns this view's type
+/// signal modified() - Called when this view's data is modified
+#[macro_export]
+macro_rules! impl_view {
+    (
+        $name:ty,
+        $type:ty,
+        $typename:literal,
+        $block:expr,
+        $custom_save:expr
+    ) => {
+        impl_view_base!(
+            $name, $type, $typename,
+            |builder: &ClassBuilder<$name>| {
+                builder.add_method("save", gdnative::godot_wrap_method!($name,
+                    fn save(&self, _owner: &Resource, _data: Instance<$crate::chumfile::ChumFile, Shared>)
+                ));
+                $block(builder)
+                
+            }
+        );
+
+        pub fn save(&self, owner: &Resource, data: Instance<$crate::chumfile::ChumFile, Shared>) {
+            $custom_save(self, owner, data)
+        }
+    };
+    (
+        $name:ty,
+        $type:ty,
+        $typename:literal,
+        $block:expr
+    ) => {
+        impl_view_base!(
+            $name, $type, $typename,
+            |builder: &ClassBuilder<$name>| {
+                builder.add_method("save", gdnative::godot_wrap_method!($name,
+                    fn save(&self, _owner: &Resource, data: Instance<$crate::chumfile::ChumFile, Shared>)
+                ));
+                $block(builder)
+                
+            }
+        );
+
+        #[allow(unused_imports)]
+        pub fn save(&self, _owner: &Resource, data: Instance<$crate::chumfile::ChumFile, Shared>) {
+            use libchum::binary::ChumBinary;
+            let mut v: Vec<u8> = Vec::new();
+            unsafe { data.assume_safe() }
+                .map_mut(|chumfile, _| {
+                    self.inner.write_to(&mut v, chumfile.get_format()).unwrap();
+                    chumfile.replace_data_with_vec(v);
+                })
+                .unwrap();
+        }
+    }
+}
+
 #[macro_export]
 macro_rules! impl_view_node_resource {
     (
@@ -79,6 +118,7 @@ macro_rules! impl_view_node_resource {
         $type:ty,
         $typename:literal,
         $block:expr
+        $(,$custom_save:expr)?
     ) => {
         impl_view!(
             $name, $type, $typename,
@@ -115,6 +155,7 @@ macro_rules! impl_view_node_resource {
                     .done();
                 $block(builder);
             }
+            $(,$custom_save)?
         );
 
         pub fn get_flags(&self, _owner: TRef<Resource>) -> i64 {

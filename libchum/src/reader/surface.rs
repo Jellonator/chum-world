@@ -9,7 +9,7 @@ use std::error::Error;
 use std::io::{self, Read, Write};
 
 /// A surface object; contains entire surface object information
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct SurfaceObject {
     pub header: THeader,
     //pub item_type: [ignore [u16] ITEM_TYPE_LIGHT],
@@ -297,34 +297,39 @@ pub fn generate_surface(
 }
 
 impl SurfaceObject {
+    pub fn generate_mesh(&self, mode: SurfaceGenMode, index: usize) -> OutMesh {
+        let surface = &self.surfaces[index];
+        let normal0 = self.normals[surface.normal_ids[0] as usize];
+        let normal1 = self.normals[surface.normal_ids[1] as usize];
+        let normal2 = self.normals[surface.normal_ids[2] as usize];
+        let normal3 = self.normals[surface.normal_ids[3] as usize];
+        let mut curves = [[Vector3::new(0.0, 0.0, 0.0); 4]; 4];
+        for i in 0..4 {
+            let curve = &self.curves[surface.curve_ids[i] as usize];
+            if surface.curve_order & (0b10 << i) == 0 {
+                curves[i][0] = self.vertices[curve.p1 as usize];
+                curves[i][1] = self.vertices[curve.p1_t as usize];
+                curves[i][2] = self.vertices[curve.p2_t as usize];
+                curves[i][3] = self.vertices[curve.p2 as usize];
+            } else {
+                curves[i][3] = self.vertices[curve.p1 as usize];
+                curves[i][2] = self.vertices[curve.p1_t as usize];
+                curves[i][1] = self.vertices[curve.p2_t as usize];
+                curves[i][0] = self.vertices[curve.p2 as usize];
+            }
+        }
+        let normals = [normal0, normal1, normal2, normal3];
+        OutMesh {
+            material_index: surface.material_id,
+            quads: generate_surface(&curves, &normals, &surface.texcoords, mode),
+        }
+    }
+
     /// Generate an entire mesh using the given surface generation mode
     pub fn generate_meshes(&self, mode: SurfaceGenMode) -> Vec<OutMesh> {
         let mut out = Vec::with_capacity(self.surfaces.len());
-        for surface in &self.surfaces {
-            let normal0 = self.normals[surface.normal_ids[0] as usize];
-            let normal1 = self.normals[surface.normal_ids[1] as usize];
-            let normal2 = self.normals[surface.normal_ids[2] as usize];
-            let normal3 = self.normals[surface.normal_ids[3] as usize];
-            let mut curves = [[Vector3::new(0.0, 0.0, 0.0); 4]; 4];
-            for i in 0..4 {
-                let curve = &self.curves[surface.curve_ids[i] as usize];
-                if surface.curve_order & (0b10 << i) == 0 {
-                    curves[i][0] = self.vertices[curve.p1 as usize];
-                    curves[i][1] = self.vertices[curve.p1_t as usize];
-                    curves[i][2] = self.vertices[curve.p2_t as usize];
-                    curves[i][3] = self.vertices[curve.p2 as usize];
-                } else {
-                    curves[i][3] = self.vertices[curve.p1 as usize];
-                    curves[i][2] = self.vertices[curve.p1_t as usize];
-                    curves[i][1] = self.vertices[curve.p2_t as usize];
-                    curves[i][0] = self.vertices[curve.p2 as usize];
-                }
-            }
-            let normals = [normal0, normal1, normal2, normal3];
-            out.push(OutMesh {
-                material_index: surface.material_id,
-                quads: generate_surface(&curves, &normals, &surface.texcoords, mode),
-            })
+        for i in 0..self.surfaces.len() {
+            out.push(self.generate_mesh(mode, i));
         }
         out
     }

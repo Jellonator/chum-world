@@ -1,16 +1,31 @@
 use gdnative::prelude::*;
+// pub mod animation;
 pub mod bitmap;
+// pub mod camera;
+// pub mod camerazone;
 pub mod collisionvol;
+// pub mod gameobj;
 pub mod light;
+// pub mod hfog;
 pub mod lod;
 pub mod material;
 pub mod materialanim;
+// pub mod materialobj;
 pub mod mesh;
 pub mod node;
+// pub mod occluder;
 pub mod omni;
+// pub mod particles;
 pub mod rotshape;
+// pub mod rtc;
 pub mod skin;
 pub mod sound;
+pub mod spline;
+pub mod surface;
+// pub mod txt;
+// pub mod userdefine;
+pub mod warp;
+// pub mod world;
 
 pub fn init(handle: InitHandle) {
     handle.add_class::<bitmap::BitmapView>();
@@ -25,4 +40,7 @@ pub fn init(handle: InitHandle) {
     handle.add_class::<sound::SoundView>();
     handle.add_class::<rotshape::RotShapeView>();
     handle.add_class::<skin::SkinView>();
+    handle.add_class::<spline::SplineView>();
+    handle.add_class::<surface::SurfaceView>();
+    handle.add_class::<warp::WarpView>();
 }

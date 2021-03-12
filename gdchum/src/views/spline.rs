@@ -32,12 +32,12 @@ impl SplineView {
     }
 
     #[export]
-    pub fn get_precomputed_vertices(&self, _owner: &Reference) -> Vector3Array {
+    pub fn get_precomputed_vertices(&self, _owner: &Resource) -> Vector3Array {
         Vector3Array::from_vec(self.inner.get_vertices_as_vec())
     }
 
     #[export]
-    pub fn get_stops(&self, _owner: &Reference) -> Vector3Array {
+    pub fn get_stops(&self, _owner: &Resource) -> Vector3Array {
         Vector3Array::from_vec(self.inner.get_section_stops_as_vec())
     }
 }

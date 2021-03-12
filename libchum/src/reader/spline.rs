@@ -1,10 +1,11 @@
 use crate::common::*;
 
 chum_binary! {
+    #[derive(Clone, Default)]
     pub struct Spline {
-        pub transform: [struct THeader],
+        pub header: [struct THeader],
         pub item_type: [ignore [u16] ITEM_TYPE_SPLINE],
-        pub item_subtype: [ignore [u16] 2u16],
+        pub item_flags: [u16],
         pub vertices: [dynamic array [u32] [Vector3] Vector3::default()],
         pub sections: [dynamic array [u32] [struct SplineSection] SplineSection::default()],
         pub unk4: [fixed array [f32] 4],
@@ -39,7 +40,7 @@ impl Spline {
 }
 
 chum_binary! {
-    #[derive(Default)]
+    #[derive(Clone, Default)]
     pub struct SplineSection {
         pub p1: [u32],
         pub p2: [u32],
@@ -52,7 +53,7 @@ chum_binary! {
 }
 
 chum_binary! {
-    #[derive(Default)]
+    #[derive(Clone, Default)]
     pub struct SplineSubsection {
         pub point1: [Vector3],
         pub point2: [Vector3],

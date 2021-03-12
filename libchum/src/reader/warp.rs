@@ -1,4 +1,5 @@
 chum_struct_binary! {
+    #[derive(Clone, Default)]
     pub struct Warp {
         pub size: [f32],
         pub material_ids: [fixed array [reference MATERIAL] 6],

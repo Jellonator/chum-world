@@ -3,17 +3,19 @@ use crate::reader::node;
 const T_NODE: i32 = -1276508687;
 
 chum_struct_binary! {
+    #[derive(Clone, Default)]
     pub struct GameObj {
         pub prefabs: [dynamic array [u32] [struct Prefab] Prefab::default()]
     }
 }
 
 chum_struct_binary! {
+    #[derive(Clone)]
     pub struct Prefab {
         pub asset_type: [ignore [i32] T_NODE],
         pub subtype1: [reference],
         pub subtype2: [custom_structure [reference]
-            // Inverse is calculated based on transform
+            // Always same as subtype1 so value does not matter
             structure: |_prefab: &Prefab| {
                 None
             };

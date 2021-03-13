@@ -4,7 +4,7 @@ pub mod bitmap;
 pub mod camera;
 // pub mod camerazone;
 pub mod collisionvol;
-// pub mod gameobj;
+pub mod gameobj;
 pub mod light;
 // pub mod hfog;
 pub mod lod;

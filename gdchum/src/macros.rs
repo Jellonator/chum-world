@@ -30,8 +30,9 @@ macro_rules! impl_view_base {
         pub fn load(&mut self, owner: &Resource, data: Instance<$crate::chumfile::ChumFile, Shared>) {
             if let Err(e) = self.load_from(data) {
                 display_err!("Error while loading {} into view: {}", $typename, e);
+            } else {
+                owner.emit_signal("modified", &[]);
             }
-            owner.emit_signal("modified", &[]);
         }
 
         #[allow(unused_imports)]

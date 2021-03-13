@@ -2,6 +2,7 @@ use crate::bytedata::ByteData;
 use crate::scenedata;
 use crate::util;
 use crate::ChumArchive;
+use crate::views::*;
 use gdnative::api::Resource;
 use gdnative::prelude::*;
 use libchum::{archive, common, reader, scene, structure::ChumStruct};
@@ -31,6 +32,22 @@ const EXPORT_ID_MODEL: i64 = 2;
 const EXPORT_ID_TEXTURE: i64 = 3;
 const EXPORT_ID_COLLADA: i64 = 4;
 const EXPORT_ID_WAV: i64 = 5;
+
+macro_rules! get_view {
+    ($viewtype:ty, $chumfile:expr) => {{
+        let instance = Instance::<$viewtype, Unique>::new();
+        match instance
+            .map_mut(|nodeview, _| {
+                nodeview.load_from($chumfile)
+            }) {
+            Ok(value) => match value {
+                Ok(_inner) => Ok(instance.into_shared().to_variant()),
+                Err(e) => Err(e),
+            },
+            Err(e) => Err(e.into())
+        }
+    }}
+}
 
 #[methods]
 impl ChumFile {
@@ -423,7 +440,6 @@ impl ChumFile {
     pub fn replace_txt_with_string(&mut self, _owner: &Resource, stringdata: GodotString) {
         let mut data = vec![0; 4];
         let realstr = format!("{}", stringdata);
-        godot_print!("A:");
         // TotemTech uses \r\n for newlines, but Godot uses \n.
         // Godot also converts all \r\n to \n when setting text.
         // So, all \n must be replaced with \r\n.
@@ -439,17 +455,14 @@ impl ChumFile {
                 other => data.push(other),
             }
         }
-        godot_print!("B:");
         // Set first four bytes to the data's size
         // Fortunately, rust lets you write to slices
         let size = data.len() - 4;
         self.format
             .write_u32(&mut &mut data[0..4], size as u32)
             .unwrap();
-        godot_print!("C:");
         // Actually set the data
         self.replace_data_with_vec(data);
-        godot_print!("D:");
     }
 
     ///////////////////////////////////////////////////////////////////////////
@@ -624,6 +637,43 @@ impl ChumFile {
                 util::struct_to_dict(&structure).into_shared().to_variant()
             }
             _ => Variant::new(),
+        }
+    }
+
+    pub fn priv_get_view(&self, owner: TRef<Resource>) -> anyhow::Result<Variant> {
+        let instance = Instance::from_base(owner.claim()).unwrap();
+        Ok(match self.get_type_str() {
+            "BITMAP" => get_view!(BitmapView, instance)?,
+            "CAMERA" => get_view!(CameraView, instance)?,
+            "COLLISIONVOL" => get_view!(CollisionVolView, instance)?,
+            "GAMEOBJ" => get_view!(GameObjView, instance)?,
+            "HFOG" => get_view!(HFogView, instance)?,
+            "LIGHT" => get_view!(LightView, instance)?,
+            "LOD" => get_view!(LodView, instance)?,
+            "MATERIAL" => get_view!(MaterialView, instance)?,
+            "MATERIALANIM" => get_view!(MaterialAnimView, instance)?,
+            "MATERIALOBJ" => get_view!(MaterialObjView, instance)?,
+            "MESH" => get_view!(MeshView, instance)?,
+            "NODE" => get_view!(NodeView, instance)?,
+            "OMNI" => get_view!(OmniView, instance)?,
+            "ROTSHAPE" => get_view!(RotShapeView, instance)?,
+            "SKIN" => get_view!(SkinView, instance)?,
+            "SOUND" => get_view!(SoundView, instance)?,
+            "SPLINE" => get_view!(SplineView, instance)?,
+            "SURFACE" => get_view!(SurfaceView, instance)?,
+            "WARP" => get_view!(WarpView, instance)?,
+            other => anyhow::bail!("No view for files of type {} yet", other)
+        })
+    }
+
+    #[export]
+    pub fn get_view(&self, owner: TRef<Resource>) -> Variant {
+        match self.priv_get_view(owner) {
+            Ok(v) => v,
+            Err(e) => {
+                display_err!("Error while loading {} into view: {}", self.namestr, e);
+                Variant::new()
+            }
         }
     }
 

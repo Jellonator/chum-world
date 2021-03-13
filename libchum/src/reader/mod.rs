@@ -2,6 +2,7 @@
 // interpretation of common file types.
 
 pub mod bitmap;
+pub mod camera;
 pub mod collisionvol;
 pub mod gameobj;
 pub mod light;

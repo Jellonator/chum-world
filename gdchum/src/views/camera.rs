@@ -1,7 +1,7 @@
-use libchum::reader::camera;
-use gdnative::prelude::*;
-use gdnative::api::Resource;
 use crate::util;
+use gdnative::api::Resource;
+use gdnative::prelude::*;
+use libchum::reader::camera;
 
 #[derive(NativeClass)]
 #[inherit(Resource)]
@@ -13,12 +13,16 @@ pub struct CameraView {
 #[methods]
 impl CameraView {
     fn new(_owner: &Resource) -> Self {
-        CameraView { inner: Default::default() }
+        CameraView {
+            inner: Default::default(),
+        }
     }
 
-    impl_view_node_resource!(CameraView, camera::Camera, "CAMERA",
-        |_builder: &ClassBuilder<Self>| {
-        }
+    impl_view_node_resource!(
+        CameraView,
+        camera::Camera,
+        "CAMERA",
+        |_builder: &ClassBuilder<Self>| {}
     );
 
     #[export]

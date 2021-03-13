@@ -18,30 +18,30 @@ impl NodeView {
         }
     }
 
-    impl_view!(NodeView, node::Node, "NODE",
-        |builder: &ClassBuilder<Self>| {
-            builder
-                .add_property("global_transform")
-                .with_getter(Self::get_global_transform)
-                .with_setter(Self::set_global_transform)
-                .done();
-            builder
-                .add_property("local_transform")
-                .with_getter(Self::get_local_transform)
-                .with_setter(Self::set_local_transform)
-                .done();
-            builder
-                .add_property("parent_id")
-                .with_getter(Self::get_parent_id)
-                .with_setter(Self::set_parent_id)
-                .done();
-            builder
-                .add_property("resource_id")
-                .with_getter(Self::get_resource_id)
-                .with_setter(Self::set_resource_id)
-                .done();
-        }
-    );
+    impl_view!(NodeView, node::Node, "NODE", |builder: &ClassBuilder<
+        Self,
+    >| {
+        builder
+            .add_property("global_transform")
+            .with_getter(Self::get_global_transform)
+            .with_setter(Self::set_global_transform)
+            .done();
+        builder
+            .add_property("local_transform")
+            .with_getter(Self::get_local_transform)
+            .with_setter(Self::set_local_transform)
+            .done();
+        builder
+            .add_property("parent_id")
+            .with_getter(Self::get_parent_id)
+            .with_setter(Self::set_parent_id)
+            .done();
+        builder
+            .add_property("resource_id")
+            .with_getter(Self::get_resource_id)
+            .with_setter(Self::set_resource_id)
+            .done();
+    });
 
     #[export]
     pub fn set_global_transform(&mut self, owner: TRef<Resource>, value: Transform) {
@@ -110,4 +110,3 @@ impl NodeView {
         owner.emit_signal("modified", &[]);
     }
 }
-

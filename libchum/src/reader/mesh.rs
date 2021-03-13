@@ -1,9 +1,9 @@
+use crate::binary::ChumBinary;
 use crate::common::*;
+use crate::error;
 use crate::format::TotemFormat;
 use crate::reader::skin;
-use crate::error;
 use crate::scene;
-use crate::binary::ChumBinary;
 use std::collections::HashMap;
 use std::io::{self, Read, Write};
 
@@ -280,7 +280,7 @@ impl Mesh {
             materials: self.materials.clone(),
             sphere_shapes: self.sphere_shapes.clone(),
             cuboid_shapes: self.cuboid_shapes.clone(),
-            cylinder_shapes: self.cylinder_shapes.clone()
+            cylinder_shapes: self.cylinder_shapes.clone(),
         }
     }
 
@@ -562,13 +562,15 @@ impl ChumBinary for Mesh {
             vertices: meshtmp.vertices,
             texcoords: meshtmp.texcoords,
             normals: meshtmp.normals,
-            strips: meshtmp.strip_data.into_iter().map(|strip| {
-                StripData {
+            strips: meshtmp
+                .strip_data
+                .into_iter()
+                .map(|strip| StripData {
                     strip,
                     group: groups.next(),
-                    ext: exts.next()
-                }
-            }).collect(),
+                    ext: exts.next(),
+                })
+                .collect(),
             materials: meshtmp.materials,
             sphere_shapes: meshtmp.sphere_shapes,
             cuboid_shapes: meshtmp.cuboid_shapes,

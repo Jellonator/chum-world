@@ -1,7 +1,7 @@
-use libchum::reader::gameobj::*;
-use gdnative::prelude::*;
-use gdnative::api::Resource;
 use crate::util;
+use gdnative::api::Resource;
+use gdnative::prelude::*;
+use libchum::reader::gameobj::*;
 
 #[derive(NativeClass)]
 #[inherit(Resource)]
@@ -13,10 +13,15 @@ pub struct GameObjView {
 #[methods]
 impl GameObjView {
     fn new(_owner: &Resource) -> Self {
-        GameObjView { inner: Default::default() }
+        GameObjView {
+            inner: Default::default(),
+        }
     }
 
-    impl_view!(GameObjView, GameObj, "GAMEOBJ",
+    impl_view!(
+        GameObjView,
+        GameObj,
+        "GAMEOBJ",
         |_builder: &ClassBuilder<Self>| {}
     );
 

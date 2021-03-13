@@ -1,7 +1,7 @@
-use libchum::reader::lod;
-use gdnative::prelude::*;
-use gdnative::api::Resource;
 use crate::util;
+use gdnative::api::Resource;
+use gdnative::prelude::*;
+use libchum::reader::lod;
 
 #[derive(NativeClass)]
 #[inherit(Resource)]
@@ -13,12 +13,12 @@ pub struct LodView {
 #[methods]
 impl LodView {
     fn new(_owner: &Resource) -> Self {
-        LodView { inner:  Default::default() }
+        LodView {
+            inner: Default::default(),
+        }
     }
 
-    impl_view_node_resource!(LodView, lod::Lod, "LOD",
-        |_builder: &ClassBuilder<Self>| {}
-    );
+    impl_view_node_resource!(LodView, lod::Lod, "LOD", |_builder: &ClassBuilder<Self>| {});
 
     #[export]
     pub fn get_structure(&self, _owner: &Resource) -> Variant {
@@ -47,7 +47,10 @@ impl LodView {
     #[export]
     pub fn set_resources(&mut self, owner: TRef<Resource>, value: VariantArray<Shared>) {
         let value = unsafe { value.assume_unique() };
-        self.inner.skin_ids = value.iter().map(|x| i32::from_variant(&x).unwrap()).collect();
+        self.inner.skin_ids = value
+            .iter()
+            .map(|x| i32::from_variant(&x).unwrap())
+            .collect();
         owner.emit_signal("modified", &[]);
     }
 

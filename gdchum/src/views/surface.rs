@@ -1,8 +1,8 @@
-use libchum::reader::surface::*;
-use gdnative::prelude::*;
+use crate::util;
 use gdnative::api::Resource;
 use gdnative::api::{ArrayMesh, Mesh};
-use crate::util;
+use gdnative::prelude::*;
+use libchum::reader::surface::*;
 
 #[derive(NativeClass)]
 #[inherit(Resource)]
@@ -14,10 +14,15 @@ pub struct SurfaceView {
 #[methods]
 impl SurfaceView {
     fn new(_owner: &Resource) -> Self {
-        SurfaceView { inner: Default::default() }
+        SurfaceView {
+            inner: Default::default(),
+        }
     }
 
-    impl_view_node_resource!(SurfaceView, SurfaceObject, "SURFACE",
+    impl_view_node_resource!(
+        SurfaceView,
+        SurfaceObject,
+        "SURFACE",
         |_builder: &ClassBuilder<Self>| {},
         |_self, _owner, _data| {}
     );
@@ -33,16 +38,23 @@ impl SurfaceView {
     }
 
     #[export]
-    pub fn get_num_surfaces(&self, _owner: &Resource) ->  usize {
+    pub fn get_num_surfaces(&self, _owner: &Resource) -> usize {
         self.inner.surfaces.len()
     }
 
     #[export]
-    pub fn generate_surface(&self, _owner: &Resource, index: usize, quality: usize) -> Option<Dictionary> {
+    pub fn generate_surface(
+        &self,
+        _owner: &Resource,
+        index: usize,
+        quality: usize,
+    ) -> Option<Dictionary> {
         if index < self.inner.surfaces.len() {
             return None;
         }
-        let surface = self.inner.generate_mesh(SurfaceGenMode::BezierInterp(quality), index);
+        let surface = self
+            .inner
+            .generate_mesh(SurfaceGenMode::BezierInterp(quality), index);
         let mesh = Ref::<ArrayMesh, Unique>::new();
         let mut verts = Vector3Array::new();
         let mut texcoords = Vector2Array::new();

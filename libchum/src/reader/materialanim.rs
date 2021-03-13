@@ -34,7 +34,8 @@ impl Default for Interpolation {
 /// A single frame in a track
 #[derive(Clone, Default)]
 pub struct TrackFrame<T>
-    where T: Clone + Default
+where
+    T: Clone + Default,
 {
     pub frame: u16,
     pub junk: (),
@@ -83,14 +84,16 @@ chum_struct_binary_impl! {
 /// A full track, including a list of frames and interpolation method
 #[derive(Clone, Default)]
 pub struct Track<T>
-    where T: Clone + Default
+where
+    T: Clone + Default,
 {
     pub interp: Interpolation,
     pub frames: Vec<TrackFrame<T>>,
 }
 
 impl<T> Track<T>
-    where T: Clone + Default
+where
+    T: Clone + Default,
 {
     /// Find the frame value that the given frame refers to.
     /// Most of the time, the frame index will be between two frames.
@@ -220,7 +223,7 @@ impl MaterialAnimation {
             7 => self.track_unk1.interp,
             8 => self.track_unk2.interp,
             9 => self.track_unk3.interp,
-            _ => None?
+            _ => None?,
         })
     }
 

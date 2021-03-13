@@ -73,7 +73,7 @@ macro_rules! impl_view {
                     fn save(&self, _owner: &Resource, _data: Instance<$crate::chumfile::ChumFile, Shared>)
                 ));
                 $block(builder)
-                
+
             }
         );
 
@@ -94,7 +94,7 @@ macro_rules! impl_view {
                     fn save(&self, _owner: &Resource, data: Instance<$crate::chumfile::ChumFile, Shared>)
                 ));
                 $block(builder)
-                
+
             }
         );
 

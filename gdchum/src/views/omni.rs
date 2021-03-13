@@ -1,7 +1,7 @@
-use libchum::reader::omni::*;
-use gdnative::prelude::*;
-use gdnative::api::Resource;
 use crate::util;
+use gdnative::api::Resource;
+use gdnative::prelude::*;
+use libchum::reader::omni::*;
 
 #[derive(NativeClass)]
 #[inherit(Resource)]
@@ -13,13 +13,12 @@ pub struct OmniView {
 #[methods]
 impl OmniView {
     fn new(_owner: &Resource) -> Self {
-        OmniView { inner: Default::default() }
+        OmniView {
+            inner: Default::default(),
+        }
     }
 
-    impl_view_node_resource!(OmniView, Omni, "OMNI",
-        |_builder: &ClassBuilder<Self>| {
-        }
-    );
+    impl_view_node_resource!(OmniView, Omni, "OMNI", |_builder: &ClassBuilder<Self>| {});
 
     #[export]
     pub fn get_structure(&self, _owner: &Resource) -> Variant {

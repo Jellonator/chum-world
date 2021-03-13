@@ -1,7 +1,7 @@
-use libchum::reader::material;
-use gdnative::prelude::*;
-use gdnative::api::Resource;
 use crate::util;
+use gdnative::api::Resource;
+use gdnative::prelude::*;
+use libchum::reader::material;
 
 #[derive(NativeClass)]
 #[inherit(Resource)]
@@ -13,10 +13,15 @@ pub struct MaterialView {
 #[methods]
 impl MaterialView {
     fn new(_owner: &Resource) -> Self {
-        MaterialView { inner:  Default::default() }
+        MaterialView {
+            inner: Default::default(),
+        }
     }
 
-    impl_view!(MaterialView, material::Material, "MATERIAL",
+    impl_view!(
+        MaterialView,
+        material::Material,
+        "MATERIAL",
         |builder: &ClassBuilder<Self>| {
             builder
                 .add_property("color")

@@ -478,4 +478,3 @@ chum_struct_binary! {
         pub junk: [ignore [fixed array [u8] 16] [0;16]],
     }
 }
-

@@ -1,7 +1,7 @@
-use libchum::reader::hfog::*;
-use gdnative::prelude::*;
-use gdnative::api::Resource;
 use crate::util;
+use gdnative::api::Resource;
+use gdnative::prelude::*;
+use libchum::reader::hfog::*;
 
 #[derive(NativeClass)]
 #[inherit(Resource)]
@@ -13,12 +13,12 @@ pub struct HFogView {
 #[methods]
 impl HFogView {
     fn new(_owner: &Resource) -> Self {
-        Self { inner: Default::default() }
+        Self {
+            inner: Default::default(),
+        }
     }
 
-    impl_view!(HFogView, HFog, "HFOG",
-        |_builder: &ClassBuilder<Self>| {}
-    );
+    impl_view!(HFogView, HFog, "HFOG", |_builder: &ClassBuilder<Self>| {});
 
     #[export]
     pub fn get_structure(&self, _owner: &Resource) -> Variant {

@@ -1,9 +1,9 @@
-use libchum::reader::rotshape::*;
-use gdnative::prelude::*;
+use crate::util;
 use gdnative::api::Resource;
 use gdnative::api::{ArrayMesh, Mesh};
+use gdnative::prelude::*;
 use libchum::common;
-use crate::util;
+use libchum::reader::rotshape::*;
 
 #[derive(NativeClass)]
 #[inherit(Resource)]
@@ -15,12 +15,16 @@ pub struct RotShapeView {
 #[methods]
 impl RotShapeView {
     fn new(_owner: &Resource) -> Self {
-        RotShapeView { inner: Default::default() }
+        RotShapeView {
+            inner: Default::default(),
+        }
     }
 
-    impl_view_node_resource!(RotShapeView, RotShape, "ROTSHAPE",
-        |_builder: &ClassBuilder<Self>| {
-        }
+    impl_view_node_resource!(
+        RotShapeView,
+        RotShape,
+        "ROTSHAPE",
+        |_builder: &ClassBuilder<Self>| {}
     );
 
     #[export]

@@ -1,7 +1,7 @@
-use libchum::reader::materialanim::*;
-use gdnative::prelude::*;
-use gdnative::api::Resource;
 use crate::util;
+use gdnative::api::Resource;
+use gdnative::prelude::*;
+use libchum::reader::materialanim::*;
 
 #[derive(NativeClass)]
 #[inherit(Resource)]
@@ -11,7 +11,8 @@ pub struct MaterialAnimView {
 }
 
 fn read_track<T>(track: &Track<T>) -> VariantArray<Unique>
-    where T: Clone + Default + ToVariant
+where
+    T: Clone + Default + ToVariant,
 {
     let arr = VariantArray::new();
     for value in track.frames.iter() {
@@ -34,7 +35,8 @@ fn read_track_unk(track: &Track<[u8; 4]>) -> VariantArray<Unique> {
 }
 
 fn gen_track<T>(data: VariantArray<ThreadLocal>, interp: Interpolation) -> Option<Track<T>>
-    where T: Clone + Default + FromVariant
+where
+    T: Clone + Default + FromVariant,
 {
     let mut track = Track::<T>::default();
     track.interp = interp;
@@ -45,7 +47,7 @@ fn gen_track<T>(data: VariantArray<ThreadLocal>, interp: Interpolation) -> Optio
         track.frames.push(TrackFrame {
             frame,
             junk: (),
-            data: value
+            data: value,
         });
     }
     Some(track)
@@ -64,12 +66,7 @@ fn gen_track_unk(data: VariantArray<ThreadLocal>, interp: Interpolation) -> Opti
         track.frames.push(TrackFrame {
             frame,
             junk: (),
-            data: [
-                arr.get(0),
-                arr.get(1),
-                arr.get(2),
-                arr.get(3),
-            ]
+            data: [arr.get(0), arr.get(1), arr.get(2), arr.get(3)],
         });
     }
     Some(track)
@@ -78,10 +75,15 @@ fn gen_track_unk(data: VariantArray<ThreadLocal>, interp: Interpolation) -> Opti
 #[methods]
 impl MaterialAnimView {
     fn new(_owner: &Resource) -> Self {
-        MaterialAnimView { inner:  Default::default() }
+        MaterialAnimView {
+            inner: Default::default(),
+        }
     }
 
-    impl_view!(MaterialAnimView, MaterialAnimation, "MATERIALANIM",
+    impl_view!(
+        MaterialAnimView,
+        MaterialAnimation,
+        "MATERIALANIM",
         |builder: &ClassBuilder<Self>| {
             builder
                 .add_property("material")
@@ -110,7 +112,7 @@ impl MaterialAnimView {
         self.inner = MaterialAnimation::destructure(&structure).unwrap();
         owner.emit_signal("modified", &[]);
     }
-    
+
     #[export]
     pub fn get_length(&self, _owner: TRef<Resource>) -> f32 {
         self.inner.length
@@ -136,35 +138,45 @@ impl MaterialAnimView {
     #[export]
     pub fn get_track_interpolation(&self, _owner: TRef<Resource>, index: usize) -> Option<u32> {
         use libchum::structure::ChumEnum;
-        self.inner.get_track_interpolation(index).map(|v| v.to_u32())
+        self.inner
+            .get_track_interpolation(index)
+            .map(|v| v.to_u32())
     }
 
     #[export]
     pub fn set_track_interpolation(&mut self, owner: TRef<Resource>, index: usize, value: u32) {
         use libchum::structure::ChumEnum;
-        self.inner.set_track_interpolation(index, Interpolation::from_u32(value).unwrap());
+        self.inner
+            .set_track_interpolation(index, Interpolation::from_u32(value).unwrap());
         owner.emit_signal("modified", &[]);
     }
 
     #[export]
     pub fn get_track(&self, _owner: TRef<Resource>, index: usize) -> Option<VariantArray> {
-        Some(match index {
-            TRACK_TEXTURE => read_track(&self.inner.track_texture),
-            TRACK_SCROLL => read_track(&self.inner.track_scroll),
-            TRACK_STRETCH => read_track(&self.inner.track_stretch),
-            TRACK_ROTATION => read_track(&self.inner.track_rotation),
-            TRACK_COLOR => read_track(&self.inner.track_color),
-            TRACK_EMISSION => read_track(&self.inner.track_emission),
-            TRACK_ALPHA => read_track(&self.inner.track_alpha),
-            TRACK_UNK1 => read_track_unk(&self.inner.track_unk1),
-            TRACK_UNK2 => read_track_unk(&self.inner.track_unk2),
-            TRACK_UNK3 => read_track_unk(&self.inner.track_unk3),
-            _ => None?
-        }.into_shared())
+        Some(
+            match index {
+                TRACK_TEXTURE => read_track(&self.inner.track_texture),
+                TRACK_SCROLL => read_track(&self.inner.track_scroll),
+                TRACK_STRETCH => read_track(&self.inner.track_stretch),
+                TRACK_ROTATION => read_track(&self.inner.track_rotation),
+                TRACK_COLOR => read_track(&self.inner.track_color),
+                TRACK_EMISSION => read_track(&self.inner.track_emission),
+                TRACK_ALPHA => read_track(&self.inner.track_alpha),
+                TRACK_UNK1 => read_track_unk(&self.inner.track_unk1),
+                TRACK_UNK2 => read_track_unk(&self.inner.track_unk2),
+                TRACK_UNK3 => read_track_unk(&self.inner.track_unk3),
+                _ => None?,
+            }
+            .into_shared(),
+        )
     }
 
-    fn set_track_priv(&mut self, index: usize, data: VariantArray<ThreadLocal>, interp: Interpolation) -> Option<()>
-    {
+    fn set_track_priv(
+        &mut self,
+        index: usize,
+        data: VariantArray<ThreadLocal>,
+        interp: Interpolation,
+    ) -> Option<()> {
         match index {
             TRACK_TEXTURE => self.inner.track_texture = gen_track(data, interp)?,
             TRACK_SCROLL => self.inner.track_scroll = gen_track(data, interp)?,
@@ -176,7 +188,7 @@ impl MaterialAnimView {
             TRACK_UNK1 => self.inner.track_unk1 = gen_track_unk(data, interp)?,
             TRACK_UNK2 => self.inner.track_unk2 = gen_track_unk(data, interp)?,
             TRACK_UNK3 => self.inner.track_unk3 = gen_track_unk(data, interp)?,
-            _ => None?
+            _ => None?,
         }
         Some(())
     }
@@ -188,7 +200,7 @@ impl MaterialAnimView {
             match self.set_track_priv(index, data, interp) {
                 Some(()) => {
                     owner.emit_signal("modified", &[]);
-                },
+                }
                 None => {
                     display_err!("Could not parse track data");
                 }

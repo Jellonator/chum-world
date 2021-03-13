@@ -1,9 +1,9 @@
+use crate::util;
 use gdnative::api::Resource;
 use gdnative::prelude::*;
 use libchum::reader::bitmap;
 use std::fs::File;
 use std::io::BufReader;
-use crate::util;
 
 #[derive(NativeClass)]
 #[inherit(Resource)]
@@ -15,10 +15,15 @@ pub struct BitmapView {
 #[methods]
 impl BitmapView {
     fn new(_owner: &Resource) -> Self {
-        BitmapView { inner:  Default::default() }
+        BitmapView {
+            inner: Default::default(),
+        }
     }
 
-    impl_view!(BitmapView, bitmap::Bitmap, "BITMAP",
+    impl_view!(
+        BitmapView,
+        bitmap::Bitmap,
+        "BITMAP",
         |_builder: &ClassBuilder<Self>| {}
     );
 
@@ -70,7 +75,8 @@ impl BitmapView {
     pub fn import_structure(&mut self, owner: &Resource, data: Dictionary) {
         use libchum::structure::ChumStruct;
         let structure = util::dict_to_struct(&data);
-        self.inner.import_struct(&bitmap::BitmapStruct::destructure(&structure).unwrap());
+        self.inner
+            .import_struct(&bitmap::BitmapStruct::destructure(&structure).unwrap());
         owner.emit_signal("modified", &[]);
     }
 }

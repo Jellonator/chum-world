@@ -1,7 +1,7 @@
+use crate::util;
+use gdnative::api::Resource;
 use gdnative::prelude::*;
 use libchum::reader::collisionvol;
-use gdnative::api::Resource;
-use crate::util;
 
 #[derive(NativeClass)]
 #[inherit(Resource)]
@@ -13,10 +13,15 @@ pub struct CollisionVolView {
 #[methods]
 impl CollisionVolView {
     fn new(_owner: &Resource) -> Self {
-        CollisionVolView { inner:  Default::default() }
+        CollisionVolView {
+            inner: Default::default(),
+        }
     }
 
-    impl_view_node_resource!(CollisionVolView, collisionvol::CollisionVol, "COLLISIONVOL",
+    impl_view_node_resource!(
+        CollisionVolView,
+        collisionvol::CollisionVol,
+        "COLLISIONVOL",
         |builder: &ClassBuilder<Self>| {
             builder
                 .add_property("local_transform")

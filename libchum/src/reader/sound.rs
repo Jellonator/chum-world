@@ -78,7 +78,7 @@ impl Default for SoundGcn {
             data: Vec::new(),
             unk9: (),
             unk10: 0u32,
-            unk11: 0u32
+            unk11: 0u32,
         }
     }
 }
@@ -88,7 +88,7 @@ impl SoundGcn {
         SoundGcnStruct {
             sample_rate: self.sample_rate,
             unk10: self.unk10,
-            unk11: self.unk11
+            unk11: self.unk11,
         }
     }
 

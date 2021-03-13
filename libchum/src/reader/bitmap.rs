@@ -1,13 +1,13 @@
 //! Used for BITMAP file conversion.
 //! See https://github.com/Jellonator/chum-world/wiki/BITMAP for more information.
 
+use crate::error;
 use crate::format::TotemFormat;
 use crate::util;
 pub use image;
 use imagequant;
 use std::io::{self, BufRead, Read, Seek, Write};
 use std::slice;
-use crate::error;
 
 // Image formats
 const FORMAT_C4: u8 = 1;
@@ -316,7 +316,7 @@ impl PaletteC4 {
             }
             v => Err(error::UnpackError::InvalidEnumeration {
                 enum_name: "PaletteFormat".to_owned(),
-                value: v as i64
+                value: v as i64,
             }),
         }
     }
@@ -402,7 +402,7 @@ impl PaletteC8 {
             }
             v => Err(error::UnpackError::InvalidEnumeration {
                 enum_name: "PaletteFormat".to_owned(),
-                value: v as i64
+                value: v as i64,
             }),
         }
     }
@@ -512,7 +512,7 @@ impl Default for Bitmap {
             height: 0,
             flags: 0,
             unknown: 0,
-            data: BitmapFormat::RGBA8888(Vec::new())
+            data: BitmapFormat::RGBA8888(Vec::new()),
         }
     }
 }
@@ -620,7 +620,7 @@ where
 fn read_u32_interleaved<R: Read>(
     fmt: &TotemFormat,
     file: &mut R,
-    out: &mut [Color]
+    out: &mut [Color],
 ) -> io::Result<()> {
     let num = out.len();
     if num % 16 != 0 {
@@ -645,27 +645,33 @@ fn read_u32_interleaved<R: Read>(
 
 /// Macro used to read image data. Reduces repitition in reading code.
 macro_rules! bitmap_read_data {
-    ($width:expr, $height:expr, $block_width:literal, $block_height:literal, $read_func:expr, $fmt: expr, $file:expr) => {
-        {
-            // round up size to match block size.
-            let data_width = util::round_up($width as usize, $block_width);
-            let data_height = util::round_up($height as usize, $block_height);
-            // read data
-            let mut indices = vec![Default::default(); (data_width * data_height) as usize];
-            match $read_func($fmt, $file, &mut indices) {
-                Ok(()) => {
-                    // convert from block arrangement to linear arrangement
-                    let mut data = deblockify(&indices, $block_width, $block_height, data_width, data_height);
-                    // resize to match original size
-                    util::resize_2d_inplace(&mut data, (data_width, data_height), ($width as usize, $height as usize));
-                    Ok(data)
-                },
-                Err(e) => {
-                    Err(e)
-                }
+    ($width:expr, $height:expr, $block_width:literal, $block_height:literal, $read_func:expr, $fmt: expr, $file:expr) => {{
+        // round up size to match block size.
+        let data_width = util::round_up($width as usize, $block_width);
+        let data_height = util::round_up($height as usize, $block_height);
+        // read data
+        let mut indices = vec![Default::default(); (data_width * data_height) as usize];
+        match $read_func($fmt, $file, &mut indices) {
+            Ok(()) => {
+                // convert from block arrangement to linear arrangement
+                let mut data = deblockify(
+                    &indices,
+                    $block_width,
+                    $block_height,
+                    data_width,
+                    data_height,
+                );
+                // resize to match original size
+                util::resize_2d_inplace(
+                    &mut data,
+                    (data_width, data_height),
+                    ($width as usize, $height as usize),
+                );
+                Ok(data)
             }
+            Err(e) => Err(e),
         }
-    };
+    }};
 }
 
 impl Bitmap {
@@ -729,7 +735,10 @@ impl Bitmap {
     }
 
     /// Read a Bitmap from a file
-    pub fn read_from<R: Read>(file: &mut R, fmt: TotemFormat) -> Result<Bitmap, error::UnpackError> {
+    pub fn read_from<R: Read>(
+        file: &mut R,
+        fmt: TotemFormat,
+    ) -> Result<Bitmap, error::UnpackError> {
         let width: u32 = fmt.read_u32(file)?;
         let height: u32 = fmt.read_u32(file)?;
         fmt.skip_n_bytes(file, 4)?;
@@ -740,33 +749,41 @@ impl Bitmap {
         let _unk: u8 = fmt.read_u8(file)?;
         let filter: u8 = fmt.read_u8(file)?;
         let data: BitmapFormat = match format {
-            FORMAT_C4 => {
-                BitmapFormat::C4(
-                    bitmap_read_data!(width, height, 8, 8, TotemFormat::read_u4_into, &fmt, file)?,
-                    PaletteC4::read_palette(palette_format, file, fmt)?
-                )
-            }
-            FORMAT_C8 => {
-                BitmapFormat::C8(
-                    bitmap_read_data!(width, height, 8, 4, TotemFormat::read_u8_into, &fmt, file)?,
-                    PaletteC8::read_palette(palette_format, file, fmt)?
-                )
-            }
-            FORMAT_RGB565 => {
-                BitmapFormat::RGB565(
-                    bitmap_read_data!(width, height, 4, 4, TotemFormat::read_u16_into, &fmt, file)?
-                )
-            }
-            FORMAT_A3RGB565 => {
-                BitmapFormat::RGB5A3(
-                    bitmap_read_data!(width, height, 4, 4, TotemFormat::read_u16_into, &fmt, file)?
-                )
-            }
-            FORMAT_ARGB8888 => {
-                BitmapFormat::RGBA8888(
-                    bitmap_read_data!(width, height, 4, 4, read_u32_interleaved, &fmt, file)?
-                )
-            }
+            FORMAT_C4 => BitmapFormat::C4(
+                bitmap_read_data!(width, height, 8, 8, TotemFormat::read_u4_into, &fmt, file)?,
+                PaletteC4::read_palette(palette_format, file, fmt)?,
+            ),
+            FORMAT_C8 => BitmapFormat::C8(
+                bitmap_read_data!(width, height, 8, 4, TotemFormat::read_u8_into, &fmt, file)?,
+                PaletteC8::read_palette(palette_format, file, fmt)?,
+            ),
+            FORMAT_RGB565 => BitmapFormat::RGB565(bitmap_read_data!(
+                width,
+                height,
+                4,
+                4,
+                TotemFormat::read_u16_into,
+                &fmt,
+                file
+            )?),
+            FORMAT_A3RGB565 => BitmapFormat::RGB5A3(bitmap_read_data!(
+                width,
+                height,
+                4,
+                4,
+                TotemFormat::read_u16_into,
+                &fmt,
+                file
+            )?),
+            FORMAT_ARGB8888 => BitmapFormat::RGBA8888(bitmap_read_data!(
+                width,
+                height,
+                4,
+                4,
+                read_u32_interleaved,
+                &fmt,
+                file
+            )?),
             FORMAT_RGB888 => {
                 // this is the only linear format
                 let mut data = vec![(0, 0, 0); (width * height) as usize];
@@ -782,7 +799,7 @@ impl Bitmap {
             }
             v => Err(error::UnpackError::InvalidEnumeration {
                 enum_name: "BitmapFormat".to_string(),
-                value: v as i64
+                value: v as i64,
             })?,
         };
         Ok(Bitmap {
@@ -793,7 +810,7 @@ impl Bitmap {
                 2 => AlphaLevel::Blend,
                 v => Err(error::UnpackError::InvalidEnumeration {
                     enum_name: "AlphaLevel".to_string(),
-                    value: v as i64
+                    value: v as i64,
                 })?,
             },
             width,
@@ -1025,4 +1042,3 @@ where
     }
     Ok((buf, width, height))
 }
-

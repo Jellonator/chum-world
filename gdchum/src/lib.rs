@@ -1,9 +1,9 @@
+use anyhow;
 use gdnative::api::Resource;
 use gdnative::prelude::*;
 use libchum::{self, archive};
 use std::collections::HashMap;
 use std::fs::File;
-use anyhow;
 
 #[macro_use]
 pub mod macros;

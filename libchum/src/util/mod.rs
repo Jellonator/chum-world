@@ -1,8 +1,8 @@
 pub mod bezierpatch;
 pub mod dsp;
 pub mod idmap;
-use std::ops::{Add, Div, Sub};
 use std::borrow::Cow;
+use std::ops::{Add, Div, Sub};
 
 use crc::crc32;
 
@@ -91,10 +91,13 @@ pub fn hash_name_i32(name: &str) -> i32 {
 /// Panics if n is greater than size.1
 pub fn remove_rows<T>(data: &mut Vec<T>, size: (usize, usize), n: usize)
 where
-    T: Default + Clone
+    T: Default + Clone,
 {
     if n > size.1 {
-        panic!("Trying to remove {} rows from a 2D array of height {}", n, size.1);
+        panic!(
+            "Trying to remove {} rows from a 2D array of height {}",
+            n, size.1
+        );
     }
     data.resize(size.0 * size.1 - size.0 * n, T::default());
 }
@@ -102,20 +105,22 @@ where
 /// Add n rows to a 2D array
 pub fn add_rows<T>(data: &mut Vec<T>, size: (usize, usize), n: usize)
 where
-    T: Default + Clone
+    T: Default + Clone,
 {
     data.resize(size.0 * size.1 - size.0 * n, T::default());
 }
-
 
 /// Remove n columns from the end of a 2D array
 /// Panics if n is greater than size.0
 pub fn remove_cols<T>(data: &mut Vec<T>, size: (usize, usize), n: usize)
 where
-    T: Default + Clone
+    T: Default + Clone,
 {
     if n > size.0 {
-        panic!("Trying to remove {} columns from a 2D array of width {}", n, size.0);
+        panic!(
+            "Trying to remove {} columns from a 2D array of width {}",
+            n, size.0
+        );
     }
     let new_w = size.0 - n;
     let old_w = size.0;
@@ -135,7 +140,7 @@ where
 /// Add n columns to the end of a 2D array
 pub fn add_cols<T>(data: &mut Vec<T>, size: (usize, usize), n: usize)
 where
-    T: Default + Clone
+    T: Default + Clone,
 {
     let new_w = size.0 + n;
     let old_w = size.0;
@@ -154,9 +159,13 @@ where
 
 /// Resize a 2D array.
 /// Returns a copy of the given array.
-pub fn resize_2d_cloned<'a, T>(data: &'a [T], old_size: (usize, usize), new_size: (usize, usize)) -> Cow<'a, [T]>
+pub fn resize_2d_cloned<'a, T>(
+    data: &'a [T],
+    old_size: (usize, usize),
+    new_size: (usize, usize),
+) -> Cow<'a, [T]>
 where
-    T: Default + Clone
+    T: Default + Clone,
 {
     if old_size == new_size {
         return Cow::from(data);
@@ -183,7 +192,7 @@ where
 /// Resize a 2D array in-place.
 pub fn resize_2d_inplace<T>(data: &mut Vec<T>, old_size: (usize, usize), new_size: (usize, usize))
 where
-    T: Default + Clone
+    T: Default + Clone,
 {
     let (old_w, old_h) = old_size;
     let (new_w, new_h) = new_size;

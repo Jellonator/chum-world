@@ -1,8 +1,8 @@
-use libchum::reader::mesh;
-use gdnative::prelude::*;
+use crate::util;
 use gdnative::api::Resource;
 use gdnative::api::{ArrayMesh, Mesh};
-use crate::util;
+use gdnative::prelude::*;
+use libchum::reader::mesh;
 
 #[derive(NativeClass)]
 #[inherit(Resource)]
@@ -14,13 +14,14 @@ pub struct MeshView {
 #[methods]
 impl MeshView {
     fn new(_owner: &Resource) -> Self {
-        MeshView { inner: Default::default() }
+        MeshView {
+            inner: Default::default(),
+        }
     }
 
-    impl_view_node_resource!(MeshView, mesh::Mesh, "MESH",
-        |_builder: &ClassBuilder<Self>| {
-        }
-    );
+    impl_view_node_resource!(MeshView, mesh::Mesh, "MESH", |_builder: &ClassBuilder<
+        Self,
+    >| {});
 
     #[export]
     pub fn get_structure(&self, _owner: &Resource) -> Variant {
@@ -33,7 +34,8 @@ impl MeshView {
     pub fn import_structure(&mut self, owner: &Resource, data: Dictionary) {
         use libchum::structure::ChumStruct;
         let structure = util::dict_to_struct(&data);
-        self.inner.import_struct(mesh::MeshStruct::destructure(&structure).unwrap());
+        self.inner
+            .import_struct(mesh::MeshStruct::destructure(&structure).unwrap());
         owner.emit_signal("modified", &[]);
     }
 

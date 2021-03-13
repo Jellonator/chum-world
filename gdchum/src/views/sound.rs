@@ -14,10 +14,15 @@ pub struct SoundView {
 #[methods]
 impl SoundView {
     fn new(_owner: &Resource) -> Self {
-        SoundView { inner: Default::default() }
+        SoundView {
+            inner: Default::default(),
+        }
     }
 
-    impl_view!(SoundView, sound::SoundGcn, "SOUND",
+    impl_view!(
+        SoundView,
+        sound::SoundGcn,
+        "SOUND",
         |builder: &ClassBuilder<Self>| {
             builder
                 .add_property("mix_rate")
@@ -77,7 +82,8 @@ impl SoundView {
     pub fn import_structure(&mut self, owner: &Resource, data: Dictionary) {
         use libchum::structure::ChumStruct;
         let structure = util::dict_to_struct(&data);
-        self.inner.import_struct(&sound::SoundGcnStruct::destructure(&structure).unwrap());
+        self.inner
+            .import_struct(&sound::SoundGcnStruct::destructure(&structure).unwrap());
         owner.emit_signal("modified", &[]);
     }
 }

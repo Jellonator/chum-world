@@ -1,7 +1,7 @@
-use libchum::reader::warp::*;
-use gdnative::prelude::*;
-use gdnative::api::Resource;
 use crate::util;
+use gdnative::api::Resource;
+use gdnative::prelude::*;
+use libchum::reader::warp::*;
 
 #[derive(NativeClass)]
 #[inherit(Resource)]
@@ -13,13 +13,12 @@ pub struct WarpView {
 #[methods]
 impl WarpView {
     fn new(_owner: &Resource) -> Self {
-        WarpView { inner: Default::default() }
+        WarpView {
+            inner: Default::default(),
+        }
     }
 
-    impl_view!(WarpView, Warp, "WARP",
-        |_builder: &ClassBuilder<Self>| {
-        }
-    );
+    impl_view!(WarpView, Warp, "WARP", |_builder: &ClassBuilder<Self>| {});
 
     #[export]
     pub fn get_structure(&self, _owner: &Resource) -> Variant {

@@ -108,7 +108,6 @@ macro_rules! display_err {
     };
 }
 
-
 pub fn color_to_godot(col: &common::ColorRGBA) -> Color {
     Color::rgba(col.r, col.g, col.b, col.a)
 }
@@ -128,7 +127,7 @@ pub fn godot_to_color3(col: &Color) -> common::Vector3 {
 pub fn get_transform2d_scale(tx: &Transform2D) -> Vector2 {
     Vector2::new(
         (tx.m11 * tx.m11 + tx.m21 + tx.m21).sqrt().copysign(tx.m11),
-        (tx.m12 * tx.m12 + tx.m22 + tx.m22).sqrt().copysign(tx.m12)
+        (tx.m12 * tx.m12 + tx.m22 + tx.m22).sqrt().copysign(tx.m12),
     )
 }
 

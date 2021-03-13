@@ -1,14 +1,14 @@
 use crate::bytedata::ByteData;
 use crate::scenedata;
 use crate::util;
-use crate::ChumArchive;
 use crate::views::*;
+use crate::ChumArchive;
 use gdnative::api::Resource;
 use gdnative::prelude::*;
+use libchum::binary::ChumBinary;
 use libchum::{archive, common, reader, scene, structure::ChumStruct};
 use std::fs::File;
 use std::io::{BufReader, Write};
-use libchum::binary::ChumBinary;
 
 /// A File resource derived from a ChumArchive.
 #[derive(NativeClass)]
@@ -36,17 +36,14 @@ const EXPORT_ID_WAV: i64 = 5;
 macro_rules! get_view {
     ($viewtype:ty, $chumfile:expr) => {{
         let instance = Instance::<$viewtype, Unique>::new();
-        match instance
-            .map_mut(|nodeview, _| {
-                nodeview.load_from($chumfile)
-            }) {
+        match instance.map_mut(|nodeview, _| nodeview.load_from($chumfile)) {
             Ok(value) => match value {
                 Ok(_inner) => Ok(instance.into_shared().to_variant()),
                 Err(e) => Err(e),
             },
-            Err(e) => Err(e.into())
+            Err(e) => Err(e.into()),
         }
-    }}
+    }};
 }
 
 #[methods]
@@ -260,7 +257,10 @@ impl ChumFile {
     /// Export a MESH file as a .obj
     fn export_mesh_to_obj(&mut self, path: &str) {
         let mut buffer = File::create(path).unwrap();
-        let mesh = match reader::mesh::Mesh::read_from(&mut self.get_data_as_vec().as_slice(), self.format) {
+        let mesh = match reader::mesh::Mesh::read_from(
+            &mut self.get_data_as_vec().as_slice(),
+            self.format,
+        ) {
             Ok(x) => x,
             Err(err) => {
                 panic!("MESH file invalid: {}", err);
@@ -271,7 +271,10 @@ impl ChumFile {
 
     fn export_skin_to_gltf(&self, path: &str) {
         use libchum::binary::ChumBinary;
-        let skin = match reader::skin::Skin::read_from(&mut self.get_data_as_vec().as_slice(), self.format) {
+        let skin = match reader::skin::Skin::read_from(
+            &mut self.get_data_as_vec().as_slice(),
+            self.format,
+        ) {
             Ok(x) => x,
             Err(err) => {
                 panic!("MESH file invalid: {}", err);
@@ -333,7 +336,10 @@ impl ChumFile {
     }
 
     fn export_mesh_to_gltf(&self, path: &str) {
-        let mesh = match reader::mesh::Mesh::read_from(&mut self.get_data_as_vec().as_slice(), self.format) {
+        let mesh = match reader::mesh::Mesh::read_from(
+            &mut self.get_data_as_vec().as_slice(),
+            self.format,
+        ) {
             Ok(x) => x,
             Err(err) => {
                 panic!("MESH file invalid: {}", err);
@@ -662,7 +668,7 @@ impl ChumFile {
             "SPLINE" => get_view!(SplineView, instance)?,
             "SURFACE" => get_view!(SurfaceView, instance)?,
             "WARP" => get_view!(WarpView, instance)?,
-            other => anyhow::bail!("No view for files of type {} yet", other)
+            other => anyhow::bail!("No view for files of type {} yet", other),
         })
     }
 

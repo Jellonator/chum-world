@@ -87,12 +87,6 @@ fn cmd_info(matches: &clap::ArgMatches) -> Result<(), Box<dyn Error>> {
         "Minimum size: {}B, Maximum size: {}B",
         min_file_size, max_file_size
     );
-    let archive = ChumArchive::merge_archives(ngc, dgc)?;
-    let unused = archive.find_unused_names();
-    println!("There are {} unused names", unused.len());
-    for v in unused {
-        println!("    {}", v);
-    }
     Ok(())
 }
 

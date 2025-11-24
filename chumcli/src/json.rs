@@ -1,4 +1,4 @@
-use libchum::{format::TotemFormat, ChumArchive, ChumFile, util};
+use libchum::{format::TotemFormat, archive::{ChumArchive, ChumFile, TotemHeader}, util};
 use serde_json;
 use std::error::Error;
 use std::fs::{self, File};
@@ -110,7 +110,7 @@ pub fn import_archive(
         files.push(chumfile);
     }
     Ok(ChumArchive::new_from_files(
-        libchum::dgc::TotemHeader::new(&json_data.header.as_bytes()).unwrap(),
+        TotemHeader::new(&json_data.header.as_bytes()),
         fmt,
         files,
     )?)

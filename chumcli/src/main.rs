@@ -6,13 +6,13 @@ use std::path::Path;
 extern crate clap;
 #[macro_use]
 extern crate serde_derive;
-use libchum::{format::TotemFormat, ChumArchive, util};
+use libchum::{format::TotemFormat, archive::{ChumArchive, TotemArchive, nametable::TotemNameTable}, util};
 
 pub mod json;
 
 fn load_archive_raw(
     matches: &clap::ArgMatches,
-) -> Result<(libchum::dgc::TotemArchive, libchum::ngc::TotemNameTable), Box<dyn Error>> {
+) -> Result<(TotemArchive, TotemNameTable), Box<dyn Error>> {
     let namepath = Path::new(matches.value_of_os("NAMES").unwrap());
     let datapath = Path::new(matches.value_of_os("DATA").unwrap());
     let typeval = if matches.is_present("ngc") {
@@ -25,8 +25,8 @@ fn load_archive_raw(
     let mut namefile = File::open(namepath)?;
     let mut datafile = File::open(datapath)?;
     Ok((
-        libchum::dgc::TotemArchive::read_from(&mut datafile, typeval)?,
-        libchum::ngc::TotemNameTable::read_from(&mut namefile)?,
+        TotemArchive::read_from(&mut datafile, typeval)?,
+        TotemNameTable::read_from(&mut namefile)?,
     ))
 }
 
@@ -42,7 +42,7 @@ fn load_archive(matches: &clap::ArgMatches) -> Result<ChumArchive, Box<dyn Error
     };
     let mut namefile = File::open(namepath)?;
     let mut datafile = File::open(datapath)?;
-    ChumArchive::read_chum_archive(&mut namefile, &mut datafile, typeval)
+    Ok(ChumArchive::read_chum_archive(&mut namefile, &mut datafile, typeval)?)
 }
 
 /// Info command.

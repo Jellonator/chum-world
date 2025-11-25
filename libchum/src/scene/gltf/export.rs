@@ -773,7 +773,7 @@ pub fn export_scene(scn: &scene::Scene, binary: bool) -> (json::Root, Vec<u8>) {
 #[cfg(test)]
 mod test {
     use crate::common::*;
-    use crate::scene::gltf::*;
+    use crate::scene::gltf::export::*;
     #[test]
     fn minmax_vec2() {
         let a = vec![

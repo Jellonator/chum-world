@@ -97,11 +97,11 @@ impl<T> IdMap<T> {
         self.data.is_empty()
     }
 
-    pub fn iter(&self) -> hash_map::Iter<i32, Element<T>> {
+    pub fn iter<'a>(&'a self) -> hash_map::Iter<'a, i32, Element<T>> {
         self.data.iter()
     }
 
-    pub fn iter_mut(&mut self) -> hash_map::IterMut<i32, Element<T>> {
+    pub fn iter_mut<'a>(&'a mut self) -> hash_map::IterMut<'a, i32, Element<T>> {
         self.data.iter_mut()
     }
 
@@ -134,21 +134,21 @@ impl<T> IdMap<T> {
         self.data.shrink_to_fit()
     }
 
-    pub fn keys_i32(&self) -> hash_map::Keys<i32, Element<T>> {
+    pub fn keys_i32<'a>(&'a self) -> hash_map::Keys<'a, i32, Element<T>> {
         self.data.keys()
     }
 
-    pub fn keys_str(
-        &self,
-    ) -> iter::Map<hash_map::Values<i32, Element<T>>, fn(&Element<T>) -> &str> {
+    pub fn keys_str<'a>(
+        &'a self,
+    ) -> iter::Map<hash_map::Values<'a, i32, Element<T>>, fn(&Element<T>) -> &str> {
         self.data.values().map(|x| &x.name.as_str())
     }
 
-    pub fn values(&self) -> hash_map::Values<i32, Element<T>> {
+    pub fn values<'a>(&'a self) -> hash_map::Values<'a, i32, Element<T>> {
         self.data.values()
     }
 
-    pub fn values_mut(&mut self) -> hash_map::ValuesMut<i32, Element<T>> {
+    pub fn values_mut<'a>(&'a mut self) -> hash_map::ValuesMut<'a, i32, Element<T>> {
         self.data.values_mut()
     }
 

@@ -2,7 +2,6 @@ use crate::format::TotemFormat;
 use euclid;
 use std::hash::{Hash, Hasher};
 use std::io::{self, Read, Write};
-use std::mem;
 
 pub const ITEM_TYPE_SURFACE: u16 = 1;
 pub const ITEM_TYPE_SPLINE: u16 = 2;
@@ -224,24 +223,19 @@ pub fn quat_to_euler(quat: Quaternion) -> Vector3 {
 
 /// Reinterpret a Vector3 as three u32. Used so that Vector3 can be a HashMap key.
 pub fn reinterpret_vec3(v: &Vector3) -> [u32; 3] {
-    // :)
-    unsafe {
-        [
-            mem::transmute::<f32, u32>(v.x),
-            mem::transmute::<f32, u32>(v.y),
-            mem::transmute::<f32, u32>(v.z),
-        ]
-    }
+    [
+        v.x.to_bits(),
+        v.y.to_bits(),
+        v.z.to_bits(),
+    ]
 }
 
 /// Reinterpret a Vector2 as two u32. Used so that Vector3 can be a HashMap key.
 pub fn reinterpret_vec2(v: &Vector2) -> [u32; 2] {
-    unsafe {
-        [
-            mem::transmute::<f32, u32>(v.x),
-            mem::transmute::<f32, u32>(v.y),
-        ]
-    }
+    [
+        v.x.to_bits(),
+        v.y.to_bits(),
+    ]
 }
 
 /// Reinterpret a Point as eight u32. Used so that Point can be a HashMap key.

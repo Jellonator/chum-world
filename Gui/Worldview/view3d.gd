@@ -383,7 +383,7 @@ func _on_OpenNodeInFiles_pressed():
 	var editor = viewer.node_editor
 	viewer.node_tabs.current_tab = 0
 	editor.set_file(file)
-	tree.set_selected(file)
+	tree.set_selected_file(file)
 
 func _on_OpenResourceInFiles_pressed():
 	if selected_node == null:
@@ -398,4 +398,4 @@ func _on_OpenResourceInFiles_pressed():
 	var editor = viewer.node_editor
 	viewer.node_tabs.current_tab = 0
 	editor.set_file(file)
-	tree.set_selected(file)
+	tree.set_selected_file(file)

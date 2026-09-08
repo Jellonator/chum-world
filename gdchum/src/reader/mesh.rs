@@ -86,11 +86,11 @@ pub fn read_mesh(
     archiveinstance
         .map(|archive, res| {
             for (i, mat) in materials.iter().enumerate() {
-                if let Some(materialfile) = archive.get_file_from_hash(&res, *mat) {
+                if let Some(materialfile) = archive.get_file_from_hash(*mat) {
                     let materialdict = reader.read_material_nodeless(materialfile.clone());
-                    if materialdict.get("exists").to_bool() == true {
+                    if materialdict.get("exists").to_variant().to::<bool>() == Some(true) {
                         let material: Ref<Material, Shared> =
-                            materialdict.get("material").try_to_object().unwrap();
+                            materialdict.get("material").unwrap().try_to_object().unwrap();
                         array_mesh.surface_set_material(i as i64, material);
                     } else {
                         display_warn!(
@@ -135,13 +135,13 @@ pub fn read_mesh_from_res(data: &ChumFile, reader: &mut ChumReader) -> Dictionar
                 let texcoords = VariantArray::new();
                 let normals = VariantArray::new();
                 for index in surface.vertex_ids.iter() {
-                    vertices.push(&Variant::from_i64(*index as i64));
+                    vertices.push((*index as i64).to_variant());
                 }
                 for index in surface.texcoord_ids.iter() {
-                    texcoords.push(&Variant::from_i64(*index as i64));
+                    texcoords.push((*index as i64).to_variant());
                 }
                 for index in surface.normal_ids.iter() {
-                    normals.push(&Variant::from_i64(*index as i64));
+                    normals.push((*index as i64).to_variant());
                 }
                 let surfacedict = Dictionary::new();
                 surfacedict.insert("vertices", vertices);
@@ -157,7 +157,7 @@ pub fn read_mesh_from_res(data: &ChumFile, reader: &mut ChumReader) -> Dictionar
                     .into_iter()
                     .map(|x| {
                         let dict = Dictionary::new();
-                        dict.insert("pos", x.position);
+                        dict.insert("pos", util::convert_vector3d_to_gd(x.position));
                         dict.insert("radius", x.radius);
                         dict.into_shared()
                     })
@@ -182,9 +182,9 @@ pub fn read_mesh_from_res(data: &ChumFile, reader: &mut ChumReader) -> Dictionar
                     .map(|x| {
                         let dict = Dictionary::new();
                         // dict.insert("unk1", &(&x.unk1[..]).to_owned());
-                        dict.insert("position", x.position);
+                        dict.insert("position", util::convert_vector3d_to_gd(x.position));
                         dict.insert("height", x.height);
-                        dict.insert("normal", x.normal);
+                        dict.insert("normal", util::convert_vector3d_to_gd(x.normal));
                         dict.insert("radius", x.radius);
                         // dict.insert("junk", x.junk);
                         // dict.insert("unk2", x.unk2);

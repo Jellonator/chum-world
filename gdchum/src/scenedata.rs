@@ -18,19 +18,19 @@ pub struct SceneData {
 pub fn add_required_materials(scene: &mut scene::Scene, archive: Instance<ChumArchive, Shared>) {
     let archive = unsafe { archive.assume_safe() };
     archive
-        .map(|inner, res| {
+        .map(|inner, _| {
             for matid in scene.get_required_materials().iter() {
                 if scene.materials.contains_key(*matid) {
                     continue;
                 }
-                let materialanim_fh = match inner.get_file_from_hash(res.as_ref(), *matid) {
+                let materialanim_fh = match inner.get_file_from_hash(*matid) {
                     Some(x) => x,
                     None => continue,
                 };
                 // Can be MATERIAL or MATERIALANIM
                 let materialanim_fh = unsafe { materialanim_fh.assume_safe() };
                 materialanim_fh
-                    .map(|materialanim_data, _materialanim_res| {
+                    .map(|materialanim_data, _| {
                         match materialanim_data.get_type_str() {
                             "MATERIAL" => {
                                 let material = match reader::material::Material::read_from(
@@ -60,7 +60,7 @@ pub fn add_required_materials(scene: &mut scene::Scene, archive: Instance<ChumAr
                                     };
                                 let material_id = materialanim.material_id;
                                 let material_fh =
-                                    match inner.get_file_from_hash(res.as_ref(), material_id) {
+                                    match inner.get_file_from_hash(material_id) {
                                         Some(x) => x,
                                         None => return,
                                     };
@@ -94,7 +94,7 @@ pub fn add_required_materials(scene: &mut scene::Scene, archive: Instance<ChumAr
                 if scene.materials.contains_key(*texture_id) {
                     continue;
                 }
-                let texture_fh = match inner.get_file_from_hash(res.as_ref(), *texture_id) {
+                let texture_fh = match inner.get_file_from_hash(*texture_id) {
                     Some(x) => x,
                     None => continue,
                 };
@@ -129,8 +129,8 @@ impl SceneData {
         }
     }
 
-    #[export]
-    pub fn get_mesh_info(&self, _owner: &Reference) -> Dictionary<Unique> {
+    #[method]
+    pub fn get_mesh_info(&self) -> Dictionary<Unique> {
         let dict = Dictionary::new();
         for (key, value) in self.scene.meshes.iter() {
             println!("ITER {}", key);
@@ -142,8 +142,8 @@ impl SceneData {
         dict
     }
 
-    #[export]
-    pub fn import_mesh(&self, _owner: &Reference, id: i32, data: Instance<ChumFile, Shared>) {
+    #[method]
+    pub fn import_mesh(&self, id: i32, data: Instance<ChumFile, Shared>) {
         let data = unsafe { data.assume_safe() };
         let mut mesh = data
             .map(|cfile, _| {
@@ -161,20 +161,19 @@ impl SceneData {
         .unwrap();
     }
 
-    #[export]
-    pub fn load(&mut self, _owner: &Reference, path: String) {
+    #[method]
+    pub fn load(&mut self, path: String) {
         self.scene = gltf::import_scene(path, gltf::ImportHint::ALL).unwrap();
     }
 
-    #[export]
-    pub fn has_node(&self, _owner: &Reference, path: Vec<String>) -> bool {
+    #[method]
+    pub fn has_node(&self, path: Vec<String>) -> bool {
         self.scene.root.get_node_ref(path.as_slice()).is_some()
     }
 
-    #[export]
+    #[method]
     pub fn add_node(
         &mut self,
-        _owner: &Reference,
         path: Vec<String>,
         name: String,
         local_transform: Transform,
@@ -190,10 +189,9 @@ impl SceneData {
         );
     }
 
-    #[export]
+    #[method]
     pub fn set_node_mesh(
         &mut self,
-        _owner: &Reference,
         node_path: Vec<String>,
         fh: Instance<ChumFile, Shared>,
     ) {
@@ -218,10 +216,9 @@ impl SceneData {
         .unwrap();
     }
 
-    #[export]
+    #[method]
     pub fn set_node_surface(
         &mut self,
-        _owner: &Reference,
         node_path: Vec<String>,
         fh: Instance<ChumFile, Shared>,
         quality: i64,
@@ -249,10 +246,9 @@ impl SceneData {
         .unwrap();
     }
 
-    #[export]
+    #[method]
     pub fn set_node_skin(
         &mut self,
-        _owner: &Reference,
         node_path: Vec<String>,
         fh: Instance<ChumFile, Shared>,
         _quality: i64,
@@ -277,11 +273,11 @@ impl SceneData {
             let archiveinstance = unsafe { chumfile.get_archive_instance().assume_safe() };
             //let mut trimeshes = Vec::new();
             archiveinstance
-                .map(|archive, archive_res| {
+                .map(|archive, _| {
                     let mut skin_meshes = Vec::new();
                     // create a child for each mesh in skin
                     for mesh_id in skin.meshes.iter() {
-                        if let Some(meshfile) = archive.get_file_from_hash(&archive_res, *mesh_id) {
+                        if let Some(meshfile) = archive.get_file_from_hash(*mesh_id) {
                             let meshfile = unsafe { meshfile.assume_safe() };
                             meshfile
                                 .map(|meshscript, _meshres| {
@@ -344,10 +340,9 @@ impl SceneData {
         .unwrap();
     }
 
-    #[export]
+    #[method]
     pub fn set_node_lod(
         &mut self,
-        owner: &Reference,
         node_path: Vec<String>,
         fh: Instance<ChumFile, Shared>,
         quality: i64,
@@ -366,9 +361,9 @@ impl SceneData {
             });
             let archive = unsafe { chumfile.get_archive_instance().assume_safe() };
             archive
-                .map(|inner, res| {
+                .map(|inner, _| {
                     for skin_id in lod.skin_ids.iter() {
-                        let skin_fh = inner.get_file_from_hash(res.as_ref(), *skin_id).unwrap();
+                        let skin_fh = inner.get_file_from_hash(*skin_id).unwrap();
                         let skin_type: String = unsafe {
                             skin_fh
                                 .assume_safe()
@@ -377,13 +372,12 @@ impl SceneData {
                         .unwrap();
                         match skin_type.as_str() {
                             "SKIN" => self.set_node_skin(
-                                owner,
                                 node_path.clone(),
                                 skin_fh,
                                 quality,
                                 include_skin,
                             ),
-                            "MESH" => self.set_node_mesh(owner, node_path.clone(), skin_fh),
+                            "MESH" => self.set_node_mesh(node_path.clone(), skin_fh),
                             _ => {}
                         };
                     }
@@ -393,17 +387,16 @@ impl SceneData {
         .unwrap();
     }
 
-    #[export]
+    #[method]
     pub fn add_required_materials(
         &mut self,
-        _owner: &Reference,
         archive: Instance<ChumArchive, Shared>,
     ) {
         add_required_materials(&mut self.scene, archive);
     }
 
-    #[export]
-    pub fn export_to(&self, _owner: &Reference, path: GodotString) {
+    #[method]
+    pub fn export_to(&self, path: GodotString) {
         self.scene
             .export_to(path.to_utf8().as_str())
             .expect("Serialization Error");

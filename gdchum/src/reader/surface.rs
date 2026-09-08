@@ -60,13 +60,13 @@ pub fn read_surface(
         let unsafe_archive_instance = file.get_archive_instance();
         let archiveinstance = unsafe { unsafe_archive_instance.assume_safe() };
         archiveinstance
-            .map(|archive, res| {
-                if let Some(materialfile) = archive.get_file_from_hash(&res, surface.material_index)
+            .map(|archive, _| {
+                if let Some(materialfile) = archive.get_file_from_hash(surface.material_index)
                 {
                     let materialdict = reader.read_materialanim_nodeless(materialfile.clone());
-                    if materialdict.get("exists").to_bool() == true {
+                    if materialdict.get("exists").to_variant().to::<bool>() == Some(true) {
                         let material: Ref<Material, Shared> =
-                            materialdict.get("material").try_to_object().unwrap();
+                            materialdict.get("material").unwrap().try_to_object().unwrap();
                         unsafe { mesh.assume_safe() }.surface_set_material(0, material);
                     } else {
                         display_warn!(

@@ -27,8 +27,8 @@ pub fn read_node(
         "local_transform",
         util::transform3d_to_godot(&node.local_transform),
     );
-    data.insert("local_translation", node.local_translation);
-    data.insert("local_scale", node.local_scale);
+    data.insert("local_translation", util::convert_vector3d_to_gd(node.local_translation));
+    data.insert("local_scale", util::convert_vector3d_to_gd(node.local_scale));
     // data.insert(
     //     "local_rotation",
     //     util::quat_to_godot(&node.local_rotation),

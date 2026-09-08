@@ -1,6 +1,7 @@
 use crate::util;
 use gdnative::api::Resource;
 use gdnative::prelude::*;
+use libchum::common;
 use libchum::reader::materialanim::*;
 
 #[derive(NativeClass)]
@@ -19,6 +20,28 @@ where
         let data = Dictionary::new();
         data.insert("frame", value.frame);
         data.insert("data", value.data.clone());
+    }
+    arr
+}
+
+fn read_track_vec3(track: &Track<common::Vector3>) -> VariantArray<Unique>
+{
+    let arr = VariantArray::new();
+    for value in track.frames.iter() {
+        let data = Dictionary::new();
+        data.insert("frame", value.frame);
+        data.insert("data", util::convert_vector3d_to_gd(value.data));
+    }
+    arr
+}
+
+fn read_track_vec2(track: &Track<common::Vector2>) -> VariantArray<Unique>
+{
+    let arr = VariantArray::new();
+    for value in track.frames.iter() {
+        let data = Dictionary::new();
+        data.insert("frame", value.frame);
+        data.insert("data", util::convert_vector2d_to_gd(value.data));
     }
     arr
 }
@@ -42,12 +65,46 @@ where
     track.interp = interp;
     for item in data.iter() {
         let dict = Dictionary::from_variant(&item).ok()?;
-        let frame = u16::from_variant(&dict.get("frame")).ok()?;
-        let value = T::from_variant(&dict.get("data")).ok()?;
+        let frame = dict.get("frame").to_variant().to::<u16>()?;
+        let value = dict.get("data").to_variant().to::<T>()?;
         track.frames.push(TrackFrame {
             frame,
             junk: (),
             data: value,
+        });
+    }
+    Some(track)
+}
+
+fn gen_track_vec3(data: VariantArray<ThreadLocal>, interp: Interpolation) -> Option<Track<common::Vector3>>
+{
+    let mut track = Track::<common::Vector3>::default();
+    track.interp = interp;
+    for item in data.iter() {
+        let dict = Dictionary::from_variant(&item).ok()?;
+        let frame = dict.get("frame").to_variant().to::<u16>()?;
+        let value = dict.get("data").to_variant().to::<Vector3>()?;
+        track.frames.push(TrackFrame {
+            frame,
+            junk: (),
+            data: util::convert_vector3d_to_euclid(value),
+        });
+    }
+    Some(track)
+}
+
+fn gen_track_vec2(data: VariantArray<ThreadLocal>, interp: Interpolation) -> Option<Track<common::Vector2>>
+{
+    let mut track = Track::<common::Vector2>::default();
+    track.interp = interp;
+    for item in data.iter() {
+        let dict = Dictionary::from_variant(&item).ok()?;
+        let frame = dict.get("frame").to_variant().to::<u16>()?;
+        let value = dict.get("data").to_variant().to::<Vector2>()?;
+        track.frames.push(TrackFrame {
+            frame,
+            junk: (),
+            data: util::convert_vector2d_to_euclid(value),
         });
     }
     Some(track)
@@ -58,8 +115,8 @@ fn gen_track_unk(data: VariantArray<ThreadLocal>, interp: Interpolation) -> Opti
     track.interp = interp;
     for item in data.iter() {
         let dict = Dictionary::from_variant(&item).ok()?;
-        let frame = u16::from_variant(&dict.get("frame")).ok()?;
-        let arr = ByteArray::from_variant(&dict.get("data")).ok()?;
+        let frame = dict.get("frame").to_variant().to::<u16>()?;
+        let arr = dict.get("data").to_variant().to::<ByteArray>()?;
         if arr.len() != 4 {
             return None;
         }
@@ -72,41 +129,38 @@ fn gen_track_unk(data: VariantArray<ThreadLocal>, interp: Interpolation) -> Opti
     Some(track)
 }
 
-#[methods]
-impl MaterialAnimView {
+impl_view!(
+    MaterialAnimView,
+    MaterialAnimation,
+    "MATERIALANIM",
+    |builder: &ClassBuilder<Self>| {
+        builder
+            .property("material")
+            .with_getter(Self::get_material)
+            .with_setter(Self::set_material)
+            .done();
+        builder
+            .property("length")
+            .with_getter(Self::get_length)
+            .with_setter(Self::set_length)
+            .done();
+    },
+
     fn new(_owner: &Resource) -> Self {
         MaterialAnimView {
             inner: Default::default(),
         }
     }
 
-    impl_view!(
-        MaterialAnimView,
-        MaterialAnimation,
-        "MATERIALANIM",
-        |builder: &ClassBuilder<Self>| {
-            builder
-                .add_property("material")
-                .with_getter(Self::get_material)
-                .with_setter(Self::set_material)
-                .done();
-            builder
-                .add_property("length")
-                .with_getter(Self::get_length)
-                .with_setter(Self::set_length)
-                .done();
-        }
-    );
-
-    #[export]
-    pub fn get_structure(&self, _owner: &Resource) -> Variant {
+    #[method]
+    pub fn get_structure(&self) -> Variant {
         use libchum::structure::ChumStruct;
         let data = self.inner.structure();
         util::struct_to_dict(&data).into_shared().to_variant()
     }
 
     #[export]
-    pub fn import_structure(&mut self, owner: &Resource, data: Dictionary) {
+    pub fn import_structure(&mut self, owner: &Resource, data: Dictionary) -> () {
         use libchum::structure::ChumStruct;
         let structure = util::dict_to_struct(&data);
         self.inner = MaterialAnimation::destructure(&structure).unwrap();
@@ -119,7 +173,7 @@ impl MaterialAnimView {
     }
 
     #[export]
-    pub fn set_length(&mut self, owner: TRef<Resource>, value: f32) {
+    pub fn set_length(&mut self, owner: TRef<Resource>, value: f32) -> () {
         self.inner.length = value;
         owner.emit_signal("modified", &[]);
     }
@@ -130,7 +184,7 @@ impl MaterialAnimView {
     }
 
     #[export]
-    pub fn set_material(&mut self, owner: TRef<Resource>, value: i32) {
+    pub fn set_material(&mut self, owner: TRef<Resource>, value: i32) -> () {
         self.inner.material_id = value;
         owner.emit_signal("modified", &[]);
     }
@@ -144,23 +198,23 @@ impl MaterialAnimView {
     }
 
     #[export]
-    pub fn set_track_interpolation(&mut self, owner: TRef<Resource>, index: usize, value: u32) {
+    pub fn set_track_interpolation(&mut self, owner: TRef<Resource>, index: usize, value: u32) -> () {
         use libchum::structure::ChumEnum;
         self.inner
             .set_track_interpolation(index, Interpolation::from_u32(value).unwrap());
         owner.emit_signal("modified", &[]);
     }
 
-    #[export]
-    pub fn get_track(&self, _owner: TRef<Resource>, index: usize) -> Option<VariantArray> {
+    #[method]
+    pub fn get_track(&self, index: usize) -> Option<VariantArray> {
         Some(
             match index {
                 TRACK_TEXTURE => read_track(&self.inner.track_texture),
-                TRACK_SCROLL => read_track(&self.inner.track_scroll),
-                TRACK_STRETCH => read_track(&self.inner.track_stretch),
+                TRACK_SCROLL => read_track_vec2(&self.inner.track_scroll),
+                TRACK_STRETCH => read_track_vec2(&self.inner.track_stretch),
                 TRACK_ROTATION => read_track(&self.inner.track_rotation),
-                TRACK_COLOR => read_track(&self.inner.track_color),
-                TRACK_EMISSION => read_track(&self.inner.track_emission),
+                TRACK_COLOR => read_track_vec3(&self.inner.track_color),
+                TRACK_EMISSION => read_track_vec3(&self.inner.track_emission),
                 TRACK_ALPHA => read_track(&self.inner.track_alpha),
                 TRACK_UNK1 => read_track_unk(&self.inner.track_unk1),
                 TRACK_UNK2 => read_track_unk(&self.inner.track_unk2),
@@ -179,11 +233,11 @@ impl MaterialAnimView {
     ) -> Option<()> {
         match index {
             TRACK_TEXTURE => self.inner.track_texture = gen_track(data, interp)?,
-            TRACK_SCROLL => self.inner.track_scroll = gen_track(data, interp)?,
-            TRACK_STRETCH => self.inner.track_stretch = gen_track(data, interp)?,
+            TRACK_SCROLL => self.inner.track_scroll = gen_track_vec2(data, interp)?,
+            TRACK_STRETCH => self.inner.track_stretch = gen_track_vec2(data, interp)?,
             TRACK_ROTATION => self.inner.track_rotation = gen_track(data, interp)?,
-            TRACK_COLOR => self.inner.track_color = gen_track(data, interp)?,
-            TRACK_EMISSION => self.inner.track_emission = gen_track(data, interp)?,
+            TRACK_COLOR => self.inner.track_color = gen_track_vec3(data, interp)?,
+            TRACK_EMISSION => self.inner.track_emission = gen_track_vec3(data, interp)?,
             TRACK_ALPHA => self.inner.track_alpha = gen_track(data, interp)?,
             TRACK_UNK1 => self.inner.track_unk1 = gen_track_unk(data, interp)?,
             TRACK_UNK2 => self.inner.track_unk2 = gen_track_unk(data, interp)?,
@@ -194,7 +248,7 @@ impl MaterialAnimView {
     }
 
     #[export]
-    pub fn set_track(&mut self, owner: TRef<Resource>, index: usize, data: VariantArray<Shared>) {
+    pub fn set_track(&mut self, owner: TRef<Resource>, index: usize, data: VariantArray<Shared>) -> () {
         let data = unsafe { data.assume_unique() }.into_thread_local();
         if let Some(interp) = self.inner.get_track_interpolation(index) {
             match self.set_track_priv(index, data, interp) {
@@ -209,4 +263,4 @@ impl MaterialAnimView {
             display_err!("Invalid track {}", index);
         }
     }
-}
+);

@@ -1,5 +1,4 @@
 use crate::format::TotemFormat;
-use euclid;
 use std::hash::{Hash, Hasher};
 use std::io::{self, Read, Write};
 

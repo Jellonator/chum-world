@@ -32,8 +32,8 @@ impl ChumArchive {
         }
     }
 
-    #[export]
-    fn save(&mut self, _owner: &Resource, ngcpath: GodotString, dgcpath: GodotString) -> i64 {
+    #[method]
+    fn save(&mut self, ngcpath: GodotString, dgcpath: GodotString) -> i64 {
         let mut ngcfile = match File::create(ngcpath.to_string()) {
             Ok(x) => x,
             Err(_) => return GodotError::FileCantOpen as i64,
@@ -107,8 +107,8 @@ impl ChumArchive {
         }
     }
 
-    #[export]
-    fn get_file_list(&self, _owner: &Resource) -> VariantArray<Unique> {
+    #[method]
+    fn get_file_list(&self) -> VariantArray<Unique> {
         let arr = VariantArray::<Unique>::new();
         for (_id, file) in self.files.iter() {
             arr.push(file);
@@ -116,22 +116,21 @@ impl ChumArchive {
         return arr;
     }
 
-    #[export]
+    #[method]
     pub fn get_file_from_hash(
         &self,
-        _owner: &Resource,
         id: i32,
     ) -> Option<Instance<chumfile::ChumFile, Shared>> {
         self.files.get(&id).map(|x| x.clone())
     }
 
-    #[export]
-    fn do_thing(&self, _owner: &Resource) {
+    #[method]
+    fn do_thing(&self) {
         godot_print!("Hello, World!");
     }
 
-    #[export]
-    pub fn maybe_get_name_from_hash(&self, _owner: &Resource, id: i32) -> GodotString {
+    #[method]
+    pub fn maybe_get_name_from_hash(&self, id: i32) -> GodotString {
         if let Some(name) = self.archive.get_name_from_id(id) {
             GodotString::from_str(&name)
         } else {
@@ -156,8 +155,8 @@ impl ChumArchive {
         }
     }
 
-    #[export]
-    pub fn register_name(&mut self, _owner: &Resource, name: GodotString) -> bool {
+    #[method]
+    pub fn register_name(&mut self, name: GodotString) -> bool {
         let utf8 = name.to_utf8();
         let name_str = utf8.as_str();
         match self.archive.add_name(name_str) {
@@ -180,8 +179,8 @@ impl ChumArchive {
         }
     }
 
-    #[export]
-    pub fn get_hash_of_name(&self, _owner: &Resource, name: GodotString) -> i32 {
+    #[method]
+    pub fn get_hash_of_name(&self, name: GodotString) -> i32 {
         libchum::util::hash_name_i32(name.to_utf8().as_str())
     }
 
@@ -200,6 +199,4 @@ fn init(handle: InitHandle) {
     views::init(handle);
 }
 
-godot_gdnative_init!();
-godot_nativescript_init!(init);
-godot_gdnative_terminate!();
+godot_init!(init);

@@ -1,4 +1,4 @@
-[gd_scene load_steps=14 format=2]
+[gd_scene load_steps=13 format=2]
 
 [ext_resource path="res://Gui/Viewers/HexEditor.tscn" type="PackedScene" id=1]
 [ext_resource path="res://Gui/Viewers/TextEditor.tscn" type="PackedScene" id=2]
@@ -9,7 +9,6 @@
 [ext_resource path="res://Gui/Viewers/TextureViewer.tscn" type="PackedScene" id=7]
 [ext_resource path="res://Gui/Viewers/ViewerMaterial.tscn" type="PackedScene" id=8]
 [ext_resource path="res://Gui/Viewers/ViewerSkin.tscn" type="PackedScene" id=9]
-[ext_resource path="res://Gui/theme.tres" type="Theme" id=10]
 [ext_resource path="res://Gui/Viewers/ViewerSound.tscn" type="PackedScene" id=11]
 [ext_resource path="res://Gui/Viewers/ViewerMesh.tscn" type="PackedScene" id=12]
 
@@ -19,13 +18,11 @@
 anchor_right = 1.0
 anchor_bottom = 1.0
 script = ExtResource( 3 )
-__meta__ = {
-"_edit_use_anchors_": false
-}
 
 [node name="HBoxContainer" type="HBoxContainer" parent="."]
 margin_right = 1280.0
 margin_bottom = 22.0
+custom_constants/separation = 0
 
 [node name="ExportButton" type="MenuButton" parent="HBoxContainer"]
 margin_right = 111.0
@@ -33,6 +30,18 @@ margin_bottom = 22.0
 text = "Export File As..."
 flat = false
 items = [ "Raw Binary (.bin)", null, 0, false, false, 0, 0, null, "", false, "Text (.txt)", null, 0, false, false, 1, 0, null, "", false, "Model (.obj)", null, 0, false, false, 2, 0, null, "", false, "Texture (.png)", null, 0, false, false, 3, 0, null, "", false, "Scene (.glb/.gltf)", null, 0, false, false, 4, 0, null, "", false, "Sound (.wav)", null, 0, false, false, 5, 0, null, "", false ]
+
+[node name="VSeparator" type="VSeparator" parent="HBoxContainer"]
+margin_left = 111.0
+margin_right = 115.0
+margin_bottom = 22.0
+
+[node name="ImportRawButton" type="Button" parent="HBoxContainer"]
+margin_left = 115.0
+margin_right = 200.0
+margin_bottom = 22.0
+text = "Import Raw"
+flat = true
 
 [node name="Split" type="HSplitContainer" parent="."]
 margin_top = 26.0
@@ -157,10 +166,17 @@ margin_bottom = 668.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
 
-[node name="ConfirmationDialog" type="ConfirmationDialog" parent="."]
-margin_top = 650.0
+[node name="ImportRawFileDialog" type="FileDialog" parent="."]
+margin_top = 580.0
 margin_right = 1280.0
 margin_bottom = 720.0
-theme = ExtResource( 10 )
 popup_exclusive = true
+window_title = "Open a File"
+resizable = true
+mode = 0
+access = 2
+show_hidden_files = true
+
+[connection signal="pressed" from="HBoxContainer/ImportRawButton" to="." method="_on_ImportRawButton_pressed"]
 [connection signal="tab_changed" from="Split/TabContainer" to="." method="_on_TabContainer_tab_changed"]
+[connection signal="file_selected" from="ImportRawFileDialog" to="." method="_on_ImportRawFileDialog_file_selected"]

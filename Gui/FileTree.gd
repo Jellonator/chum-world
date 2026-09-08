@@ -121,8 +121,12 @@ func _on_LineEdit_text_changed(new_text: String):
 		current_file = get_selected().get_meta("file")
 	do_search(new_text, current_file)
 
-func set_selected(new_file):
+func set_selected(file, column):
+	printt("SET SELECTED", file, column)
+
+func set_selected_file(new_file):
 	do_search(prev_search, new_file)
+	printt("SET FILE", new_file)
 
 var _tree_menu_item: TreeItem = null
 func _gui_input(event):

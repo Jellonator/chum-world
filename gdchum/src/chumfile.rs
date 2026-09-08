@@ -64,25 +64,25 @@ impl ChumFile {
     fn _register(builder: &ClassBuilder<Self>) {
         // builder.add_property("data").with_getter(Self::get_data).done();
         builder
-            .add_property("data")
+            .property("data")
             .with_getter(Self::get_data)
             .done();
         builder
-            .add_property("name")
+            .property("name")
             .with_getter(Self::get_name)
             .done();
         builder
-            .add_property("type")
+            .property("type")
             .with_getter(Self::get_type)
             .done();
         builder
-            .add_property("subtype")
+            .property("subtype")
             .with_getter(Self::get_subtype)
             .done();
     }
 
-    #[export]
-    pub fn get_archive(&self, _owner: &Resource) -> Instance<ChumArchive, Shared> {
+    #[method]
+    pub fn get_archive(&self) -> Instance<ChumArchive, Shared> {
         self.parent.clone().unwrap()
     }
 
@@ -107,8 +107,8 @@ impl ChumFile {
     }
 
     /// Get the hash ID for this file
-    #[export]
-    pub fn get_hash_id(&self, _owner: &Resource) -> i32 {
+    #[method]
+    pub fn get_hash_id(&self) -> i32 {
         self.get_hash_id_ownerless()
     }
 
@@ -284,9 +284,9 @@ impl ChumFile {
         let archiveinstance = self.get_archive_instance();
         let mut skin_meshes = Vec::new();
         unsafe { archiveinstance.assume_safe() }
-            .map(|archive, res| {
+            .map(|archive, _| {
                 for meshid in skin.meshes.iter() {
-                    if let Some(meshfile) = archive.get_file_from_hash(&res, *meshid) {
+                    if let Some(meshfile) = archive.get_file_from_hash(*meshid) {
                         unsafe { meshfile.assume_safe() }
                             .map(|meshscript, _| match meshscript.typestr.as_str() {
                                 "MESH" => {
@@ -413,8 +413,8 @@ impl ChumFile {
     }
 
     /// Export file data with the given export type to the given path
-    #[export]
-    pub fn export_to(&mut self, _owner: &Resource, export_type: i64, path: GodotString) {
+    #[method]
+    pub fn export_to(&mut self, export_type: i64, path: GodotString) {
         let pathstr: String = format!("{}", path);
         match export_type {
             EXPORT_ID_BIN => self.export_to_binary(&pathstr),
@@ -441,9 +441,43 @@ impl ChumFile {
         };
     }
 
+    ///////////////////////////////////////////////////////////////////////////
+    // IMPORT DATA                                                           //
+    ///////////////////////////////////////////////////////////////////////////
+
+    /// Import BITMAP data from a file with the given format
+    #[method]
+    pub fn import_bitmap(
+        &mut self,
+        path: GodotString,
+        formattype: i64,
+        palettetype: i64,
+    ) {
+        use libchum::reader::bitmap;
+        let pathstr = path.to_string();
+        let fh = File::open(&pathstr).unwrap();
+        let image_format = bitmap::image::ImageFormat::from_path(&pathstr).unwrap();
+        let mut buf_reader = BufReader::new(fh);
+        let (bitmap, width, height) = bitmap::import_bitmap(&mut buf_reader, image_format).unwrap();
+        let mut data =
+            bitmap::BitmapFormat::new_empty(formattype as u8, palettetype as u8).unwrap();
+        bitmap::compress_bitmap(&bitmap, &mut data, width, height).unwrap();
+        let bitmap =
+            match reader::bitmap::Bitmap::read_data(&mut self.get_data_as_vec(), self.format) {
+                Ok(x) => x,
+                Err(err) => {
+                    panic!("BITMAP file invalid: {}", err);
+                }
+            }
+            .with_bitmap(data, width, height);
+        let mut outdata = Vec::new();
+        bitmap.write_to(&mut outdata, self.format).unwrap();
+        self.replace_data_with_vec(outdata);
+    }
+
     /// Replace a TXT file with the given string
-    #[export]
-    pub fn replace_txt_with_string(&mut self, _owner: &Resource, stringdata: GodotString) {
+    #[method]
+    pub fn replace_txt_with_string(&mut self, stringdata: GodotString) {
         let mut data = vec![0; 4];
         let realstr = format!("{}", stringdata);
         // TotemTech uses \r\n for newlines, but Godot uses \n.
@@ -471,47 +505,18 @@ impl ChumFile {
         self.replace_data_with_vec(data);
     }
 
-    ///////////////////////////////////////////////////////////////////////////
-    // IMPORT DATA                                                           //
-    ///////////////////////////////////////////////////////////////////////////
-
-    /// Import BITMAP data from a file with the given format
-    #[export]
-    pub fn import_bitmap(
-        &mut self,
-        _owner: &Resource,
-        path: GodotString,
-        formattype: i64,
-        palettetype: i64,
-    ) {
-        use libchum::reader::bitmap;
-        let pathstr = path.to_string();
-        let fh = File::open(&pathstr).unwrap();
-        let image_format = bitmap::image::ImageFormat::from_path(&pathstr).unwrap();
-        let mut buf_reader = BufReader::new(fh);
-        let (bitmap, width, height) = bitmap::import_bitmap(&mut buf_reader, image_format).unwrap();
-        let mut data =
-            bitmap::BitmapFormat::new_empty(formattype as u8, palettetype as u8).unwrap();
-        bitmap::compress_bitmap(&bitmap, &mut data, width, height).unwrap();
-        let bitmap =
-            match reader::bitmap::Bitmap::read_data(&mut self.get_data_as_vec(), self.format) {
-                Ok(x) => x,
-                Err(err) => {
-                    panic!("BITMAP file invalid: {}", err);
-                }
-            }
-            .with_bitmap(data, width, height);
-        let mut outdata = Vec::new();
-        bitmap.write_to(&mut outdata, self.format).unwrap();
-        self.replace_data_with_vec(outdata);
+    #[method]
+    pub fn replace_with_binary_data(&mut self, bindata: PoolArray<u8>)
+    {
+        self.replace_data_with_vec(bindata.to_vec());
     }
 
     ///////////////////////////////////////////////////////////////////////////
     // STRUCTURE DATA                                                        //
     ///////////////////////////////////////////////////////////////////////////
 
-    #[export]
-    pub fn read_structure(&self, _owner: &Resource) -> Variant {
+    #[method]
+    pub fn read_structure(&self) -> Variant {
         use libchum::binary::ChumBinary;
         match self.get_type_str() {
             "BITMAP" => {
@@ -642,7 +647,7 @@ impl ChumFile {
                 let structure = data.structure();
                 util::struct_to_dict(&structure).into_shared().to_variant()
             }
-            _ => Variant::new(),
+            _ => Variant::nil(),
         }
     }
 
@@ -678,13 +683,13 @@ impl ChumFile {
             Ok(v) => v,
             Err(e) => {
                 display_err!("Error while loading {} into view: {}", self.namestr, e);
-                Variant::new()
+                Variant::nil()
             }
         }
     }
 
-    #[export]
-    pub fn import_structure(&mut self, _owner: &Resource, data: Dictionary) {
+    #[method]
+    pub fn import_structure(&mut self, data: Dictionary) {
         use libchum::binary::ChumBinary;
         let structure = util::dict_to_struct(&data);
         match self.get_type_str() {

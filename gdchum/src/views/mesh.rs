@@ -1,4 +1,4 @@
-use crate::util;
+use crate::util::{self};
 use gdnative::api::Resource;
 use gdnative::api::{ArrayMesh, Mesh};
 use gdnative::prelude::*;
@@ -11,27 +11,27 @@ pub struct MeshView {
     pub inner: mesh::Mesh,
 }
 
-#[methods]
-impl MeshView {
+impl_view_node_resource!(
+    MeshView,
+    mesh::Mesh,
+    "MESH",
+    (|_builder: &ClassBuilder<Self>| {}),
+
     fn new(_owner: &Resource) -> Self {
         MeshView {
             inner: Default::default(),
         }
     }
 
-    impl_view_node_resource!(MeshView, mesh::Mesh, "MESH", |_builder: &ClassBuilder<
-        Self,
-    >| {});
-
-    #[export]
-    pub fn get_structure(&self, _owner: &Resource) -> Variant {
+    #[method]
+    pub fn get_structure(&self) -> Variant {
         use libchum::structure::ChumStruct;
         let data = self.inner.get_struct().structure();
         util::struct_to_dict(&data).into_shared().to_variant()
     }
 
     #[export]
-    pub fn import_structure(&mut self, owner: &Resource, data: Dictionary) {
+    pub fn import_structure(&mut self, owner: &Resource, data: Dictionary) -> () {
         use libchum::structure::ChumStruct;
         let structure = util::dict_to_struct(&data);
         self.inner
@@ -39,20 +39,20 @@ impl MeshView {
         owner.emit_signal("modified", &[]);
     }
 
-    #[export]
-    pub fn get_sphere_shapes(&self, _owner: &Resource) -> VariantArray {
+    #[method]
+    pub fn get_sphere_shapes(&self) -> VariantArray {
         let shapes = VariantArray::new();
         for shape in self.inner.sphere_shapes.iter() {
             let dict = Dictionary::new();
-            dict.insert("center", shape.position);
+            dict.insert("center", util::convert_vector3d_to_gd(shape.position));
             dict.insert("radius", shape.radius);
             shapes.push(dict);
         }
         shapes.into_shared()
     }
 
-    #[export]
-    pub fn get_cuboid_shapes(&self, _owner: &Resource) -> VariantArray {
+    #[method]
+    pub fn get_cuboid_shapes(&self) -> VariantArray {
         let shapes = VariantArray::new();
         for shape in self.inner.cuboid_shapes.iter() {
             let dict = Dictionary::new();
@@ -62,14 +62,14 @@ impl MeshView {
         shapes.into_shared()
     }
 
-    #[export]
-    pub fn get_cylinder_shapes(&self, _owner: &Resource) -> VariantArray {
+    #[method]
+    pub fn get_cylinder_shapes(&self) -> VariantArray {
         let shapes = VariantArray::new();
         for shape in self.inner.cylinder_shapes.iter() {
             let dict = Dictionary::new();
-            dict.insert("position", shape.position);
+            dict.insert("position", util::convert_vector3d_to_gd(shape.position));
             dict.insert("height", shape.height);
-            dict.insert("normal", shape.normal);
+            dict.insert("normal", util::convert_vector3d_to_gd(shape.normal));
             dict.insert("radius", shape.radius);
             shapes.push(dict);
         }
@@ -89,8 +89,8 @@ impl MeshView {
     ///         "normals":   [int], # Index for each normal contained in the surface
     ///         "material":  int    # The material to apply to this surface
     ///     }],
-    #[export]
-    pub fn generate_array_mesh(&self, _owner: &Resource) -> Option<Dictionary<Shared>> {
+    #[method]
+    pub fn generate_array_mesh(&self) -> Option<Dictionary<Shared>> {
         let array_mesh = Ref::<ArrayMesh, Unique>::new();
         let generated_tris = self.inner.gen_triangles();
         let mesh_materials = self.inner.get_materials();
@@ -136,4 +136,4 @@ impl MeshView {
         dict.insert("mesh", array_mesh);
         Some(dict.into_shared())
     }
-}
+);

@@ -21,16 +21,11 @@ bg_color = Color( 0.2, 0.227451, 0.309804, 1 )
 border_width_bottom = 1
 border_color = Color( 0.0980392, 0.113725, 0.152941, 1 )
 
-[node name="Viewer" type="Control" groups=[
-"viewer",
-]]
+[node name="Viewer" type="Control" groups=["viewer"]]
 anchor_right = 1.0
 anchor_bottom = 1.0
 theme = ExtResource( 9 )
 script = ExtResource( 1 )
-__meta__ = {
-"_edit_use_anchors_": false
-}
 
 [node name="VBox" type="VBoxContainer" parent="."]
 anchor_right = 1.0
@@ -70,8 +65,8 @@ items = [ "Bulk Export", null, 0, false, false, 0, 0, null, "", false, "Scene Ex
 
 [node name="View" type="MenuButton" parent="VBox/Panel/Menu"]
 visible = false
-margin_left = 103.0
-margin_right = 145.0
+margin_left = 95.0
+margin_right = 137.0
 margin_bottom = 22.0
 text = "View"
 flat = false
@@ -164,8 +159,6 @@ margin_bottom = 548.0
 theme = ExtResource( 9 )
 access = 2
 show_hidden_files = true
-current_dir = "/home/jellonator/Workspace/Rust/ChumWorld"
-current_path = "/home/jellonator/Workspace/Rust/ChumWorld/"
 
 [node name="BulkExport" parent="." instance=ExtResource( 5 )]
 margin_left = 379.006
@@ -220,6 +213,7 @@ __meta__ = {
 [node name="SceneExportDialog" parent="." instance=ExtResource( 10 )]
 
 [node name="Viewport" parent="." instance=ExtResource( 11 )]
+
 [connection signal="tab_changed" from="VBox/Tabs" to="." method="_on_Tabs_tab_changed"]
 [connection signal="text_changed" from="VBox/Tabs/Files/VBox/HBox/LineEdit" to="VBox/Tabs/Files/VBox/Tree" method="_on_LineEdit_text_changed"]
 [connection signal="file_selected" from="VBox/Tabs/Files/VBox/Tree" to="." method="_on_Tree_file_selected"]

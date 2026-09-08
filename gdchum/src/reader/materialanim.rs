@@ -25,15 +25,15 @@ pub fn read_materialanim(
     let unsafe_archive_instance = file.get_archive_instance();
     let archiveinstance = unsafe { unsafe_archive_instance.assume_safe() };
     archiveinstance
-        .map(|archive, archiveres| {
+        .map(|archive, _| {
             if let Some(materialfile) =
-                archive.get_file_from_hash(&archiveres, matanimdata.material_id)
+                archive.get_file_from_hash(matanimdata.material_id)
             {
                 let materialdict = reader.read_material_nodeless_nocache(materialfile.clone());
-                if materialdict.get("exists").to_bool() == true {
+                if materialdict.get("exists").to_variant().to::<bool>() == Some(true) {
                     let res: Ref<ShaderMaterial, Shared> =
-                        materialdict.get("material").try_to_object().unwrap();
-                    reader.add_materialanim(res.clone(), matanimdata, archive, archiveres);
+                        materialdict.get("material").unwrap().try_to_object().unwrap();
+                    reader.add_materialanim(res.clone(), matanimdata, archive);
                     Some(res)
                 } else {
                     display_warn!(

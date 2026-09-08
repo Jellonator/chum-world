@@ -1,4 +1,5 @@
 use crate::chumfile::ChumFile;
+use crate::util::convert_transform3d_to_euclid;
 use crate::views;
 use crate::ChumArchive;
 use gdnative::api::{ImageTexture, Resource, ShaderMaterial};
@@ -36,8 +37,8 @@ pub struct ChumReader {
 
 #[methods]
 impl ChumReader {
-    #[export]
-    pub fn _physics_process(&mut self, _owner: &Node, delta: f32) {
+    #[method]
+    pub fn _physics_process(&mut self, delta: f32) {
         // godot_print!("{}", delta);
         for entry in &mut self.materialanims {
             if entry.data.length <= 1.0 / 60.0 {
@@ -84,21 +85,19 @@ impl ChumReader {
                 } else {
                     0.0
                 };
-                let tx = Transform2D::identity()
-                    .then_translate(Vector2::new(-0.5, -0.5))
-                    .then_translate(scroll)
-                    .then_scale(scale.x, scale.y)
-                    .then_rotate(Angle {
-                        radians: rotation.into(),
-                    })
-                    .then_translate(-Vector2::new(0.5, 0.5));
+                let tx = Transform2D::IDENTITY
+                    .translated(Vector2::new(-0.5, -0.5))
+                    .translated(scroll)
+                    .scaled(scale)
+                    .rotated(rotation)
+                    .translated(-Vector2::new(0.5, 0.5));
                 let realtx = Transform {
                     basis: entry.original_transform.basis
                         * Basis {
                             elements: [
-                                Vector3::new(tx.m11, tx.m12, 0.0),
-                                Vector3::new(tx.m21, tx.m22, 0.0),
-                                Vector3::new(tx.m31, tx.m32, 1.0),
+                                Vector3::new(tx.a.x, tx.a.y, 0.0),
+                                Vector3::new(tx.b.x, tx.b.y, 0.0),
+                                Vector3::new(tx.origin.x, tx.origin.y, 1.0),
                             ],
                         },
                     origin: entry.original_transform.origin,
@@ -112,20 +111,19 @@ impl ChumReader {
         &mut self,
         resource: Ref<ShaderMaterial, Shared>,
         data: reader::materialanim::MaterialAnimation,
-        archive: &ChumArchive,
-        archive_res: TRef<Resource>,
+        archive: &ChumArchive
     ) {
         let mut textures: Vec<Option<Ref<Texture, Shared>>> =
             Vec::with_capacity(data.track_texture.len());
         for track in &data.track_texture.frames {
             let id = track.data;
-            textures.push(match archive.get_file_from_hash(&archive_res, id) {
+            textures.push(match archive.get_file_from_hash(id) {
                 Some(texturefile) => {
                     let texturedict = self.read_bitmap_nodeless(texturefile.clone());
-                    if texturedict.get("exists").to_bool() == true {
+                    if texturedict.get("exists").to_variant().to::<bool>() == Some(true) {
                         godot_print!("Found material for {}", id);
                         let image: Ref<Image, Shared> =
-                            texturedict.get("bitmap").try_to_object().unwrap();
+                            texturedict.get("bitmap").unwrap().try_to_object().unwrap();
                         let texture = Ref::<ImageTexture, Unique>::new();
                         texture.create_from_image(image, 2);
                         Some(texture.into_shared().upcast::<Texture>())
@@ -150,7 +148,7 @@ impl ChumReader {
             resource
                 .assume_safe()
                 .get_shader_param("arg_texcoord_transform")
-                .to_transform()
+                .to::<Transform>().unwrap()
         };
         self.materialanims.push(MaterialAnimEntry {
             time: 0.0,
@@ -161,10 +159,9 @@ impl ChumReader {
         });
     }
 
-    #[export]
+    #[method]
     pub fn read_text(
         &mut self,
-        _owner: &Node,
         data: Instance<ChumFile, Shared>,
     ) -> Dictionary<Unique> {
         self.read_text_nodeless(data)
@@ -181,10 +178,9 @@ impl ChumReader {
             .unwrap()
     }
 
-    #[export]
+    #[method]
     pub fn read_mesh(
         &mut self,
-        _owner: &Node,
         data: Instance<ChumFile, Shared>,
     ) -> Dictionary<Shared> {
         self.read_mesh_nodeless(data)
@@ -204,10 +200,9 @@ impl ChumReader {
             .unwrap()
     }
 
-    #[export]
+    #[method]
     pub fn read_surface(
         &mut self,
-        _owner: &Node,
         data: Instance<ChumFile, Shared>,
     ) -> Dictionary<Shared> {
         self.read_surface_nodeless(data)
@@ -230,10 +225,9 @@ impl ChumReader {
             .unwrap()
     }
 
-    #[export]
+    #[method]
     pub fn read_bitmap(
         &mut self,
-        _owner: &Node,
         data: Instance<ChumFile, Shared>,
     ) -> Dictionary<Shared> {
         self.read_bitmap_nodeless(data)
@@ -253,10 +247,9 @@ impl ChumReader {
             .unwrap()
     }
 
-    #[export]
+    #[method]
     pub fn read_material(
         &mut self,
-        _owner: &Node,
         data: Instance<ChumFile, Shared>,
     ) -> Dictionary<Shared> {
         self.read_material_nodeless(data)
@@ -290,10 +283,9 @@ impl ChumReader {
             .unwrap()
     }
 
-    #[export]
+    #[method]
     pub fn read_materialanim(
         &mut self,
-        _owner: &Node,
         data: Instance<ChumFile, Shared>,
     ) -> Dictionary<Shared> {
         self.read_materialanim_nodeless(data)
@@ -316,10 +308,9 @@ impl ChumReader {
             .unwrap()
     }
 
-    #[export]
+    #[method]
     pub fn read_skin(
         &mut self,
-        _owner: &Node,
         data: Instance<ChumFile, Shared>,
     ) -> Dictionary<Shared> {
         self.read_skin_nodeless(data)
@@ -339,10 +330,9 @@ impl ChumReader {
             .unwrap()
     }
 
-    #[export]
+    #[method]
     pub fn read_node(
         &mut self,
-        _owner: &Node,
         data: Instance<ChumFile, Shared>,
     ) -> Dictionary<Shared> {
         self.read_node_nodeless(data)
@@ -362,10 +352,9 @@ impl ChumReader {
             .unwrap()
     }
 
-    #[export]
+    #[method]
     pub fn read_lod(
         &mut self,
-        _owner: &Node,
         data: Instance<ChumFile, Shared>,
     ) -> Dictionary<Shared> {
         self.read_lod_nodeless(data)
@@ -385,10 +374,9 @@ impl ChumReader {
             .unwrap()
     }
 
-    #[export]
+    #[method]
     pub fn read_rotshape(
         &mut self,
-        _owner: &Node,
         data: Instance<ChumFile, Shared>,
     ) -> Dictionary<Shared> {
         self.read_rotshape_nodeless(data)
@@ -411,10 +399,9 @@ impl ChumReader {
             .unwrap()
     }
 
-    #[export]
+    #[method]
     pub fn read_spline(
         &mut self,
-        _owner: &Node,
         data: Instance<ChumFile, Shared>,
     ) -> Dictionary<Shared> {
         self.read_spline_nodeless(data)
@@ -434,10 +421,9 @@ impl ChumReader {
             .unwrap()
     }
 
-    #[export]
+    #[method]
     pub fn read_collisionvol(
         &mut self,
-        _owner: &Node,
         data: Instance<ChumFile, Shared>,
     ) -> Dictionary<Shared> {
         self.read_collisionvol_nodeless(data)
@@ -460,20 +446,20 @@ impl ChumReader {
             .unwrap()
     }
 
-    #[export]
-    pub fn cool(&self, _owner: &Node) {
+    #[method]
+    pub fn cool(&self) {
         // very important function do not remove
         godot_print!("Trans Rights!");
     }
 
-    #[export]
-    pub fn clear_cache(&mut self, _owner: &Node) {
+    #[method]
+    pub fn clear_cache(&mut self) {
         self.cache.clear();
         self.materialanims.clear();
     }
 
-    #[export]
-    pub fn invalidate(&mut self, _owner: &Node, value: i32) {
+    #[method]
+    pub fn invalidate(&mut self, value: i32) {
         self.cache.remove(&value);
     }
 
@@ -485,10 +471,9 @@ impl ChumReader {
     }
 
     // new View system
-    #[export]
+    #[method]
     pub fn get_node_view(
         &self,
-        _owner: &Node,
         data: Instance<ChumFile, Shared>,
     ) -> Instance<views::node::NodeView, Unique> {
         let instance = Instance::<views::node::NodeView, Unique>::new();
@@ -501,10 +486,9 @@ impl ChumReader {
     }
 
     // new View system
-    #[export]
+    #[method]
     pub fn get_sound_view(
         &self,
-        _owner: &Node,
         data: Instance<ChumFile, Shared>,
     ) -> Instance<views::sound::SoundView, Unique> {
         let instance = Instance::<views::sound::SoundView, Unique>::new();

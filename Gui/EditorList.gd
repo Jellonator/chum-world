@@ -1,5 +1,7 @@
 extends VBoxContainer
 
+const ChumFile := preload("res://gdchum/ChumFile.gdns")
+
 var cfile = null
 
 onready var button_export := $HBoxContainer/ExportButton
@@ -70,3 +72,22 @@ func _on_export_pressed(id: int):
 #		var fname = yield(dialog, "popup_hide")
 #		print("ACCEPTED")
 #		cfile.export_to(id, fname)
+
+func _on_ImportRawButton_pressed():
+	if cfile == null:
+		print("No file selected; could not import.")
+		return
+	var dialog := $ImportRawFileDialog as FileDialog
+	dialog.popup_centered()
+
+func _on_ImportRawFileDialog_file_selected(path: String):
+	if cfile == null:
+		print("No file selected; could not import.")
+		return
+	var file := File.new()
+	file.open(path, File.READ)
+	var bindata = file.get_buffer(file.get_len())
+	file.close()
+	cfile.replace_with_binary_data(bindata)
+	ChumReader.invalidate(cfile.get_hash_id())
+	set_file(cfile)

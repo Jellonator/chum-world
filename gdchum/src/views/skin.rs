@@ -10,28 +10,31 @@ pub struct SkinView {
     pub inner: Skin,
 }
 
-#[methods]
-impl SkinView {
+impl_view_node_resource!(
+    SkinView,
+    Skin,
+    "SKIN",
+    (|_builder: &ClassBuilder<Self>| {}),
+
     fn new(_owner: &Resource) -> Self {
         SkinView {
             inner: Default::default(),
         }
     }
 
-    impl_view_node_resource!(SkinView, Skin, "SKIN", |_builder: &ClassBuilder<Self>| {});
 
-    #[export]
-    pub fn get_structure(&self, _owner: &Resource) -> Variant {
-        return Variant::new();
+    #[method]
+    pub fn get_structure(&self) -> Variant {
+        return Variant::nil();
     }
 
-    #[export]
-    pub fn import_structure(&mut self, _owner: &Resource, _data: Dictionary) {
+    #[method]
+    pub fn import_structure(&mut self, _data: Dictionary) -> () {
         // do nothing
     }
 
-    #[export]
-    pub fn get_resources(&self, _owner: &Resource) -> VariantArray {
+    #[method]
+    pub fn get_resources(&self) -> VariantArray {
         let arr = VariantArray::new();
         for meshid in self.inner.meshes.iter() {
             arr.push(*meshid);
@@ -53,8 +56,8 @@ impl SkinView {
     ///         }
     ///     }
     /// }
-    #[export]
-    pub fn get_groups(&self, _owner: &Resource) -> Dictionary {
+    #[method]
+    pub fn get_groups(&self) -> Dictionary {
         let groups = Dictionary::new();
         for group in self.inner.vertex_groups.iter() {
             let group_dict = Dictionary::new();
@@ -76,4 +79,4 @@ impl SkinView {
         }
         groups.into_shared()
     }
-}
+);

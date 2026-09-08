@@ -20,49 +20,55 @@ impl ByteData {
         &self.data
     }
 
-    #[export]
-    pub fn get(&self, _owner: &Resource, mut index: i64) -> i64 {
+    #[method]
+    pub fn set_from_array(&mut self, data: PoolArray<u8>)
+    {
+        self.data = data.to_vec();
+    }
+
+    #[method]
+    pub fn get(&self, mut index: i64) -> i64 {
         if index < 0 {
             index = self.data.len() as i64 + index;
         }
         self.data[index as usize] as i64
     }
 
-    #[export]
-    pub fn set(&mut self, _owner: &Resource, index: i64, value: u8) {
+    #[method]
+    pub fn set(&mut self, index: i64, value: u8) {
         self.data[index as usize] = value as u8;
     }
 
-    #[export]
-    pub fn append(&mut self, _owner: &Resource, value: u8) {
+    #[method]
+    pub fn append(&mut self, value: u8) {
         self.data.push(value);
     }
 
-    #[export]
-    pub fn size(&self, _owner: &Resource) -> i64 {
+    #[method]
+    pub fn size(&self) -> i64 {
         self.data.len() as i64
     }
 
-    #[export]
-    pub fn back(&self, _owner: &Resource) -> Variant {
+    #[method]
+    pub fn back(&self) -> Variant {
         match self.data.len() {
-            0 => Variant::new(),
+            0 => Variant::nil(),
             x => self.data[x - 1].to_variant(),
         }
     }
 
-    #[export]
-    pub fn clear(&mut self, _owner: &Resource) {
+    #[method]
+    pub fn clear(&mut self) {
         self.data.clear()
     }
 
-    #[export]
-    pub fn count(&self, _owner: &Resource, value: u8) -> i64 {
+    #[method]
+    pub fn count(&self, value: u8) -> i64 {
         self.data.iter().filter(|x| **x == value).count() as i64
     }
 
-    #[export]
-    pub fn duplicate(&self, _owner: &Resource) -> Instance<ByteData, Unique> {
+    #[method]
+    pub fn duplicate(&self) -> Instance<ByteData, Unique> {
         let f = Instance::<ByteData, Unique>::new();
         f.map_mut(|script, _| {
             script.set_data(self.data.clone());
@@ -71,20 +77,20 @@ impl ByteData {
         f
     }
 
-    #[export]
-    pub fn empty(&self, _owner: &Resource) -> bool {
+    #[method]
+    pub fn empty(&self) -> bool {
         self.data.is_empty()
     }
 
-    #[export]
-    pub fn erase(&mut self, _owner: &Resource, value: u8) {
+    #[method]
+    pub fn erase(&mut self, value: u8) {
         if let Some(index) = self.data.iter().position(|x| *x == value) {
             self.data.remove(index);
         }
     }
 
-    #[export]
-    pub fn find(&self, _owner: &Resource, value: u8) -> i64 {
+    #[method]
+    pub fn find(&self, value: u8) -> i64 {
         if let Some(index) = self.data.iter().position(|x| *x == value) {
             (index as i64).into()
         } else {
@@ -92,8 +98,8 @@ impl ByteData {
         }
     }
 
-    #[export]
-    pub fn find_from(&self, _owner: &Resource, value: u8, mut from: i64) -> i64 {
+    #[method]
+    pub fn find_from(&self, value: u8, mut from: i64) -> i64 {
         if from < 0 {
             from = self.data.len() as i64 + from;
         }
@@ -104,8 +110,8 @@ impl ByteData {
         }
     }
 
-    #[export]
-    pub fn find_last(&self, _owner: &Resource, value: u8) -> i64 {
+    #[method]
+    pub fn find_last(&self, value: u8) -> i64 {
         if let Some(index) = self.data.iter().rposition(|x| *x == value) {
             (index as i64).into()
         } else {
@@ -113,8 +119,8 @@ impl ByteData {
         }
     }
 
-    #[export]
-    pub fn find_last_from(&self, _owner: &Resource, value: u8, mut from: i64) -> i64 {
+    #[method]
+    pub fn find_last_from(&self, value: u8, mut from: i64) -> i64 {
         if from < 0 {
             from = self.data.len() as i64 + from;
         }
@@ -128,16 +134,16 @@ impl ByteData {
         }
     }
 
-    #[export]
-    pub fn front(&self, _owner: &Resource) -> Variant {
+    #[method]
+    pub fn front(&self) -> Variant {
         match self.data.len() {
-            0 => Variant::new(),
+            0 => Variant::nil(),
             _x => self.data[0].to_variant(),
         }
     }
 
-    #[export]
-    pub fn has(&self, _owner: &Resource, value: u8) -> bool {
+    #[method]
+    pub fn has(&self, value: u8) -> bool {
         if let Some(_index) = self.data.iter().position(|x| *x == value) {
             true
         } else {
@@ -145,13 +151,13 @@ impl ByteData {
         }
     }
 
-    #[export]
-    pub fn insert(&mut self, _owner: &Resource, index: i64, value: u8) {
+    #[method]
+    pub fn insert(&mut self, index: i64, value: u8) {
         self.data.insert(index as usize, value);
     }
 
-    #[export]
-    pub fn slice(&self, _owner: &Resource, from: i64, to: i64) -> Instance<ByteData, Unique> {
+    #[method]
+    pub fn slice(&self, from: i64, to: i64) -> Instance<ByteData, Unique> {
         let f = Instance::<ByteData, Unique>::new();
         f.map_mut(|script, _| {
             script.set_data(self.data[from as usize..(to + 1) as usize].to_owned());
@@ -160,39 +166,39 @@ impl ByteData {
         f
     }
 
-    #[export]
-    pub fn pop_back(&mut self, _owner: &Resource) -> Variant {
+    #[method]
+    pub fn pop_back(&mut self) -> Variant {
         match self.data.len() {
-            0 => Variant::new(),
+            0 => Variant::nil(),
             _x => self.data.pop().unwrap().to_variant(),
         }
     }
 
-    #[export]
-    pub fn pop_front(&mut self, _owner: &Resource) -> Variant {
+    #[method]
+    pub fn pop_front(&mut self) -> Variant {
         match self.data.len() {
-            0 => Variant::new(),
+            0 => Variant::nil(),
             _x => self.data.remove(0).to_variant(),
         }
     }
 
-    #[export]
-    pub fn push_front(&mut self, _owner: &Resource, value: u8) {
+    #[method]
+    pub fn push_front(&mut self, value: u8) {
         self.data.insert(0, value);
     }
 
-    #[export]
-    pub fn push_back(&mut self, _owner: &Resource, value: u8) {
+    #[method]
+    pub fn push_back(&mut self, value: u8) {
         self.data.push(value);
     }
 
-    #[export]
-    pub fn remove(&mut self, _owner: &Resource, index: i64) {
+    #[method]
+    pub fn remove(&mut self, index: i64) {
         self.data.remove(index as usize);
     }
 
-    #[export]
-    pub fn resize(&mut self, _owner: &Resource, size: i64) {
+    #[method]
+    pub fn resize(&mut self, size: i64) {
         self.data.resize(size as usize, 0);
     }
 

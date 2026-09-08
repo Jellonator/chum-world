@@ -1,4 +1,4 @@
-use crate::chumfile::ChumFile;
+use crate::{chumfile::ChumFile, util};
 use gdnative::prelude::*;
 use libchum::reader::spline;
 
@@ -22,6 +22,7 @@ pub fn read_spline(
         spline
             .get_vertices_as_vec()
             .into_iter()
+            .map(|v| util::convert_vector3d_to_gd(v))
             .collect::<Vec<Vector3>>()
             .to_variant(),
     );
@@ -30,6 +31,7 @@ pub fn read_spline(
         &spline
             .get_section_stops_as_vec()
             .into_iter()
+            .map(|v| util::convert_vector3d_to_gd(v))
             .collect::<Vec<Vector3>>()
             .to_variant(),
     );

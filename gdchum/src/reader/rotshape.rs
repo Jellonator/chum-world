@@ -1,5 +1,6 @@
 use crate::chumfile::ChumFile;
 use crate::reader::ChumReader;
+use crate::util;
 use gdnative::api::{ArrayMesh, Material, Mesh};
 use gdnative::prelude::*;
 use libchum::common;
@@ -28,15 +29,15 @@ pub fn read_rotshape(
     let uv2 = Vector2::new((rsdata.billboard_mode.to_u32() + 2) as f32, 0.0);
     let mesh = ArrayMesh::new();
     let mut verts = Vector3Array::new();
-    verts.push(pos_tl + rsdata.offset);
-    verts.push(pos_tr + rsdata.offset);
-    verts.push(pos_br + rsdata.offset);
-    verts.push(pos_bl + rsdata.offset);
+    verts.push(util::convert_vector3d_to_gd(pos_tl + rsdata.offset));
+    verts.push(util::convert_vector3d_to_gd(pos_tr + rsdata.offset));
+    verts.push(util::convert_vector3d_to_gd(pos_br + rsdata.offset));
+    verts.push(util::convert_vector3d_to_gd(pos_bl + rsdata.offset));
     let mut texcoords = Vector2Array::new();
-    texcoords.push(rsdata.texcoords[0]);
-    texcoords.push(rsdata.texcoords[1]);
-    texcoords.push(rsdata.texcoords[2]);
-    texcoords.push(rsdata.texcoords[3]);
+    texcoords.push(util::convert_vector2d_to_gd(rsdata.texcoords[0]));
+    texcoords.push(util::convert_vector2d_to_gd(rsdata.texcoords[1]));
+    texcoords.push(util::convert_vector2d_to_gd(rsdata.texcoords[2]));
+    texcoords.push(util::convert_vector2d_to_gd(rsdata.texcoords[3]));
     let mut uv2coords = Vector2Array::new();
     uv2coords.push(uv2);
     uv2coords.push(uv2);
@@ -65,11 +66,11 @@ pub fn read_rotshape(
     let archiveinstance = unsafe { unsafe_archive_instance.assume_safe() };
     archiveinstance
         .map(|archive, res| {
-            if let Some(materialfile) = archive.get_file_from_hash(&res, rsdata.materialanim_id) {
+            if let Some(materialfile) = archive.get_file_from_hash(rsdata.materialanim_id) {
                 let materialdict = reader.read_materialanim_nodeless(materialfile.clone());
-                if materialdict.get("exists").to_bool() == true {
+                if materialdict.get("exists").to_variant().to::<bool>() == Some(true) {
                     let material: Ref<Material, Shared> =
-                        materialdict.get("material").try_to_object().unwrap();
+                        materialdict.get("material").unwrap().try_to_object().unwrap();
                     mesh.surface_set_material(0, material);
                 } else {
                     display_warn!(

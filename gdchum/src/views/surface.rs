@@ -11,41 +11,37 @@ pub struct SurfaceView {
     pub inner: SurfaceObject,
 }
 
-#[methods]
-impl SurfaceView {
+impl_view_node_resource!(
+    SurfaceView,
+    SurfaceObject,
+    "SURFACE",
+    (|_builder: &ClassBuilder<Self>| {}),
+    save |_self, _owner, _data| {},
+
     fn new(_owner: &Resource) -> Self {
         SurfaceView {
             inner: Default::default(),
         }
     }
 
-    impl_view_node_resource!(
-        SurfaceView,
-        SurfaceObject,
-        "SURFACE",
-        |_builder: &ClassBuilder<Self>| {},
-        |_self, _owner, _data| {}
-    );
-
-    #[export]
-    pub fn get_structure(&self, _owner: &Resource) -> Variant {
-        return Variant::new();
+    #[method]
+    pub fn get_structure(&self) -> Variant {
+        return Variant::nil();
     }
 
-    #[export]
-    pub fn import_structure(&mut self, _owner: &Resource, _data: Dictionary) {
+    #[method]
+    pub fn import_structure(&mut self, _data: Dictionary) -> () {
         // do nothing
     }
 
-    #[export]
-    pub fn get_num_surfaces(&self, _owner: &Resource) -> usize {
+    #[method]
+    pub fn get_num_surfaces(&self) -> usize {
         self.inner.surfaces.len()
     }
 
-    #[export]
+    #[method]
     pub fn generate_surface(
         &self,
-        _owner: &Resource,
         index: usize,
         quality: usize,
     ) -> Option<Dictionary> {
@@ -87,4 +83,4 @@ impl SurfaceView {
         dict.insert("material", surface.material_index);
         Some(dict.into_shared())
     }
-}
+);

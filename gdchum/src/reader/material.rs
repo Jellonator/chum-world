@@ -1,5 +1,6 @@
 use crate::chumfile::ChumFile;
 use crate::reader::ChumReader;
+use crate::util;
 use gdnative::api::{ImageTexture, ShaderMaterial};
 use gdnative::prelude::*;
 use libchum::reader::material;
@@ -37,13 +38,13 @@ pub fn read_material(
     let unsafe_archive_instance = file.get_archive_instance();
     let archiveinstance = unsafe { unsafe_archive_instance.assume_safe() };
     archiveinstance
-        .map(|archive, res| {
+        .map(|archive, _| {
             if matdata.get_texture() != 0 {
-                if let Some(texturefile) = archive.get_file_from_hash(&res, matdata.get_texture()) {
+                if let Some(texturefile) = archive.get_file_from_hash(matdata.get_texture()) {
                     let texturedict = reader.read_bitmap_nodeless(texturefile.clone());
-                    if texturedict.get("exists").to_bool() == true {
+                    if texturedict.get("exists").to_variant().to::<bool>() == Some(true) {
                         let image: Ref<Image, Shared> =
-                            texturedict.get("bitmap").try_to_object().unwrap();
+                            texturedict.get("bitmap").unwrap().try_to_object().unwrap();
                         let texture = Ref::<ImageTexture, Unique>::new();
                         texture.create_from_image(image, 1 | 2 | 4);
                         material.set_shader_param("has_texture", true);
@@ -67,13 +68,13 @@ pub fn read_material(
             }
             if matdata.texture_reflection != 0 {
                 if let Some(texturefile) =
-                    archive.get_file_from_hash(&res, matdata.texture_reflection)
+                    archive.get_file_from_hash(matdata.texture_reflection)
                 {
                     let texturedict = reader.read_bitmap_nodeless(texturefile.clone());
-                    if texturedict.get("exists").to_bool() == true {
+                    if texturedict.get("exists").to_variant().to::<bool>() == Some(true) {
                         godot_print!("Found material for {}", matdata.texture_reflection);
                         let image: Ref<Image, Shared> =
-                            texturedict.get("bitmap").try_to_object().unwrap();
+                            texturedict.get("bitmap").unwrap().try_to_object().unwrap();
                         let texture = Ref::<ImageTexture, Unique>::new();
                         texture.create_from_image(image, 1 | 2 | 4);
                         material.set_shader_param("has_reflection", true);
@@ -114,7 +115,7 @@ pub fn read_material(
         origin: Vector3::new(0.0, 0.0, 0.0),
     };
     material.set_shader_param("arg_texcoord_transform", realtx);
-    material.set_shader_param("arg_emission", matdata.emission);
+    material.set_shader_param("arg_emission", util::convert_vector3d_to_gd(matdata.emission));
     Some(material)
 }
 

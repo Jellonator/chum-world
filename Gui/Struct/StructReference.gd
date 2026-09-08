@@ -69,7 +69,7 @@ func _on_Goto_pressed():
 	var tree = get_viewer().node_tree
 	var editor = get_viewer().node_editor
 	editor.set_file(file)
-	tree.set_selected(file)
+	tree.set_selected_file(file)
 
 func _on_Text_text_entered(new_text: String):
 	if not get_archive().register_name(new_text):

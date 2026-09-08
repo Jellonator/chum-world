@@ -12,45 +12,43 @@ pub struct RotShapeView {
     pub inner: RotShape,
 }
 
-#[methods]
-impl RotShapeView {
+impl_view_node_resource!(
+    RotShapeView,
+    RotShape,
+    "ROTSHAPE",
+    (|_builder: &ClassBuilder<Self>| {}),
+
     fn new(_owner: &Resource) -> Self {
         RotShapeView {
             inner: Default::default(),
         }
     }
 
-    impl_view_node_resource!(
-        RotShapeView,
-        RotShape,
-        "ROTSHAPE",
-        |_builder: &ClassBuilder<Self>| {}
-    );
 
-    #[export]
-    pub fn get_structure(&self, _owner: &Resource) -> Variant {
+    #[method]
+    pub fn get_structure(&self) -> Variant {
         use libchum::structure::ChumStruct;
         let data = self.inner.structure();
         util::struct_to_dict(&data).into_shared().to_variant()
     }
 
     #[export]
-    pub fn import_structure(&mut self, owner: &Resource, data: Dictionary) {
+    pub fn import_structure(&mut self, owner: &Resource, data: Dictionary) -> () {
         use libchum::structure::ChumStruct;
         let structure = util::dict_to_struct(&data);
         self.inner = RotShape::destructure(&structure).unwrap();
         owner.emit_signal("modified", &[]);
     }
 
-    #[export]
-    pub fn get_materialanim(&self, _owner: &Resource) -> i32 {
+    #[method]
+    pub fn get_materialanim(&self) -> i32 {
         self.inner.materialanim_id
     }
 
     /// Generates an ArrayMesh based on the contents of the rotshape in this view.
     /// The material are not automatically applied, and must be applied manually.
-    #[export]
-    pub fn generate_array_mesh(&self, _owner: &Resource) -> Ref<ArrayMesh, Shared> {
+    #[method]
+    pub fn generate_array_mesh(&self) -> Ref<ArrayMesh, Shared> {
         use libchum::structure::ChumEnum;
         let pos_tl = self.inner.size[0];
         let pos_br = self.inner.size[1];
@@ -59,15 +57,15 @@ impl RotShapeView {
         let uv2 = Vector2::new((self.inner.billboard_mode.to_u32() + 2) as f32, 0.0);
         let mesh = Ref::<ArrayMesh, Unique>::new();
         let mut verts = Vector3Array::new();
-        verts.push(pos_tl + self.inner.offset);
-        verts.push(pos_tr + self.inner.offset);
-        verts.push(pos_br + self.inner.offset);
-        verts.push(pos_bl + self.inner.offset);
+        verts.push(util::convert_vector3d_to_gd(pos_tl + self.inner.offset));
+        verts.push(util::convert_vector3d_to_gd(pos_tr + self.inner.offset));
+        verts.push(util::convert_vector3d_to_gd(pos_br + self.inner.offset));
+        verts.push(util::convert_vector3d_to_gd(pos_bl + self.inner.offset));
         let mut texcoords = Vector2Array::new();
-        texcoords.push(self.inner.texcoords[0]);
-        texcoords.push(self.inner.texcoords[1]);
-        texcoords.push(self.inner.texcoords[2]);
-        texcoords.push(self.inner.texcoords[3]);
+        texcoords.push(util::convert_vector2d_to_gd(self.inner.texcoords[0]));
+        texcoords.push(util::convert_vector2d_to_gd(self.inner.texcoords[1]));
+        texcoords.push(util::convert_vector2d_to_gd(self.inner.texcoords[2]));
+        texcoords.push(util::convert_vector2d_to_gd(self.inner.texcoords[3]));
         let mut uv2coords = Vector2Array::new();
         uv2coords.push(uv2);
         uv2coords.push(uv2);
@@ -92,4 +90,4 @@ impl RotShapeView {
         );
         mesh.into_shared()
     }
-}
+);
